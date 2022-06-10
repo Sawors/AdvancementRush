@@ -1,8 +1,6 @@
 package com.github.sawors;
 
-import net.kyori.adventure.text.Component;
 import org.bukkit.Bukkit;
-import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.java.JavaPlugin;
 
 import java.io.File;
@@ -17,6 +15,7 @@ public final class Main extends JavaPlugin {
     public void onEnable() {
         // Plugin startup logic
     
+            //Initialisation of the Database
         this.getDataFolder().mkdirs();
         try {
             dbfile.createNewFile();
