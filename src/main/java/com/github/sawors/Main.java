@@ -1,21 +1,29 @@
 package com.github.sawors;
 
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.TextComponent;
 import org.bukkit.Bukkit;
+import org.bukkit.ChatColor;
+import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
 
 import java.io.File;
 import java.io.IOException;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.logging.Level;
 
 public final class Main extends JavaPlugin {
     
-    File dbfile = new File(this.getDataFolder()+File.separator+"advancements.db");
+    private static Main instance;
+    private static File dbfile;
     
     @Override
     public void onEnable() {
         // Plugin startup logic
-    
-            //Initialisation of the Database
+        instance = this;
+        //Initialisation of the Database
+        dbfile = new File(instance.getDataFolder()+File.separator+"database.db");
         this.getDataFolder().mkdirs();
         try {
             dbfile.createNewFile();
@@ -26,10 +34,30 @@ public final class Main extends JavaPlugin {
         }
         getServer().getPluginManager().registerEvents(new SmallListeners(), this);
         getServer().getPluginManager().registerEvents(new AdvancementListeners(), this);
+    
+        DataBase.connectInit();
     }
     
     @Override
     public void onDisable() {
         // Plugin shutdown logic
+        DataBase.closeDBConnection();
+    }
+    
+    public static File getDbFile(){
+        return dbfile;
+    }
+    
+    public static void logAdmin(TextComponent msg){
+        Bukkit.getLogger().log(Level.INFO, "[AdvancementRush] "+msg.content().replaceAll("§e", ""));
+        for(Player p : Bukkit.getOnlinePlayers()){
+            if(p.isOp()){
+                p.sendMessage(ChatColor.YELLOW+"[DEBUG] "+ LocalDateTime.now().format(DateTimeFormatter.ISO_TIME)+" : "+msg);
+            }
+        }
+    }
+    
+    public static void logAdmin(String msg){
+        logAdmin(Component.text(ChatColor.YELLOW+msg));
     }
 }
