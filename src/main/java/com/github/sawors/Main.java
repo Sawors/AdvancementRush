@@ -41,7 +41,6 @@ public final class Main extends JavaPlugin {
     @Override
     public void onDisable() {
         // Plugin shutdown logic
-        DataBase.closeDBConnection();
     }
     
     public static File getDbFile(){
@@ -52,7 +51,7 @@ public final class Main extends JavaPlugin {
         Bukkit.getLogger().log(Level.INFO, "[AdvancementRush] "+msg.content().replaceAll("§e", ""));
         for(Player p : Bukkit.getOnlinePlayers()){
             if(p.isOp()){
-                p.sendMessage(ChatColor.YELLOW+"[DEBUG] "+ LocalDateTime.now().format(DateTimeFormatter.ISO_TIME)+" : "+msg);
+                p.sendMessage(ChatColor.YELLOW+"[DEBUG] "+ LocalDateTime.now().format(DateTimeFormatter.ISO_TIME)+" : "+msg.content().replaceAll("§e", ""));
             }
         }
     }

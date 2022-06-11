@@ -5,20 +5,30 @@ import java.sql.*;
 
 public class DataBase {
     
-    private static Connection co = null;
+    
     
     public static void connectInit(){
         try{
-            String target = "jdbc:sqlite:"+Main.getDbFile().getCanonicalFile();
-            co = DriverManager.getConnection(target);
-            Main.logAdmin("[AdvancementRush] Connection to database established : "+target);
+            Connection co = connect();
             
             // create advancement table if it does not exist yet
             co.createStatement().execute(initTableQuery());
             co.createStatement().execute("DELETE FROM advancements;");
             co.createStatement().execute(initDBAdvancements());
             co.close();
-            
+        } catch (
+                SQLException e) {
+            throw new RuntimeException(e);
+        }
+    }
+    
+    public static Connection connect(){
+        Connection co;
+        try{
+            String target = "jdbc:sqlite:"+Main.getDbFile().getCanonicalFile();
+            co = DriverManager.getConnection(target);
+            //Main.logAdmin("[AdvancementRush] Connection to database established : "+target);
+            return co;
         } catch (
                 IOException |
                 SQLException e) {
@@ -33,20 +43,24 @@ public class DataBase {
                 + ");";
     }
     
-    public static int getAdvancementValue(String advancement) throws IllegalArgumentException{
-        try(Statement statement = getDBConnection().createStatement()){
-            ResultSet rset = statement.executeQuery("SELECT * FROM advancements WHERE name='"+advancement+"';");
-            if(!rset.wasNull()){
+    public static int getAdvancementValue(String advancement){
+        try(Connection co = connect()){
+            try(Statement statement = co.createStatement()){
+                ResultSet rset = statement.executeQuery("SELECT * FROM advancements WHERE name='"+advancement+"';");
                 return rset.getInt("value");
-            } else {
-                throw new IllegalArgumentException(advancement+" not found in Database");
             }
         } catch (SQLException e) {
+            e.printStackTrace();
             return 0;
         }
     }
     
     public static String initDBAdvancements(){
+        // EDIT THIS TO ADD/MODIFY ADVANCEMENTS
+        // TODO
+        //  - Add a config file for this
+        //  - Add a check for adv validity
+        //  - Find a better way to edit adv (maybe set default values here and then allow for overwrite in config ? define them all in the config ?
         return  "INSERT INTO advancements(name,value) VALUES" +
                 "('story/root',1)," +
                 "('story/mine_stone',1)," +
@@ -54,7 +68,7 @@ public class DataBase {
                 "('story/smelt_iron',1)," +
                 "('story/obtain_armor',1)," +
                 "('story/deflect_arrow',1)," +
-                "('story/lava_bucket',1)," +
+                "('story/lava_bucket',10)," +
                 "('story/form_obsidian',1)," +
                 "('story/enter_the_nether',1)," +
                 "('story/cure_zombie_villager',1)," +
@@ -150,20 +164,5 @@ public class DataBase {
                 "('end/respawn_dragon',1)," +
                 "('end/dragon_breath',1)" +
                 ";";
-    }
-    
-    public static Connection getDBConnection(){
-        return co;
-    }
-    public static void closeDBConnection(){
-        try{
-            if(co != null){
-                co.close();
-                Main.logAdmin("Connection to database closed");
-            }
-        } catch (
-                SQLException e) {
-            throw new RuntimeException(e);
-        }
     }
 }
