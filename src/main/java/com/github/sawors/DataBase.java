@@ -1,7 +1,14 @@
 package com.github.sawors;
 
+import com.github.sawors.teams.ArTeam;
+import org.bukkit.Bukkit;
+import org.bukkit.entity.Player;
+
 import java.io.IOException;
+import java.lang.reflect.MalformedParametersException;
 import java.sql.*;
+import java.util.ArrayList;
+import java.util.UUID;
 
 public class DataBase {
     
@@ -79,7 +86,61 @@ public class DataBase {
                       ||
                       ||
     */
+    public static void registerTeam(ArTeam team){
+        try(Connection co = connect()){
+            co.createStatement().execute("INSERT INTO teams(name,color,points,players) VALUES('"+team.getName()+"','"+team.getColorHex()+"',"+team.getPoints()+","+teamMembersSerialize(team)+")");
+        } catch (SQLException e){
+            e.printStackTrace();
+        }
+        
+    }
     
+    public static String teamMembersSerialize(ArTeam tm){
+        StringBuilder msg = new StringBuilder();
+        msg.append("[");
+        ArrayList<Player> members = tm.getMembers();
+        
+        if(members.size()>=1){
+            for(int i = 0; i<members.size(); i++){
+                msg.append(members.get(i).getUniqueId());
+                if(i!=members.size()-1){
+                   msg.append(",");
+                }
+            }
+        }
+        msg.append("]");
+        return msg.toString();
+    }
+    
+    public static ArrayList<Player> teamMembersDeserialize(String str) throws MalformedParametersException {
+        char[] content = str.toCharArray();
+        ArrayList<Player> list = new ArrayList<>();
+        if(content[0] == '[' && content[content.length-1] == ']'){
+            ArrayList<String> ids = new ArrayList<>();
+            StringBuilder uuid = new StringBuilder();
+            for(int i = 1; i<content.length; i++){
+                char evalchar = content[i];
+                if(evalchar == ',' || evalchar == ']'){
+                    ids.add(uuid.toString());
+                    uuid = new StringBuilder();
+                } else {
+                    uuid.append(content[i]);
+                }
+                
+            }
+            Main.logAdmin("ids -> "+ids);
+            for(String conv : ids){
+                //Main.logAdmin("player -> "+conv);
+                list.add(Bukkit.getPlayer(UUID.fromString(conv)));
+            }
+            //Main.logAdmin(list.toString());
+        } else{
+            throw new MalformedParametersException("Can't recognize input as player list (missing \"[\" \"]\")");
+        }
+        
+        
+        return list;
+    }
     
     
     

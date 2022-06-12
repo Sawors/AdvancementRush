@@ -10,6 +10,7 @@ public class ArTeam {
     private ArrayList<Player> members = new ArrayList<>();
     private String name = "no_name";
     private Color color;
+    private int points;
     
     
     public void addMember(Player p){
@@ -43,9 +44,15 @@ public class ArTeam {
         this.color = color;
     }
     
-    ArTeam(String name, Color color){
+    public int getPoints() {
+        return points;
+    }
+    
+    public ArTeam(String name, Color color, int points, ArrayList<Player> players){
         this.name = name;
-        this.color=color;
+        this.color = color;
+        this.points = points;
+        this.members = players;
     }
     
     
