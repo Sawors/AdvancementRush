@@ -11,8 +11,13 @@ public class DataBase {
         try{
             Connection co = connect();
             
-            // create advancement table if it does not exist yet
-            co.createStatement().execute(initTableQuery());
+            //create advancement table if it does not exist yet
+            
+            //  Init teams
+            co.createStatement().execute(initTeamsTableQuery());
+            
+            //  Init advancements
+            co.createStatement().execute(initAdvancementsTableQuery());
             co.createStatement().execute("DELETE FROM advancements;");
             co.createStatement().execute(initDBAdvancements());
             co.close();
@@ -36,13 +41,55 @@ public class DataBase {
         }
     }
     
-    public static String initTableQuery(){
+    private static String initAdvancementsTableQuery(){
         return "CREATE TABLE IF NOT EXISTS advancements (\n"
                 + "	name text UNIQUE,\n"
                 + "	value int NOT NULL\n"
                 + ");";
     }
+    private static String initTeamsTableQuery(){
+        return "CREATE TABLE IF NOT EXISTS teams (\n"
+                + "	name text UNIQUE,\n"
+                + "	color text NOT NULL,\n"
+                + "	points int NOT NULL,\n"
+                + "	players text NOT NULL\n"
+                + ");";
+    }
     
+    // TODO
+    //  players in team are registered in the database, however the link player-team
+    //  will have it's own hashmap as HashMap<Player player, String teamname>
+    //  -> add player to database and sync hashmap in THE SAME METHOD !
+    //  -> init hashmap based on database between each server reset (database persists, hashmap not)
+    
+    /*
+    TEAMS
+        |name|color|points|players|
+        
+    ADVANCEMENTS
+        |name|value|
+        
+     */
+    
+    
+    /*
+            |=====================|
+            |   TEAMS DATABASE    |
+            |=====================|
+                      ||
+                      ||
+    */
+    
+    
+    
+    
+    /*
+            |=====================|
+            |ADVANCEMENTS DATABASE|
+            |=====================|
+                      ||
+                      ||
+    */
     public static int getAdvancementValue(String advancement){
         try(Connection co = connect()){
             try(Statement statement = co.createStatement()){
@@ -165,4 +212,6 @@ public class DataBase {
                 "('end/dragon_breath',1)" +
                 ";";
     }
+    
+    
 }

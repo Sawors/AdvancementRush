@@ -1,5 +1,6 @@
-package com.github.sawors;
+package com.github.sawors.advancements;
 
+import com.github.sawors.DataBase;
 import net.kyori.adventure.text.Component;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;

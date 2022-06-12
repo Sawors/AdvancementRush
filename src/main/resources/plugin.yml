@@ -3,3 +3,13 @@ version: '${project.version}'
 main: com.github.sawors.Main
 api-version: 1.18
 authors: [ Sawors ]
+commands:
+  arteam:
+    usage: /<command> <action> <parameters>
+    aliases: [advancementrushteam, artm]
+  arpoint:
+    usage: /<command> <action> <parameters>
+    aliases: [advancementrushpoint, arpt]
+  artest:
+    usage: /<command>
+    aliases: [advancementrushtest, arts]

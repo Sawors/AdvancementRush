@@ -1,5 +1,9 @@
 package com.github.sawors;
 
+import com.github.sawors.advancements.AdvancementListeners;
+import com.github.sawors.commands.ArPointCommand;
+import com.github.sawors.commands.ArTeamCommand;
+import com.github.sawors.commands.ArTestCommand;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.TextComponent;
 import org.bukkit.Bukkit;
@@ -34,6 +38,10 @@ public final class Main extends JavaPlugin {
         }
         getServer().getPluginManager().registerEvents(new SmallListeners(), this);
         getServer().getPluginManager().registerEvents(new AdvancementListeners(), this);
+    
+        getServer().getPluginCommand("arteam").setExecutor(new ArTeamCommand());
+        getServer().getPluginCommand("arpoint").setExecutor(new ArPointCommand());
+        getServer().getPluginCommand("artest").setExecutor(new ArTestCommand());
     
         DataBase.connectInit();
     }

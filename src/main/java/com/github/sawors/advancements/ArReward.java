@@ -1,8 +1,5 @@
-package com.github.sawors.rewards;
+package com.github.sawors.advancements;
 
-import org.bukkit.Bukkit;
-import org.bukkit.entity.Item;
-import org.bukkit.inventory.ItemStack;
 import org.bukkit.scheduler.BukkitRunnable;
 
 public class ArReward {

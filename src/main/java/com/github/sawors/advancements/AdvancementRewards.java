@@ -1,12 +1,5 @@
-package com.github.sawors.rewards;
+package com.github.sawors.advancements;
 
-import org.bukkit.Bukkit;
-import org.bukkit.NamespacedKey;
-import org.bukkit.advancement.Advancement;
-import org.checkerframework.checker.units.qual.A;
-
-import java.util.AbstractMap;
-import java.util.HashMap;
 import java.util.Map;
 
 public class AdvancementRewards {
