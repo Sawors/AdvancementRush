@@ -1,66 +1,138 @@
 package com.github.sawors.teams;
 
-import com.github.sawors.DataBase;
+import com.github.sawors.ArDataBase;
 import org.bukkit.Color;
 
+import java.lang.reflect.MalformedParametersException;
 import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Objects;
 import java.util.UUID;
 
 public class ArTeamManager {
     
-    private static ArrayList<ArTeam> arteams = new ArrayList<>();
-    private static HashMap<UUID, ArTeam> playerteamlink = new HashMap<>();
     
+    // |====================================[GIT GUD]=====================================|
+    // |                     Reminder for the newbie I'm in SQL :                         |
+    // | -> Set  : INSERT into [table]([column]) VALUES([value])                          |
+    // | -> Get  : SELECT [column] FROM [table] // WHERE [condition]=[something]          |
+    // | -> Edit : UPDATE [table] SET [column] = [value] // WHERE [condition]=[something] |
+    // | -> Del  : DELETE FROM [table] WHERE [condition]=[something]                      |
+    // |==================================================================================|
     
-    // TODO
-    //  -> separate the "load team" from the actual team creation : creating a team is a DB operation, loading one is an ArrayList/HashMap operation
-    //  -> do we really need to use ArrayLists/Hashmaps ? I think using only the database might be even more efficient than trying to always sync DB with Java Collections
-    //      > if we use only DB we should IMPERATIVELY handle ALL the team operations with methods (getters and setters)
+    public static ArTeam createTeam(String name, Color color){
+        ArTeam tm = new ArTeam(name, color);
+        ArDataBase.registerTeam(tm);
+        return tm;
+    }
     
-    @Deprecated
-    public static ArTeam createTeam(String name, Color color) throws IllegalArgumentException{
-        ArTeam team = new ArTeam(name, color);
-        IllegalArgumentException exc = new IllegalArgumentException("team already exists");
+    public static void removeTeam(String name){
+        ArDataBase.deleteTeam(name);
+    }
+    
+    public static void setTeamColor(String teamname, String colorhex){
         try{
-            registerTeam(team);
-        } catch(SQLException e){
-            throw exc;
-        }
-        if(!arteams.contains(team)){
-            arteams.add(team);
-        } else{
-            throw exc;
-        }
-        return team;
-    }
-    
-    @Deprecated
-    public static void removeTeam(String name) throws IllegalArgumentException{
-        boolean found = false;
-        for(ArTeam t : arteams){
-            if(Objects.equals(t.getName(), name)){
-                arteams.remove(t);
-                found = true;
+            if(ArDataBase.doesTeamExist(teamname)){
+                setTeamData(ArTeamData.NAME, teamname, colorhex);
             }
-        }
-        if(!found){
-            throw new IllegalArgumentException("Team not found");
+        }catch (SQLException e){
+            e.printStackTrace();
         }
     }
     
-    @Deprecated
-    public static ArrayList<ArTeam> getTeams(){
-        return arteams;
+    public static void setTeamPoints(String teamname, int points){
+        try{
+            if(ArDataBase.doesTeamExist(teamname)){
+                setTeamData(ArTeamData.POINTS, teamname, String.valueOf(points));
+            }
+        }catch (SQLException e){
+            e.printStackTrace();
+        }
     }
     
-    @Deprecated
-    private static void registerTeam(ArTeam team) throws SQLException{
-        try(Connection co = DataBase.connect()){
-            co.createStatement().execute("INSERT INTO teams(name,color,points,players) VALUES('"+team.getName()+"','"+team.getColorHex()+"',"+team.getPoints()+",'"+DataBase.teamMembersSerialize(team)+"')");
+    public static void setTeamPlayers(String teamname, String players){
+        try{
+            if(ArDataBase.doesTeamExist(teamname)){
+                setTeamData(ArTeamData.PLAYERS, teamname, players);
+            }
+        }catch (SQLException e){
+            e.printStackTrace();
         }
+    }
+    
+    public static void setTeamPlayers(String teamname, ArrayList<UUID> players){
+        try{
+            if(ArDataBase.doesTeamExist(teamname)){
+                setTeamData(ArTeamData.PLAYERS, teamname, ArDataBase.teamMembersSerialize(players));
+            }
+        }catch (SQLException e){
+            e.printStackTrace();
+        }
+    }
+    
+    public static String getTeamColor(String teamname) throws SQLException{
+        try(Connection co = ArDataBase.connect()){
+            String target = ArTeamData.COLOR.toString();
+            String query = "SELECT '"+target+"' FROM teams WHERE 'name'='"+teamname+"'";
+            PreparedStatement statement = co.prepareStatement(query);
+            ResultSet rs = statement.executeQuery();
+            return rs.getString(target);
+        }
+    }
+    public static int getTeamPoints(String teamname) throws SQLException{
+        try(Connection co = ArDataBase.connect()){
+            String target = ArTeamData.POINTS.toString();
+            String query = "SELECT '"+target+"' FROM teams WHERE 'name'='"+teamname+"'";
+            PreparedStatement statement = co.prepareStatement(query);
+            ResultSet rs = statement.executeQuery();
+            return rs.getInt(target);
+        }
+    }
+    public static String getTeamPlayers(String teamname) throws SQLException{
+        try(Connection co = ArDataBase.connect()){
+            String target = ArTeamData.PLAYERS.toString();
+            String query = "SELECT '"+target+"' FROM teams WHERE 'name'='"+teamname+"'";
+            PreparedStatement statement = co.prepareStatement(query);
+            ResultSet rs = statement.executeQuery();
+            return rs.getString(target);
+        }
+    }
+    
+    public static void addPlayerToTeam(String teamname, UUID playerid) throws SQLException, MalformedParametersException {
+        ArrayList<UUID> output = ArDataBase.teamMembersDeserialize(getTeamPlayers(teamname));
+        output.add(playerid);
+        setTeamPlayers(teamname, ArDataBase.teamMembersSerialize(output));
+        ArDataBase.setPlayerTeamLink(playerid, teamname);
+    }
+    public static void removePlayerFromTeam(String teamname, UUID playerid) throws SQLException, MalformedParametersException {
+        ArrayList<UUID> output = ArDataBase.teamMembersDeserialize(getTeamPlayers(teamname));
+        output.remove(playerid);
+        setTeamPlayers(teamname, ArDataBase.teamMembersSerialize(output));
+        ArDataBase.setPlayerTeamLink(playerid, "");
+    }
+    public static void addPointsToTeam(String teamname, int points) throws SQLException, MalformedParametersException {
+        setTeamPoints(teamname, getTeamPoints(teamname)+points);
+    }
+    
+    private static void setTeamData(ArTeamData datatype, String teamname, String data){
+        try(Connection co = ArDataBase.connect()){
+            //yes this "if" is ridiculous but used to avoid database errors
+            String query;
+            if(datatype == ArTeamData.POINTS){
+                query = "UPDATE teams SET '"+datatype+"',"+data+" WHERE 'name'='"+teamname+"'";
+            } else {
+                query = "UPDATE teams SET '"+datatype+"','"+data+"' WHERE 'name'='"+teamname+"'";
+            }
+            PreparedStatement statement = co.prepareStatement(query);
+            statement.executeQuery();
+        }catch (SQLException e){
+            e.printStackTrace();
+        }
+    }
+    
+    public static void syncTeamAdvancements(String teamname){
+    
     }
 }

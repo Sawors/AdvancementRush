@@ -1,6 +1,6 @@
 package com.github.sawors.advancements;
 
-import com.github.sawors.DataBase;
+import com.github.sawors.ArDataBase;
 import net.kyori.adventure.text.Component;
 import org.bukkit.Bukkit;
 import org.bukkit.NamespacedKey;
@@ -24,8 +24,14 @@ public class AdvancementListeners implements Listener {
         
         Player p = event.getPlayer();
         final String key = event.getAdvancement().getKey().getKey();
+        
         if(p.getAdvancementProgress(event.getAdvancement()).isDone()){
-            p.sendMessage(Component.text("Value : "+DataBase.getAdvancementValue(key)));
+            int value = ArDataBase.getAdvancementValue(key);
+            if(value != 0){
+                // and do the other stuff related to point attribution here !
+                p.sendMessage(Component.text("Value : "+value));
+            }
+            
         }
         //DataBase.getAdvancementValue(event.getAdvancement().toString());
     }

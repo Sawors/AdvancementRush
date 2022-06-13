@@ -46,7 +46,7 @@ public final class Main extends JavaPlugin {
         getServer().getPluginCommand("arpoint").setExecutor(new ArPointCommand());
         getServer().getPluginCommand("artest").setExecutor(new ArTestCommand());
     
-        DataBase.connectInit();
+        ArDataBase.connectInit();
     }
     
     @Override

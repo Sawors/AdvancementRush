@@ -12,6 +12,17 @@ public class ArTeam {
     private Color color;
     private int points;
     
+    // For code cleanliness all database queries concerning team data modification
+    // (NAME FORBIDDEN UNTIL TEAM ID SYSTEM ADDED) will be handled in ArTeamManager, methods here will only use the ones present in ArTeamManager
+    
+    // |====================================[GIT GUD]=====================================|
+    // |                     Reminder for the newbie I'm in SQL :                         |
+    // | -> Set  : INSERT into [table]([column]) VALUES([value])                          |
+    // | -> Get  : SELECT [column] FROM [table] // WHERE [condition]=[something]          |
+    // | -> Edit : UPDATE [table] SET [column] = [value] // WHERE [condition]=[something] |
+    // | -> Del  : DELETE FROM [table] WHERE [condition]=[something]                      |
+    // |==================================================================================|
+    
     
     public void addMember(UUID p){
         members.add(p);

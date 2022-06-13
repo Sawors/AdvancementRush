@@ -1,6 +1,7 @@
 package com.github.sawors;
 
 import com.github.sawors.teams.ArTeam;
+import com.github.sawors.teams.ArTeamData;
 
 import javax.management.openmbean.KeyAlreadyExistsException;
 import java.io.IOException;
@@ -10,23 +11,43 @@ import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.UUID;
 
-public class DataBase {
+public class ArDataBase {
     
     // |====================================[GIT GUD]=====================================|
     // |                     Reminder for the newbie I'm in SQL :                         |
     // | -> Set  : INSERT into [table]([column]) VALUES([value])                          |
     // | -> Get  : SELECT [column] FROM [table] // WHERE [condition]=[something]          |
     // | -> Edit : UPDATE [table] SET [column] = [value] // WHERE [condition]=[something] |
+    // | -> Del  : DELETE FROM [table] WHERE [condition]=[something]                      |
     // |==================================================================================|
     
+    
+    // This hashmap is used for convenience to avoid spamming the Database with queries
+    // TODO :
+    //  go for a 100% sql way to check for player's teams
+    private static HashMap<UUID, String> playerteams = new HashMap<>();
+    public static void setPlayerTeamLink(UUID playerid, String teamname){
+        playerteams.put(playerid, teamname);
+    }
+    public static String getPlayerTeam(UUID playerid) throws MalformedParametersException, NullPointerException{
+        if(playerteams.containsKey(playerid)){
+            String teamname = playerteams.get(playerid);
+            if(teamname.length() > 1){
+                return teamname;
+            } else {
+                throw new NullPointerException("Player has no team");
+            }
+        } else {
+            throw new MalformedParametersException("Player not found (severe error)");
+        }
+    }
+    
+    
     public static void connectInit(){
-        try{
-            Connection co = connect();
-            
-            //create advancement table if it does not exist yet
-            
+        try(Connection co = connect()){
             //  Init teams
             co.createStatement().execute(initTeamsTableQuery());
             
@@ -34,7 +55,6 @@ public class DataBase {
             co.createStatement().execute(initAdvancementsTableQuery());
             co.createStatement().execute("DELETE FROM advancements;");
             co.createStatement().execute(initDBAdvancements());
-            co.close();
         } catch (
                 SQLException e) {
             throw new RuntimeException(e);
@@ -55,48 +75,37 @@ public class DataBase {
         }
     }
     
+    public static boolean doesTeamExist(String teamname) throws SQLException {
+        try(Connection co = connect()){
+            PreparedStatement smtcheck = co.prepareStatement("SELECT COUNT(*) from teams WHERE "+ArTeamData.NAME+" = '"+teamname+"';");
+            return smtcheck.executeQuery().getInt(1) != 0;
+        }
+    }
+    // TEAMS
+    //    |name|color|points|players|
+    // ADVANCEMENTS
+    //    |name|value|
     
     
-    // TODO
-    //  players in team are registered in the database, however the link player-team
-    //  will have it's own hashmap as HashMap<Player player, String teamname>
-    //  -> add player to database and sync hashmap in THE SAME METHOD !
-    //  -> init hashmap based on database between each server reset (database persists, hashmap not)
+    //        |=====================|
+    //        |   TEAMS DATABASE    |
+    //        |=====================|
+    //                  ||
+    //                  ||
     
-    /*
-    TEAMS
-        |name|color|points|players|
-        
-    ADVANCEMENTS
-        |name|value|
-        
-     */
-    
-    
-    /*
-            |=====================|
-            |   TEAMS DATABASE    |
-            |=====================|
-                      ||
-                      ||
-    */
     private static String initTeamsTableQuery(){
         return "CREATE TABLE IF NOT EXISTS teams (\n"
-                + "	name text UNIQUE,\n"
-                + "	color text NOT NULL,\n"
-                + "	points int NOT NULL,\n"
-                + "	players text NOT NULL\n"
+                + "	"+ArTeamData.NAME+" text UNIQUE,\n"
+                + "	"+ArTeamData.COLOR+" text NOT NULL,\n"
+                + "	"+ArTeamData.POINTS+" int NOT NULL,\n"
+                + "	"+ArTeamData.PLAYERS+" text NOT NULL\n"
                 + ");";
     }
     
     public static void registerTeam(ArTeam team) throws KeyAlreadyExistsException{
-        try(Connection co =connect()){
-            PreparedStatement smtcheck = co.prepareStatement("SELECT COUNT(*) from teams WHERE name = '"+team.getName()+"';");
-            int result = smtcheck.executeQuery().getInt(1);
-            // IGNORE
-            String query = "INSERT INTO teams(name,color,points,players) VALUES('"+team.getName()+"','"+team.getColorHex()+"',"+team.getPoints()+",'"+teamMembersSerialize(team)+"')";
-            if(result == 0){
-                Main.logAdmin(query);
+        try(Connection co = connect()){
+            String query = "INSERT INTO teams("+ArTeamData.NAME+","+ArTeamData.COLOR+","+ArTeamData.POINTS+","+ArTeamData.PLAYERS+") VALUES('"+team.getName()+"','"+team.getColorHex()+"',"+team.getPoints()+",'"+teamMembersSerialize(team)+"')";
+            if(doesTeamExist(team.getName())){
                 co.createStatement().execute(query);
             } else{
                 throw new KeyAlreadyExistsException("this team is already registered");
@@ -107,10 +116,23 @@ public class DataBase {
         }
     }
     
-    public static String teamMembersSerialize(ArTeam tm){
+    public static void deleteTeam(String teamname) throws NullPointerException {
+        try(Connection co = connect()){
+            String query = "DELETE FROM teams WHERE '"+ArTeamData.NAME+"'='"+teamname+"'";
+            if(!doesTeamExist(teamname)){
+                co.createStatement().execute(query);
+            } else{
+                throw new NullPointerException("sorry, there is no team with name "+teamname);
+            }
+        
+        } catch(SQLException e){
+            e.printStackTrace();
+        }
+    }
+    
+    public static String teamMembersSerialize(ArrayList<UUID> members){
         StringBuilder msg = new StringBuilder();
         msg.append("[");
-        ArrayList<UUID> members = tm.getMembers();
         
         if(members.size()>=1){
             for(int i = 0; i<members.size(); i++){
@@ -122,6 +144,10 @@ public class DataBase {
         }
         msg.append("]");
         return msg.toString();
+    }
+    
+    public static String teamMembersSerialize(ArTeam team){
+        return teamMembersSerialize(team.getMembers());
     }
     
     public static ArrayList<UUID> teamMembersDeserialize(String str) throws MalformedParametersException {
@@ -138,22 +164,16 @@ public class DataBase {
                 } else {
                     uuid.append(content[i]);
                 }
-                
             }
             Main.logAdmin("ids -> "+ids);
             for(String conv : ids){
-                //Main.logAdmin("player -> "+conv);
                 list.add(UUID.fromString(conv));
             }
-            //Main.logAdmin(list.toString());
         } else{
             throw new MalformedParametersException("Can't recognize input as player list (missing \"[\" \"]\")");
         }
-        
-        
         return list;
     }
-    
     
     
     /*

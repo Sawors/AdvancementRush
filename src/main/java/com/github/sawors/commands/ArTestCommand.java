@@ -1,6 +1,6 @@
 package com.github.sawors.commands;
 
-import com.github.sawors.DataBase;
+import com.github.sawors.ArDataBase;
 import com.github.sawors.teams.ArTeam;
 import org.bukkit.ChatColor;
 import org.bukkit.Color;
@@ -27,7 +27,7 @@ public class ArTestCommand implements CommandExecutor {
             //String test = DataBase.teamMembersSerialize(team);
             
             try{
-                DataBase.registerTeam(team);
+                ArDataBase.registerTeam(team);
             } catch(KeyAlreadyExistsException e){
                 sender.sendMessage(ChatColor.RED+"sorry, a team already exists with this name ("+team.getName()+")");
                 return true;
