@@ -16,8 +16,9 @@ public class AdvancementListeners implements Listener {
         }
         
         Player p = event.getPlayer();
-        if(p.getAdvancementProgress(event.getAdvancement()).getRemainingCriteria().size()<1){
-            p.sendMessage(Component.text(DataBase.getAdvancementValue(event.getAdvancement().getKey().getKey())));
+        final String key = event.getAdvancement().getKey().getKey();
+        if(p.getAdvancementProgress(event.getAdvancement()).isDone()){
+            p.sendMessage(Component.text("Value : "+DataBase.getAdvancementValue(key)));
         }
         //DataBase.getAdvancementValue(event.getAdvancement().toString());
     }

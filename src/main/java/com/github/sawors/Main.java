@@ -9,6 +9,7 @@ import net.kyori.adventure.text.TextComponent;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.entity.Player;
+import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.java.JavaPlugin;
 
 import java.io.File;
@@ -21,6 +22,8 @@ public final class Main extends JavaPlugin {
     
     private static Main instance;
     private static File dbfile;
+    
+    
     
     @Override
     public void onEnable() {
@@ -49,6 +52,10 @@ public final class Main extends JavaPlugin {
     @Override
     public void onDisable() {
         // Plugin shutdown logic
+    }
+    
+    public static Plugin getPlugin() {
+        return instance;
     }
     
     public static File getDbFile(){

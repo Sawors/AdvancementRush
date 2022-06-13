@@ -1,22 +1,22 @@
 package com.github.sawors.teams;
 
 import org.bukkit.Color;
-import org.bukkit.entity.Player;
 
 import java.util.ArrayList;
+import java.util.UUID;
 
 public class ArTeam {
     
-    private ArrayList<Player> members = new ArrayList<>();
+    private ArrayList<UUID> members = new ArrayList<>();
     private String name = "no_name";
     private Color color;
     private int points;
     
     
-    public void addMember(Player p){
+    public void addMember(UUID p){
         members.add(p);
     }
-    public ArrayList<Player> getMembers(){
+    public ArrayList<UUID> getMembers(){
         return this.members;
     }
     public void removeAllMembers(){
@@ -48,7 +48,7 @@ public class ArTeam {
         return points;
     }
     
-    public ArTeam(String name, Color color, int points, ArrayList<Player> players){
+    public ArTeam(String name, Color color, int points, ArrayList<UUID> players){
         this.name = name;
         this.color = color;
         this.points = points;
