@@ -13,7 +13,12 @@ import java.util.UUID;
 
 public class DataBase {
     
-    
+    // |====================================[GIT GUD]=====================================|
+    // |                     Reminder for the newbie I'm in SQL :                         |
+    // | -> Set  : INSERT into [table]([column]) VALUES([value])                          |
+    // | -> Get  : SELECT [column] FROM [table] // WHERE [condition]=[something]          |
+    // | -> Edit : UPDATE [table] SET [column] = [value] // WHERE [condition]=[something] |
+    // |==================================================================================|
     
     public static void connectInit(){
         try{
