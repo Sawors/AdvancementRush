@@ -7,7 +7,6 @@ import net.kyori.adventure.text.TextComponent;
 import net.kyori.adventure.text.format.TextColor;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
-import org.bukkit.Color;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
@@ -26,10 +25,10 @@ public class ArTeamCommand implements CommandExecutor {
                 sender.sendMessage("y1");
                 switch(action){
                     case "create":
-                        ArTeamManager.createTeam(args[1], Color.fromRGB((int)(Math.random()*255), (int)(Math.random()*255), (int)(Math.random()*255)));
+                        //ArTeamManager.createTeam(args[1], Color.fromRGB((int)(Math.random()*255), (int)(Math.random()*255), (int)(Math.random()*255)));
                         return true;
                     case "remove":
-                        ArTeamManager.removeTeam(args[1]);
+                        //ArTeamManager.removeTeam(args[1]);
                         return true;
                     case "set":
                         break;

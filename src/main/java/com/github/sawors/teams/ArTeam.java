@@ -17,20 +17,18 @@ public class ArTeam {
         members.add(p);
     }
     public ArrayList<UUID> getMembers(){
-        return this.members;
+        return new ArrayList<>(this.members);
     }
     public void removeAllMembers(){
         members = new ArrayList<>();
     }
     
-    
+    // TODO :
+    //  add a team ID column to DB to allow the safe modification of team name
+    //  (touching to a team name is for the moment dangerous as it is it's unique identifier)
     public String getName() {
         return name;
     }
-    public void setName(String name) {
-        this.name = name;
-    }
-    
     
     public Color getColor() {
         return color;
@@ -40,6 +38,7 @@ public class ArTeam {
         hex=hex.toUpperCase();
         return hex;
     }
+    
     public void setColor(Color color) {
         this.color = color;
     }
@@ -47,12 +46,18 @@ public class ArTeam {
     public int getPoints() {
         return points;
     }
+    public void addPoints(int pts) {
+        this.points += pts;
+    }
+    public void setPoints(int pts) {
+        this.points = pts;
+    }
     
-    public ArTeam(String name, Color color, int points, ArrayList<UUID> players){
+    public ArTeam(String name, Color color){
         this.name = name;
         this.color = color;
-        this.points = points;
-        this.members = players;
+        this.points = 0;
+        this.members = new ArrayList<>();
     }
     
     

@@ -2,6 +2,7 @@ package com.github.sawors;
 
 import com.github.sawors.teams.ArTeam;
 
+import javax.management.openmbean.KeyAlreadyExistsException;
 import java.io.IOException;
 import java.lang.reflect.MalformedParametersException;
 import java.sql.Connection;
@@ -54,20 +55,7 @@ public class DataBase {
         }
     }
     
-    private static String initAdvancementsTableQuery(){
-        return "CREATE TABLE IF NOT EXISTS advancements (\n"
-                + "	name text UNIQUE,\n"
-                + "	value int NOT NULL\n"
-                + ");";
-    }
-    private static String initTeamsTableQuery(){
-        return "CREATE TABLE IF NOT EXISTS teams (\n"
-                + "	name text UNIQUE,\n"
-                + "	color text NOT NULL,\n"
-                + "	points int NOT NULL,\n"
-                + "	players text NOT NULL\n"
-                + ");";
-    }
+    
     
     // TODO
     //  players in team are registered in the database, however the link player-team
@@ -92,6 +80,32 @@ public class DataBase {
                       ||
                       ||
     */
+    private static String initTeamsTableQuery(){
+        return "CREATE TABLE IF NOT EXISTS teams (\n"
+                + "	name text UNIQUE,\n"
+                + "	color text NOT NULL,\n"
+                + "	points int NOT NULL,\n"
+                + "	players text NOT NULL\n"
+                + ");";
+    }
+    
+    public static void registerTeam(ArTeam team) throws KeyAlreadyExistsException{
+        try(Connection co =connect()){
+            PreparedStatement smtcheck = co.prepareStatement("SELECT COUNT(*) from teams WHERE name = '"+team.getName()+"';");
+            int result = smtcheck.executeQuery().getInt(1);
+            // IGNORE
+            String query = "INSERT INTO teams(name,color,points,players) VALUES('"+team.getName()+"','"+team.getColorHex()+"',"+team.getPoints()+",'"+teamMembersSerialize(team)+"')";
+            if(result == 0){
+                Main.logAdmin(query);
+                co.createStatement().execute(query);
+            } else{
+                throw new KeyAlreadyExistsException("this team is already registered");
+            }
+            
+        } catch(SQLException e){
+            e.printStackTrace();
+        }
+    }
     
     public static String teamMembersSerialize(ArTeam tm){
         StringBuilder msg = new StringBuilder();
@@ -149,6 +163,13 @@ public class DataBase {
                       ||
                       ||
     */
+    private static String initAdvancementsTableQuery(){
+        return "CREATE TABLE IF NOT EXISTS advancements (\n"
+                + "	name text UNIQUE,\n"
+                + "	value int NOT NULL\n"
+                + ");";
+    }
+    
     public static int getAdvancementValue(String advancement){
         try(Connection co = connect()){
             PreparedStatement statement = co.prepareStatement("SELECT * FROM advancements WHERE name=?;");
@@ -166,7 +187,7 @@ public class DataBase {
         // TODO
         //  - Add a config file for this
         //  - Add a check for adv validity
-        //  - Find a better way to edit adv (maybe set default values here and then allow for overwrite in config ? define them all in the config ?
+        //  - Find a better way to edit adv (maybe set default values here and then allow for overwrite in config ? define them all directly in the config ?
         return  "INSERT INTO advancements(name,value) VALUES" +
                 "('story/mine_stone',5)," +
                 "('story/upgrade_tools',5)," +

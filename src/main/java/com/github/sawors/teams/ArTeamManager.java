@@ -23,7 +23,7 @@ public class ArTeamManager {
     
     @Deprecated
     public static ArTeam createTeam(String name, Color color) throws IllegalArgumentException{
-        ArTeam team = new ArTeam(name, color,0,new ArrayList<>());
+        ArTeam team = new ArTeam(name, color);
         IllegalArgumentException exc = new IllegalArgumentException("team already exists");
         try{
             registerTeam(team);
