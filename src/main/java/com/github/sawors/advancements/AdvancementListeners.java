@@ -1,6 +1,9 @@
 package com.github.sawors.advancements;
 
+import com.destroystokyo.paper.event.player.PlayerAdvancementCriterionGrantEvent;
 import com.github.sawors.ArDataBase;
+import com.github.sawors.Main;
+import com.github.sawors.teams.ArTeamManager;
 import net.kyori.adventure.text.Component;
 import org.bukkit.Bukkit;
 import org.bukkit.NamespacedKey;
@@ -11,6 +14,7 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerAdvancementDoneEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
 
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Objects;
 
@@ -34,6 +38,18 @@ public class AdvancementListeners implements Listener {
             
         }
         //DataBase.getAdvancementValue(event.getAdvancement().toString());
+    }
+    
+    @EventHandler
+    public static void playerSyncCriterias(PlayerAdvancementCriterionGrantEvent event){
+        Main.logAdmin("you're fired!");
+        Player p = event.getPlayer();
+        try{
+            String team = ArTeamManager.getPlayerTeam(p.getUniqueId());
+            ArTeamManager.syncTeamAdvancement(team, event.getAdvancement(), p);
+        } catch(SQLException | NullPointerException e){
+            e.printStackTrace();
+        }
     }
     
     @EventHandler

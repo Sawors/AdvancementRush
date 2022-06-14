@@ -11,7 +11,6 @@ import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.UUID;
 
 public class ArDataBase {
@@ -28,7 +27,7 @@ public class ArDataBase {
     // This hashmap is used for convenience to avoid spamming the Database with queries
     // TODO :
     //  go for a 100% sql way to check for player's teams
-    private static HashMap<UUID, String> playerteams = new HashMap<>();
+    /*private static HashMap<UUID, String> playerteams = new HashMap<>();
     public static void setPlayerTeamLink(UUID playerid, String teamname){
         playerteams.put(playerid, teamname);
     }
@@ -46,7 +45,7 @@ public class ArDataBase {
     }
     public static void printPlayerTeamLink(){
         Main.logAdmin(playerteams.toString());
-    }
+    }*/
     
     
     public static void connectInit(){
