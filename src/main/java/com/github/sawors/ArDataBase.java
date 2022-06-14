@@ -44,6 +44,9 @@ public class ArDataBase {
             throw new MalformedParametersException("Player not found (severe error)");
         }
     }
+    public static void printPlayerTeamLink(){
+        Main.logAdmin(playerteams.toString());
+    }
     
     
     public static void connectInit(){
@@ -105,7 +108,7 @@ public class ArDataBase {
     public static void registerTeam(ArTeam team) throws KeyAlreadyExistsException{
         try(Connection co = connect()){
             String query = "INSERT INTO teams("+ArTeamData.NAME+","+ArTeamData.COLOR+","+ArTeamData.POINTS+","+ArTeamData.PLAYERS+") VALUES('"+team.getName()+"','"+team.getColorHex()+"',"+team.getPoints()+",'"+teamMembersSerialize(team)+"')";
-            if(doesTeamExist(team.getName())){
+            if(!doesTeamExist(team.getName())){
                 co.createStatement().execute(query);
             } else{
                 throw new KeyAlreadyExistsException("this team is already registered");
@@ -118,8 +121,9 @@ public class ArDataBase {
     
     public static void deleteTeam(String teamname) throws NullPointerException {
         try(Connection co = connect()){
-            String query = "DELETE FROM teams WHERE '"+ArTeamData.NAME+"'='"+teamname+"'";
-            if(!doesTeamExist(teamname)){
+            String query = "DELETE FROM teams WHERE "+ArTeamData.NAME+"='"+teamname+"'";
+            Main.logAdmin(query);
+            if(doesTeamExist(teamname)){
                 co.createStatement().execute(query);
             } else{
                 throw new NullPointerException("sorry, there is no team with name "+teamname);
@@ -165,9 +169,12 @@ public class ArDataBase {
                     uuid.append(content[i]);
                 }
             }
-            Main.logAdmin("ids -> "+ids);
-            for(String conv : ids){
-                list.add(UUID.fromString(conv));
+            try{
+                for(String conv : ids){
+                    list.add(UUID.fromString(conv));
+                }
+            } catch(IllegalArgumentException e){
+                //e.printStackTrace();
             }
         } else{
             throw new MalformedParametersException("Can't recognize input as player list (missing \"[\" \"]\")");

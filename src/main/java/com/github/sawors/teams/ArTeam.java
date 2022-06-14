@@ -25,7 +25,9 @@ public class ArTeam {
     
     
     public void addMember(UUID p){
-        members.add(p);
+        if(!members.contains(p)){
+            members.add(p);
+        }
     }
     public ArrayList<UUID> getMembers(){
         return new ArrayList<>(this.members);

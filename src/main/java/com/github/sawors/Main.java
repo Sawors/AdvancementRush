@@ -1,6 +1,7 @@
 package com.github.sawors;
 
 import com.github.sawors.advancements.AdvancementListeners;
+import com.github.sawors.commands.ArLinkCommand;
 import com.github.sawors.commands.ArPointCommand;
 import com.github.sawors.commands.ArTeamCommand;
 import com.github.sawors.commands.ArTestCommand;
@@ -45,6 +46,7 @@ public final class Main extends JavaPlugin {
         getServer().getPluginCommand("arteam").setExecutor(new ArTeamCommand());
         getServer().getPluginCommand("arpoint").setExecutor(new ArPointCommand());
         getServer().getPluginCommand("artest").setExecutor(new ArTestCommand());
+        getServer().getPluginCommand("arlink").setExecutor(new ArLinkCommand());
     
         ArDataBase.connectInit();
     }

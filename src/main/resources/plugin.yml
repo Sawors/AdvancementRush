@@ -13,3 +13,6 @@ commands:
   artest:
     usage: /<command>
     aliases: [advancementrushtest, arts]
+  arlink:
+    usage: /<command>
+    aliases: [arlk]
