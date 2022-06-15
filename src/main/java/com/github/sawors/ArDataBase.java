@@ -11,6 +11,7 @@ import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.UUID;
 
 public class ArDataBase {
@@ -24,9 +25,29 @@ public class ArDataBase {
     // |==================================================================================|
     
     
-    // This hashmap is used for convenience to avoid spamming the Database with queries
-    // TODO :
-    //  go for a 100% sql way to check for player's teams
+    //                 <team, advancementsname>
+    private static HashMap<String, ArrayList<String>> advancementmutemap = new HashMap<>();
+    
+    public static void muteAdvancement(String advancement, String team){
+        ArrayList<String> check = new ArrayList<>();
+        if(advancementmutemap.containsKey(team)){
+            check = advancementmutemap.get(team);
+        }
+        if(!check.contains(advancement)){
+            check.add(advancement);
+        }
+        advancementmutemap.put(team, check);
+    }
+    public static void unmuteAdvancement(String advancement, String team){
+        if(advancementmutemap.containsKey(team)){
+            ArrayList<String> check = advancementmutemap.get(team);
+            check.remove(advancement);
+            advancementmutemap.put(team, check);
+        }
+    }
+    public static boolean isAdvancementMuted(String advancement, String team){
+        return advancementmutemap.containsKey(team) && advancementmutemap.get(team).contains(advancement);
+    }
     /*private static HashMap<UUID, String> playerteams = new HashMap<>();
     public static void setPlayerTeamLink(UUID playerid, String teamname){
         playerteams.put(playerid, teamname);

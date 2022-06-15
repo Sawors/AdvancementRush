@@ -159,7 +159,8 @@ public class ArTeamCommand implements CommandExecutor {
                         if(args.length == 1){
                             sender.sendMessage(ChatColor.YELLOW+"=====[Team List]=====");
                             for(String team : ArTeamManager.getTeamList()){
-                                sender.sendMessage(ChatColor.YELLOW+team);
+                                Component teamname = Component.text(team).color(TextColor.color(UsefulTools.stringToColorElseRandom(ArTeamManager.getTeamColor(team)).asRGB()));
+                                sender.sendMessage(Component.text(ChatColor.YELLOW+"- ").append(teamname).append(Component.text(" : "+ArTeamManager.getTeamPoints(team))));
                             }
                             sender.sendMessage(ChatColor.YELLOW+"===================");
                             return true;
@@ -170,7 +171,7 @@ public class ArTeamCommand implements CommandExecutor {
                                 sender.sendMessage(ChatColor.YELLOW+"==[Team "+args[1]+" Players]==");
                                 for(UUID pid : players){
                                     try{
-                                        sender.sendMessage(ChatColor.YELLOW+Bukkit.getOfflinePlayer(pid).getName());
+                                        sender.sendMessage(ChatColor.YELLOW+"- "+Bukkit.getOfflinePlayer(pid).getName());
                                     } catch(NullPointerException e){
                                         e.printStackTrace();
                                     }
@@ -208,6 +209,9 @@ public class ArTeamCommand implements CommandExecutor {
                 if(sender instanceof Player){
                     sender.sendMessage(ChatColor.RED+"Command failed, missing argument");
                 }
+            } catch (
+                    SQLException e) {
+                e.printStackTrace();
             }
         }
         

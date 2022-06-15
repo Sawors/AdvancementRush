@@ -7,6 +7,7 @@ import org.bukkit.Color;
 import org.bukkit.advancement.Advancement;
 import org.bukkit.advancement.AdvancementProgress;
 import org.bukkit.entity.Player;
+import org.jetbrains.annotations.NotNull;
 
 import javax.management.openmbean.KeyAlreadyExistsException;
 import java.lang.reflect.MalformedParametersException;
@@ -15,6 +16,7 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.Objects;
 import java.util.UUID;
 
@@ -110,6 +112,10 @@ public class ArTeamManager {
             }
             return rs.getString(target);
         }
+    }
+    
+    public static boolean playerHasTeam(UUID player){
+        return false;
     }
     
     public static void addPlayerToTeam(String teamname, UUID playerid) throws SQLException, MalformedParametersException, KeyAlreadyExistsException{
@@ -236,7 +242,7 @@ public class ArTeamManager {
                     for(String crit : referenceprogress.getAwardedCriteria()){
                         target.getAdvancementProgress(adv).awardCriteria(crit);
                     }
-                    break;
+                    return;
                 }
             }
             
@@ -244,6 +250,43 @@ public class ArTeamManager {
             e.printStackTrace();
         }
     }
+    
+    
+    // TODO :
+    //  Maybe as all sync methods are pretty slow we might try to make them asynchronous, however I don't know how
+    public static void syncPlayerAllAdvancementsWithTeam(Player target, String teamsource){
+        try {
+            ArrayList<UUID> players = ArDataBase.teamMembersDeserialize(getTeamPlayers(teamsource));
+            ArrayList<String> mutelist = new ArrayList<>();
+            for (UUID id : players) {
+                if (id != target.getUniqueId() && Bukkit.getPlayer(id) != null && Objects.requireNonNull(Bukkit.getPlayer(id)).isOnline()) {
+                    for (@NotNull Iterator<Advancement> it = Bukkit.advancementIterator(); it.hasNext(); ) {
+                        Advancement adv = it.next();
+                        AdvancementProgress referenceprogress = Objects.requireNonNull(Bukkit.getPlayer(id)).getAdvancementProgress(adv);
+                        if(target.getAdvancementProgress(adv) != referenceprogress){
+                            ArDataBase.muteAdvancement(adv.getKey().getKey(), teamsource);
+                            mutelist.add(adv.getKey().getKey());
+                            for(String crit : referenceprogress.getAwardedCriteria()){
+                                target.getAdvancementProgress(adv).awardCriteria(crit);
+                            }
+                        }
+                    }
+                    for(String advname : mutelist){
+                        ArDataBase.unmuteAdvancement(advname, teamsource);
+                    }
+                    
+                    return;
+                }
+            }
+        
+        } catch (SQLException | NullPointerException e){
+            e.printStackTrace();
+        }
+    }
+    
+    //  TODO :
+    //      Maybe log all advancements to the database pretty much like we've done with players in teams.
+    //      I believe this could provide us a more stable way to register advancement completion and synchronization
     
     public static void syncAllTeamAdvancements(String teamname){
     

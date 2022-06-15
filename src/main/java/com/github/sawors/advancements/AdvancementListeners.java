@@ -10,6 +10,7 @@ import org.bukkit.NamespacedKey;
 import org.bukkit.advancement.Advancement;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
+import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerAdvancementDoneEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
@@ -20,36 +21,55 @@ import java.util.Objects;
 
 public class AdvancementListeners implements Listener {
     
-    @EventHandler
-    public static void onPlayerUnlockAdvancement(PlayerAdvancementDoneEvent event){
-        if(event.getAdvancement().getKey().getKey().contains("recipes/")){
+    @EventHandler(priority = EventPriority.LOW)
+    public static void playerCriteriaProgress(PlayerAdvancementCriterionGrantEvent event){
+        Advancement adv = event.getAdvancement();
+        if(adv.getKey().getKey().contains("recipes/")){
             return;
         }
-        
-        Player p = event.getPlayer();
-        final String key = event.getAdvancement().getKey().getKey();
-        
-        if(p.getAdvancementProgress(event.getAdvancement()).isDone()){
-            int value = ArDataBase.getAdvancementValue(key);
-            if(value != 0){
-                // and do the other stuff related to point attribution here !
-                p.sendMessage(Component.text("Value : "+value));
-            }
-            
-        }
-        //DataBase.getAdvancementValue(event.getAdvancement().toString());
-    }
-    
-    @EventHandler
-    public static void playerSyncCriterias(PlayerAdvancementCriterionGrantEvent event){
         Main.logAdmin("you're fired!");
         Player p = event.getPlayer();
         try{
             String team = ArTeamManager.getPlayerTeam(p.getUniqueId());
-            ArTeamManager.syncTeamAdvancement(team, event.getAdvancement(), p);
+            if(!p.getAdvancementProgress(event.getAdvancement()).isDone()){
+                ArTeamManager.syncTeamAdvancement(team, adv, p);
+            }
         } catch(SQLException | NullPointerException e){
             e.printStackTrace();
         }
+        
+    }
+    
+    @EventHandler(priority = EventPriority.HIGH)
+    public static void onPlayerCompleteAdvancement(PlayerAdvancementDoneEvent event){
+        Advancement adv = event.getAdvancement();
+        if(adv.getKey().getKey().contains("recipes/")){
+            return;
+        }
+        Player p = event.getPlayer();
+        try{
+            String team = ArTeamManager.getPlayerTeam(p.getUniqueId());
+            String advname = event.getAdvancement().getKey().getKey();
+        
+            if(p.getAdvancementProgress(event.getAdvancement()).isDone()){
+                int value = ArDataBase.getAdvancementValue(advname);
+                if(value != 0){
+                    if (ArDataBase.isAdvancementMuted(advname, team)) {
+                        event.message(null);
+                    } else {
+                        // VALUE ADD
+                        p.sendMessage(Component.text("Value : "+value));
+                        ArTeamManager.addPointsToTeam(team, value);
+                        ArDataBase.muteAdvancement(advname,team);
+                        ArTeamManager.syncTeamAdvancement(team, adv, p);
+                        ArDataBase.unmuteAdvancement(advname,team);
+                    }
+                }
+            }
+        } catch(SQLException | NullPointerException e){
+            e.printStackTrace();
+        }
+        
     }
     
     @EventHandler
@@ -71,6 +91,12 @@ public class AdvancementListeners implements Listener {
             for(String c : p.getAdvancementProgress(Objects.requireNonNull(ad)).getRemainingCriteria()){
                 p.getAdvancementProgress(ad).awardCriteria(c);
             }
+        }
+        
+        try{
+            ArTeamManager.syncPlayerAllAdvancementsWithTeam(p,ArTeamManager.getPlayerTeam(p.getUniqueId()));
+        } catch (SQLException ex) {
+            ex.printStackTrace();
         }
     }
 }

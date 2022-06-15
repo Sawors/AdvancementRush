@@ -5,6 +5,7 @@ import com.github.sawors.commands.ArLinkCommand;
 import com.github.sawors.commands.ArPointCommand;
 import com.github.sawors.commands.ArTeamCommand;
 import com.github.sawors.commands.ArTestCommand;
+import com.github.sawors.teams.TeamListeners;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.TextComponent;
 import org.bukkit.Bukkit;
@@ -42,6 +43,7 @@ public final class Main extends JavaPlugin {
         }
         getServer().getPluginManager().registerEvents(new SmallListeners(), this);
         getServer().getPluginManager().registerEvents(new AdvancementListeners(), this);
+        getServer().getPluginManager().registerEvents(new TeamListeners(), this);
     
         getServer().getPluginCommand("arteam").setExecutor(new ArTeamCommand());
         getServer().getPluginCommand("arpoint").setExecutor(new ArPointCommand());
