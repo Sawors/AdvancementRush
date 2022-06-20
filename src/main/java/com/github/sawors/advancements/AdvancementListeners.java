@@ -1,10 +1,12 @@
 package com.github.sawors.advancements;
 
+import com.destroystokyo.paper.event.player.PlayerAdvancementCriterionGrantEvent;
 import com.github.sawors.ArDataBase;
 import com.github.sawors.Main;
 import com.github.sawors.teams.ArTeamManager;
 import net.kyori.adventure.text.Component;
 import org.bukkit.Bukkit;
+import org.bukkit.ChatColor;
 import org.bukkit.NamespacedKey;
 import org.bukkit.advancement.Advancement;
 import org.bukkit.entity.Player;
@@ -20,7 +22,7 @@ import java.util.Objects;
 
 public class AdvancementListeners implements Listener {
     
-    /*@EventHandler(priority = EventPriority.LOW)
+    @EventHandler(priority = EventPriority.LOW)
     public static void playerCriteriaProgress(PlayerAdvancementCriterionGrantEvent event){
         Advancement adv = event.getAdvancement();
         if(AdvancementManager.isRecipe(adv)){
@@ -30,14 +32,15 @@ public class AdvancementListeners implements Listener {
         Player p = event.getPlayer();
         try{
             String team = ArTeamManager.getPlayerTeam(p.getUniqueId());
-            if(!p.getAdvancementProgress(event.getAdvancement()).isDone()){
-                ArTeamManager.syncTeamAdvancement(team, adv);
+            if(!p.getAdvancementProgress(event.getAdvancement()).isDone() && !ArDataBase.isAdvancementMuted(adv.getKey(),team)){
+                ArTeamManager.addCriterionToTeam(team,adv.getKey(),event.getCriterion());
+                Main.logAdmin(ChatColor.RED+event.getCriterion());
             }
         } catch(SQLException | NullPointerException e){
             e.printStackTrace();
         }
         
-    }*/
+    }
     
     @EventHandler(priority = EventPriority.HIGH)
     public static void onPlayerCompleteAdvancement(PlayerAdvancementDoneEvent event){
@@ -52,17 +55,21 @@ public class AdvancementListeners implements Listener {
                 return;
             }
         }
-        
-        if(AdvancementManager.isRecipe(adv)){
+    
+        p.sendMessage(Component.text("C1"));
+        if(AdvancementManager.isRecipe(adv) || adv.getKey().getKey().contains("/root")){
             return;
         }
         try{
+            p.sendMessage(Component.text("C2"));
             String team = ArTeamManager.getPlayerTeam(p.getUniqueId());
-            String advname = event.getAdvancement().getKey().getKey();
+            NamespacedKey advname = event.getAdvancement().getKey();
         
             if(p.getAdvancementProgress(event.getAdvancement()).isDone()){
-                int value = ArDataBase.getAdvancementValue(advname);
+                p.sendMessage(Component.text("C3"));
+                int value = ArDataBase.getAdvancementValue(advname.getKey());
                 if(value != 0){
+                    p.sendMessage(Component.text("C4"));
                     if (ArDataBase.isAdvancementMuted(advname, team)) {
                         event.message(null);
                     } else {

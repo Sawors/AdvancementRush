@@ -2,6 +2,8 @@ package com.github.sawors;
 
 import com.github.sawors.teams.ArTeam;
 import com.github.sawors.teams.ArTeamData;
+import org.bukkit.ChatColor;
+import org.bukkit.NamespacedKey;
 
 import javax.management.openmbean.KeyAlreadyExistsException;
 import java.io.IOException;
@@ -11,6 +13,7 @@ import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.UUID;
 
@@ -26,10 +29,10 @@ public class ArDataBase {
     
     
     //                 <team, advancementsname>
-    private static HashMap<String, ArrayList<String>> advancementmutemap = new HashMap<>();
+    private static HashMap<String, ArrayList<NamespacedKey>> advancementmutemap = new HashMap<>();
     
-    public static void muteAdvancement(String advancement, String team){
-        ArrayList<String> check = new ArrayList<>();
+    public static void muteAdvancement(NamespacedKey advancement, String team){
+        ArrayList<NamespacedKey> check = new ArrayList<>();
         if(advancementmutemap.containsKey(team)){
             check = advancementmutemap.get(team);
         }
@@ -38,15 +41,19 @@ public class ArDataBase {
         }
         advancementmutemap.put(team, check);
     }
-    public static void unmuteAdvancement(String advancement, String team){
+    public static void unmuteAdvancement(NamespacedKey advancement, String team){
         if(advancementmutemap.containsKey(team)){
-            ArrayList<String> check = advancementmutemap.get(team);
+            ArrayList<NamespacedKey> check = advancementmutemap.get(team);
             check.remove(advancement);
             advancementmutemap.put(team, check);
         }
     }
-    public static boolean isAdvancementMuted(String advancement, String team){
+    public static boolean isAdvancementMuted(NamespacedKey advancement, String team){
         return advancementmutemap.containsKey(team) && advancementmutemap.get(team).contains(advancement);
+    }
+    
+    public static void printMuteMap(){
+        Main.logAdmin(ChatColor.RED+"Mute Map : \n"+advancementmutemap.toString());
     }
     /*private static HashMap<UUID, String> playerteams = new HashMap<>();
     public static void setPlayerTeamLink(UUID playerid, String teamname){
@@ -210,14 +217,63 @@ public class ArDataBase {
     //      namespace:branch/advancement(criteria)
     //      -> minecraft:adventure/adventuring_time(badlands)
     
-    public static String teamAdvancementsSerialize(ArrayList<String> members){
+    
+    public static String advancementCriteriaSerialize(NamespacedKey adv, Collection<String> crits){
+        StringBuilder output = new StringBuilder();
+        output.append(adv.toString());
+        output.append('(');
+    
+        for(String it : crits){
+            output.append(it);
+            output.append(',');
+        }
+        output.deleteCharAt(output.length()-1);
+        output.append(')');
+        return output.toString();
+    }
+    public static ArrayList<String> advancementCriteriaDeserialize(String advancementwithcrits){
+        char[] content = advancementwithcrits.toCharArray();
+        ArrayList<String> list = new ArrayList<>();
+        if(Character.isLetterOrDigit(content[0]) && content[content.length-1] == ')'){
+            ArrayList<String> crits = new ArrayList<>();
+            StringBuilder critunique = new StringBuilder();
+            int criteriastart = 0;
+            for(int i = 0; i<content.length; i++){
+                char evalchar = content[i];
+                if(evalchar == '('){
+                    criteriastart = i+1;
+                }
+            }
+            for(int i = criteriastart; i<content.length; i++){
+                char evalchar = content[i];
+                if(evalchar == ',' || evalchar == ')'){
+                    crits.add(critunique.toString());
+                    critunique = new StringBuilder();
+                } else {
+                    critunique.append(content[i]);
+                }
+            }
+            try{
+                list.addAll(crits);
+            } catch(IllegalArgumentException e){
+                //e.printStackTrace();
+            }
+        } else{
+            throw new MalformedParametersException("Can't recognize input as criteria list (missing \"[\" \"]\")");
+        }
+        return list;
+    }
+    
+    public static String teamAdvancementsSerialize(ArrayList<String> adv){
         StringBuilder msg = new StringBuilder();
         msg.append("[");
         
-        if(members.size()>=1){
-            for(int i = 0; i<members.size(); i++){
-                msg.append(members.get(i));
-                if(i!=members.size()-1){
+        if(adv.size()>=1){
+            for(int i = 0; i<adv.size(); i++){
+                msg.append(adv.get(i));
+                Main.logAdmin(adv.get(i));
+                //append the separator ","
+                if(i!=adv.size()-1){
                     msg.append(",");
                 }
             }
@@ -234,7 +290,7 @@ public class ArDataBase {
             StringBuilder advunique = new StringBuilder();
             for(int i = 1; i<content.length; i++){
                 char evalchar = content[i];
-                if(evalchar == ',' || evalchar == ']'){
+                if((evalchar == ',' && content[i-1] == ')') || evalchar == ']'){
                     advs.add(advunique.toString());
                     advunique = new StringBuilder();
                 } else {
@@ -247,7 +303,7 @@ public class ArDataBase {
                 //e.printStackTrace();
             }
         } else{
-            throw new MalformedParametersException("Can't recognize input as player list (missing \"[\" \"]\")");
+            throw new MalformedParametersException("Can't recognize input as advancement list (missing \"[\" \"]\")");
         }
         return list;
     }
@@ -285,6 +341,7 @@ public class ArDataBase {
         //  - Add a config file for this
         //  - Add a check for adv validity
         //  - Find a better way to edit adv (maybe set default values here and then allow for overwrite in config ? define them all directly in the config ?
+        //  - CHANGE THE READING METHOD : NOW HAS NAMESPACE INCLUDED !!!!!!!!!!!!!!!!!!!!!!!!!!
         return  "INSERT INTO advancements(name,value) VALUES" +
                 "('story/mine_stone',5)," +
                 "('story/upgrade_tools',5)," +

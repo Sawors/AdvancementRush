@@ -36,6 +36,28 @@ public class ArTestCommand implements CommandExecutor {
                         for(String crit : Objects.requireNonNull(Bukkit.getAdvancement(Objects.requireNonNull(NamespacedKey.fromString("minecraft:story/mine_stone")))).getCriteria()){
                             Main.logAdmin(crit);
                         }
+                        break;
+                    case"testcrits":
+                        Main.logAdmin(ArDataBase.advancementCriteriaSerialize(NamespacedKey.fromString("minecraft:adventure/adventuring_time"), ((Player)sender).getAdvancementProgress(Bukkit.getAdvancement(NamespacedKey.fromString("minecraft:adventure/adventuring_time"))).getRemainingCriteria()));
+                        break;
+                    case"reversecrits":
+                        Main.logAdmin(ArDataBase.advancementCriteriaDeserialize("minecraft:adventure/adventuring_time(minecraft:snowy_slopes,minecraft:old_growth_pine_taiga,minecraft:mushroom_fields,minecraft:taiga,minecraft:deep_ocean,minecraft:eroded_badlands,minecraft:frozen_river,minecraft:sunflower_plains,minecraft:birch_forest,minecraft:windswept_hills,minecraft:wooded_badlands,minecraft:bamboo_jungle,minecraft:savanna_plateau,minecraft:beach,minecraft:dark_forest,minecraft:stony_peaks,minecraft:sparse_jungle,minecraft:lukewarm_ocean,minecraft:river,minecraft:stony_shore,minecraft:snowy_plains,minecraft:snowy_taiga,minecraft:dripstone_caves,minecraft:swamp,minecraft:grove,minecraft:jagged_peaks,minecraft:cold_ocean,minecraft:forest,minecraft:lush_caves,minecraft:deep_cold_ocean,minecraft:ice_spikes,minecraft:frozen_ocean,minecraft:desert,minecraft:windswept_forest,minecraft:ocean,minecraft:jungle,minecraft:old_growth_spruce_taiga,minecraft:snowy_beach,minecraft:windswept_savanna,minecraft:warm_ocean,minecraft:deep_lukewarm_ocean,minecraft:flower_forest,minecraft:frozen_peaks,minecraft:old_growth_birch_forest,minecraft:meadow,minecraft:windswept_gravelly_hills,minecraft:savanna)").toString());
+                        break;
+                    case"checkcomplete":
+                        try {
+                            if(ArTeamManager.hasTeamAdvancementCompleted("Sawors2",NamespacedKey.fromString("minecraft:adventure/adventuring_time"))){
+                                sender.sendMessage("yes");
+                            } else {
+                                sender.sendMessage("no");
+                            }
+                        } catch (
+                                SQLException e) {
+                            throw new RuntimeException(e);
+                        }
+                        break;
+                    case"mutelist":
+                        ArDataBase.printMuteMap();
+    
                 }
             } else {
                 sender.sendMessage("Phase 1");
