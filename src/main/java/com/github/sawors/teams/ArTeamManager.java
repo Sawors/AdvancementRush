@@ -2,8 +2,11 @@ package com.github.sawors.teams;
 
 import com.github.sawors.ArDataBase;
 import com.github.sawors.Main;
+import com.github.sawors.advancements.AdvancementManager;
 import org.bukkit.Bukkit;
+import org.bukkit.ChatColor;
 import org.bukkit.Color;
+import org.bukkit.NamespacedKey;
 import org.bukkit.advancement.Advancement;
 import org.bukkit.advancement.AdvancementProgress;
 import org.bukkit.entity.Player;
@@ -17,7 +20,6 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Iterator;
-import java.util.Objects;
 import java.util.UUID;
 
 public class ArTeamManager {
@@ -83,6 +85,16 @@ public class ArTeamManager {
         }
     }
     
+    public static void setTeamAdvancements(String teamname, String advancements){
+        try{
+            if(ArDataBase.doesTeamExist(teamname)){
+                setTeamData(ArTeamData.ADVANCEMENTS, teamname, advancements);
+            }
+        }catch (SQLException e){
+            e.printStackTrace();
+        }
+    }
+    
     public static String getTeamColor(String teamname) throws SQLException{
         try(Connection co = ArDataBase.connect()){
             String target = ArTeamData.COLOR.toString();
@@ -114,8 +126,17 @@ public class ArTeamManager {
         }
     }
     
-    public static boolean playerHasTeam(UUID player){
-        return false;
+    public static String getTeamAdvancements(String teamname) throws SQLException{
+        try(Connection co = ArDataBase.connect()){
+            String target = ArTeamData.ADVANCEMENTS.toString();
+            String query = "SELECT "+target+" FROM teams WHERE "+ArTeamData.NAME+"='"+teamname+"'";
+            PreparedStatement statement = co.prepareStatement(query);
+            ResultSet rs = statement.executeQuery();
+            if(rs.isClosed()){
+                return "";
+            }
+            return rs.getString(target);
+        }
     }
     
     public static void addPlayerToTeam(String teamname, UUID playerid) throws SQLException, MalformedParametersException, KeyAlreadyExistsException{
@@ -206,26 +227,57 @@ public class ArTeamManager {
         }
     }
     
-    public static void syncTeamAdvancement(String teamname, Advancement adv, Player source){
+    public static ArrayList<String> getTeamsWithAdvancement(NamespacedKey adv) throws SQLException, NullPointerException{
+        try(Connection co = ArDataBase.connect()){
+            ArrayList<String> list = new ArrayList<>();
+            String stmt = "SELECT NAME FROM teams WHERE "+ArTeamData.ADVANCEMENTS+" LIKE '%"+AdvancementManager.getAdvancementWithoutKey(adv.toString())+"%'";
+            PreparedStatement statement = co.prepareStatement(stmt);
+            Main.logAdmin(stmt);
+            ResultSet rset = statement.executeQuery();
+            if(!rset.isClosed() && rset.getString("NAME") != null){
+                while(rset.next()){
+                    list.add(rset.getString("NAME"));
+                }
+                return list;
+            } else {
+                throw new NullPointerException("no team with advancement "+adv);
+            }
+        }
+    }
+    
+    public static void addAdvancementToTeam(String teamname, NamespacedKey advancement) throws SQLException, MalformedParametersException, KeyAlreadyExistsException{
+        ArrayList<String> output = ArDataBase.teamAdvancementsDeserialize(getTeamAdvancements(teamname));
+        // add advancement to team if not in it
+        String nokeyadv = AdvancementManager.getAdvancementWithoutKey(advancement.toString());
+        
+        if (!output.contains(nokeyadv) && !output.contains(advancement.toString())) {
+            output.add(advancement.toString());
+        } else {
+            throw new KeyAlreadyExistsException("this advancement is already unlocked for this team");
+        }
+        setTeamAdvancements(teamname, ArDataBase.teamAdvancementsSerialize(output));
+        Main.logAdmin(ArDataBase.teamAdvancementsSerialize(output));
+    }
+    public static void removeAdvancementFromTeam(String teamname, NamespacedKey advancement) throws SQLException, MalformedParametersException {
+        ArrayList<String> output = ArDataBase.teamAdvancementsDeserialize(getTeamPlayers(teamname));
+        output.remove(advancement.toString());
+        setTeamAdvancements(teamname, ArDataBase.teamAdvancementsSerialize(output));
+    }
+    public static boolean hasTeamAdvancement(String team, NamespacedKey advancement) throws SQLException{
+        boolean result = false;
+        try{
+            result = getTeamsWithAdvancement(advancement).contains(team);
+        } catch(NullPointerException ignored){
+        }
+        return result;
+    }
+    
+    //Sync an advancement for the whole team
+    public static void syncTeamAdvancement(String teamname, Advancement adv){
         try{
             ArrayList<UUID> players = ArDataBase.teamMembersDeserialize(getTeamPlayers(teamname));
             for(UUID id : players){
-                if(!source.getUniqueId().equals(id)){
-                    try{
-                        Main.logAdmin("idsource : "+source.getUniqueId());
-                        Main.logAdmin("id : "+id);
-                        Main.logAdmin("size : "+source.getAdvancementProgress(adv).getAwardedCriteria().size());
-                        for(String crit : source.getAdvancementProgress(adv).getAwardedCriteria()){
-                                Main.logAdmin("crit : "+crit);
-                                Player p = Bukkit.getPlayer(id);
-                                if(p != null){
-                                    p.getAdvancementProgress(adv).awardCriteria(crit);
-                                }
-                        }
-                    } catch (NullPointerException e){
-                        e.printStackTrace();
-                    }
-                }
+                syncPlayerAdvancementWithTeam(Bukkit.getPlayer(id),teamname,adv);
             }
         } catch (SQLException e){
             e.printStackTrace();
@@ -233,7 +285,26 @@ public class ArTeamManager {
     }
     
     public static void syncPlayerAdvancementWithTeam(Player target, String teamsource, Advancement adv){
+    
         try {
+            ArrayList<String> advancements = ArDataBase.teamAdvancementsDeserialize(getTeamAdvancements(teamsource));
+        
+            for (String id : advancements) {
+                AdvancementProgress targetprogress = target.getAdvancementProgress(adv);
+                if(target.isOnline()){
+                    if(hasTeamAdvancement(teamsource, adv.getKey())){
+                        for(String crit : targetprogress.getRemainingCriteria()){
+                            targetprogress.awardCriteria(crit);
+                        }
+                    }
+                }
+            }
+        
+        } catch (SQLException | NullPointerException e){
+            e.printStackTrace();
+        }
+        
+        /*try {
             ArrayList<UUID> players = ArDataBase.teamMembersDeserialize(getTeamPlayers(teamsource));
             
             for (UUID id : players) {
@@ -248,41 +319,38 @@ public class ArTeamManager {
             
         } catch (SQLException | NullPointerException e){
             e.printStackTrace();
-        }
+        }*/
     }
     
     
     // TODO :
-    //  Maybe as all sync methods are pretty slow we might try to make them asynchronous, however I don't know how
+    //  Maybe as all sync methods are pretty heavy we might try to make them asynchronous, however I don't know how
     public static void syncPlayerAllAdvancementsWithTeam(Player target, String teamsource){
         try {
+            target.sendMessage(ChatColor.BLUE+"SYNC");
             ArrayList<UUID> players = ArDataBase.teamMembersDeserialize(getTeamPlayers(teamsource));
             ArrayList<String> mutelist = new ArrayList<>();
-            for (UUID id : players) {
-                if (id != target.getUniqueId() && Bukkit.getPlayer(id) != null && Objects.requireNonNull(Bukkit.getPlayer(id)).isOnline()) {
-                    for (@NotNull Iterator<Advancement> it = Bukkit.advancementIterator(); it.hasNext(); ) {
-                        Advancement adv = it.next();
-                        AdvancementProgress referenceprogress = Objects.requireNonNull(Bukkit.getPlayer(id)).getAdvancementProgress(adv);
-                        if(target.getAdvancementProgress(adv) != referenceprogress){
-                            ArDataBase.muteAdvancement(adv.getKey().getKey(), teamsource);
-                            mutelist.add(adv.getKey().getKey());
-                            for(String crit : referenceprogress.getAwardedCriteria()){
-                                target.getAdvancementProgress(adv).awardCriteria(crit);
-                            }
-                        }
+            for (@NotNull Iterator<Advancement> it = Bukkit.advancementIterator(); it.hasNext(); ) {
+                Advancement adv = it.next();
+                if(!AdvancementManager.isRecipe(adv) && hasTeamAdvancement(teamsource, adv.getKey())){
+                    ArDataBase.muteAdvancement(adv.getKey().getKey(), teamsource);
+                    mutelist.add(adv.getKey().getKey());
+                    for(String crit : target.getAdvancementProgress(adv).getRemainingCriteria()){
+                        target.getAdvancementProgress(adv).awardCriteria(crit);
+                        target.sendMessage(ChatColor.BLUE+"crit : "+crit);
                     }
-                    for(String advname : mutelist){
-                        ArDataBase.unmuteAdvancement(advname, teamsource);
-                    }
-                    
-                    return;
                 }
+                
+            }
+            for(String advname : mutelist){
+                ArDataBase.unmuteAdvancement(advname, teamsource);
             }
         
         } catch (SQLException | NullPointerException e){
             e.printStackTrace();
         }
     }
+    
     
     //  TODO :
     //      Maybe log all advancements to the database pretty much like we've done with players in teams.

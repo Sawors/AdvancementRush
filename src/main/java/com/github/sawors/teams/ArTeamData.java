@@ -1,5 +1,5 @@
 package com.github.sawors.teams;
 
 public enum ArTeamData {
-    NAME, COLOR, POINTS, PLAYERS
+    NAME, COLOR, POINTS, PLAYERS, ADVANCEMENTS
 }

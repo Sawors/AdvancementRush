@@ -118,10 +118,11 @@ public class ArDataBase {
     
     private static String initTeamsTableQuery(){
         return "CREATE TABLE IF NOT EXISTS teams (\n"
-                + "	"+ArTeamData.NAME+" text UNIQUE,\n"
+                + "	"+ArTeamData.NAME+" text PRIMARY KEY,\n"
                 + "	"+ArTeamData.COLOR+" text NOT NULL,\n"
                 + "	"+ArTeamData.POINTS+" int NOT NULL,\n"
-                + "	"+ArTeamData.PLAYERS+" text NOT NULL\n"
+                + "	"+ArTeamData.PLAYERS+" text NOT NULL DEFAULT '[]',\n"
+                + "	"+ArTeamData.ADVANCEMENTS+" text NOT NULL DEFAULT '[]'\n"
                 + ");";
     }
     
@@ -193,6 +194,55 @@ public class ArDataBase {
                 for(String conv : ids){
                     list.add(UUID.fromString(conv));
                 }
+            } catch(IllegalArgumentException e){
+                //e.printStackTrace();
+            }
+        } else{
+            throw new MalformedParametersException("Can't recognize input as player list (missing \"[\" \"]\")");
+        }
+        return list;
+    }
+    
+    // FORMAT :
+    //      namespace:branch/advancement
+    //      -> minecraft:end/elytra
+    //
+    //      namespace:branch/advancement(criteria)
+    //      -> minecraft:adventure/adventuring_time(badlands)
+    
+    public static String teamAdvancementsSerialize(ArrayList<String> members){
+        StringBuilder msg = new StringBuilder();
+        msg.append("[");
+        
+        if(members.size()>=1){
+            for(int i = 0; i<members.size(); i++){
+                msg.append(members.get(i));
+                if(i!=members.size()-1){
+                    msg.append(",");
+                }
+            }
+        }
+        msg.append("]");
+        return msg.toString();
+    }
+    
+    public static ArrayList<String> teamAdvancementsDeserialize(String str) throws MalformedParametersException {
+        char[] content = str.toCharArray();
+        ArrayList<String> list = new ArrayList<>();
+        if(content[0] == '[' && content[content.length-1] == ']'){
+            ArrayList<String> advs = new ArrayList<>();
+            StringBuilder advunique = new StringBuilder();
+            for(int i = 1; i<content.length; i++){
+                char evalchar = content[i];
+                if(evalchar == ',' || evalchar == ']'){
+                    advs.add(advunique.toString());
+                    advunique = new StringBuilder();
+                } else {
+                    advunique.append(content[i]);
+                }
+            }
+            try{
+                list.addAll(advs);
             } catch(IllegalArgumentException e){
                 //e.printStackTrace();
             }

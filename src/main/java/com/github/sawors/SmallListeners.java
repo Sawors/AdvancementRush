@@ -1,20 +1,27 @@
 package com.github.sawors;
 
-import org.bukkit.entity.Player;
-import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
-import org.bukkit.event.player.PlayerJoinEvent;
-import org.bukkit.scoreboard.Team;
 
 public class SmallListeners implements Listener {
-    Team team;
     
-    @EventHandler
-    public static void onPlayerConnect(PlayerJoinEvent event){
-        
-        Player p = event.getPlayer();
-        /*for(String c : p.getAdvancementProgress(Objects.requireNonNull(Bukkit.getAdvancement(NamespacedKey.minecraft("story/upgrade_tools")))).getRemainingCriteria()){
-            p.getAdvancementProgress(Objects.requireNonNull(Bukkit.getAdvancement(NamespacedKey.minecraft("story/upgrade_tools")))).awardCriteria(c);
-        }*/
-    }
+    
+    // FANCY TRAIL FOR THE BEST PLAYER (ME OFC)
+    /*@EventHandler
+    public static void saworsTrailMaker(PlayerMoveEvent event){
+        if(event.hasChangedPosition() && event.getPlayer().getName().equals("Sawors")){
+            Location locp = event.getFrom().clone();
+            new BukkitRunnable(){
+                int i = 20;
+                @Override
+                public void run(){
+                    if(i <= 0){
+                        this.cancel();
+                        return;
+                    }
+                    locp.getWorld().spawnParticle(Particle.ELECTRIC_SPARK, locp.clone().add(0,0.8,0),2,.1,.3,.1,.1);
+                    i--;
+                }
+            }.runTaskTimer(Main.getPlugin(),2,1);
+        }
+    }*/
 }
