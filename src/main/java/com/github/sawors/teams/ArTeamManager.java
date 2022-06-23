@@ -4,6 +4,8 @@ import com.github.sawors.ArDataBase;
 import com.github.sawors.Main;
 import com.github.sawors.UsefulTools;
 import com.github.sawors.advancements.AdvancementManager;
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.format.TextColor;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.Color;
@@ -145,7 +147,6 @@ public class ArTeamManager {
         
         }
         setTeamPlayers(newteam, ArDataBase.teamMembersSerialize(output));
-        Main.logAdmin(ArDataBase.teamMembersSerialize(output));
         //ArDataBase.setPlayerTeamLink(playerid, newteam);
     }
     
@@ -425,6 +426,22 @@ public class ArTeamManager {
         
         } catch (SQLException | NullPointerException e){
             e.printStackTrace();
+        }
+    }
+    
+    public static void syncPlayerColorWithTeam(Player p) throws NullPointerException{
+        Component pname = p.displayName();
+        try{
+            String team = ArTeamManager.getPlayerTeam(p.getUniqueId());
+            p.displayName(pname.color(TextColor.fromCSSHexString(ArTeamManager.getTeamColor(team))));
+            p.playerListName(p.playerListName().color(TextColor.fromCSSHexString(ArTeamManager.getTeamColor(team))));
+        } catch (
+                SQLException e) {
+            e.printStackTrace();
+        } catch (NullPointerException e){
+            Main.logAdmin("Player "+p.getName()+" has no team");
+            p.displayName(pname.color(TextColor.color(0xFFFFFF)));
+            p.playerListName(pname.color(TextColor.color(0xFFFFFF)));
         }
     }
 }

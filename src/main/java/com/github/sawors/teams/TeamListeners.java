@@ -1,19 +1,22 @@
 package com.github.sawors.teams;
 
+import io.papermc.paper.event.player.AsyncChatEvent;
+import org.bukkit.entity.Player;
+import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
+import org.bukkit.event.player.PlayerJoinEvent;
 
 public class TeamListeners implements Listener {
     
-    /*@EventHandler
+    @EventHandler
     public static void chatHandleEvent(AsyncChatEvent event){
         Player p = event.getPlayer();
-        
-        try{
-            String team = ArTeamManager.getPlayerTeam(p.getUniqueId());
-        } catch (SQLException e) {
-            e.printStackTrace();
-        } catch (NullPointerException e){
-            Main.logAdmin("Player "+p.getName()+" has no team");
-        }
-    }*/
+        ArTeamManager.syncPlayerColorWithTeam(p);
+    }
+    
+    @EventHandler
+    public static void updateOnJoin(PlayerJoinEvent event){
+        Player p = event.getPlayer();
+        ArTeamManager.syncPlayerColorWithTeam(p);
+    }
 }

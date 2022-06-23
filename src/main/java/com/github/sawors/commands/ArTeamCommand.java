@@ -21,6 +21,7 @@ import javax.management.openmbean.KeyAlreadyExistsException;
 import java.lang.reflect.MalformedParametersException;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.Objects;
 import java.util.UUID;
 
 public class ArTeamCommand implements CommandExecutor {
@@ -105,6 +106,7 @@ public class ArTeamCommand implements CommandExecutor {
                                 TextComponent namepart = Component.text(team).color(TextColor.fromHexString(ArTeamManager.getTeamColor(team)));
                                 if(p.isOnline()) {
                                     ArTeamManager.syncPlayerAllAdvancementsWithTeam(p, team);
+                                    ArTeamManager.syncPlayerColorWithTeam(p);
                                 } else {
                                     Main.logAdmin("could not sync player "+p.getName()+" with team "+team+" for this player is offline");
                                 }
@@ -131,6 +133,7 @@ public class ArTeamCommand implements CommandExecutor {
                                 TextComponent namepart = Component.text(team).color(TextColor.fromHexString(ArTeamManager.getTeamColor(team)));
                                 if(Bukkit.getPlayer(player) != null && Bukkit.getPlayer(player).isOnline()) {
                                     ArTeamManager.syncPlayerAllAdvancementsWithTeam(Bukkit.getPlayer(player), team);
+                                    ArTeamManager.syncPlayerColorWithTeam(Objects.requireNonNull(Bukkit.getPlayer(player)));
                                 } else {
                                     Main.logAdmin("could not sync player "+player+" with team "+team+" for this player is offline");
                                 }

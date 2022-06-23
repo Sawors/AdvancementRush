@@ -4,7 +4,6 @@ import com.destroystokyo.paper.event.player.PlayerAdvancementCriterionGrantEvent
 import com.github.sawors.ArDataBase;
 import com.github.sawors.Main;
 import com.github.sawors.teams.ArTeamManager;
-import net.kyori.adventure.text.Component;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.NamespacedKey;
@@ -46,6 +45,12 @@ public class AdvancementListeners implements Listener {
     @EventHandler(priority = EventPriority.HIGH)
     public static void onPlayerCompleteAdvancement(PlayerAdvancementDoneEvent event){
         Advancement adv = event.getAdvancement();
+    
+        if(AdvancementManager.isRecipe(adv) || adv.getKey().getKey().contains("/root")){
+            return;
+        }
+        
+        
         Player p = event.getPlayer();
         try{
             ArTeamManager.getPlayerTeam(p.getUniqueId());
@@ -56,26 +61,17 @@ public class AdvancementListeners implements Listener {
                 return;
             }
         }
-    
-        p.sendMessage(Component.text("C1"));
-        if(AdvancementManager.isRecipe(adv) || adv.getKey().getKey().contains("/root")){
-            return;
-        }
         try{
-            p.sendMessage(Component.text("C2"));
             String team = ArTeamManager.getPlayerTeam(p.getUniqueId());
             NamespacedKey advname = event.getAdvancement().getKey();
         
             if(p.getAdvancementProgress(event.getAdvancement()).isDone()){
-                p.sendMessage(Component.text("C3"));
                 int value = ArDataBase.getAdvancementValue(advname.getKey());
                 if(value != 0){
-                    p.sendMessage(Component.text("C4"));
                     if (ArDataBase.isAdvancementMuted(advname, team)) {
                         event.message(null);
                     } else {
-                        // VALUE ADD
-                        p.sendMessage(Component.text("Value : "+value));
+                        // VALUE ADD AND SYNC
                         ArTeamManager.addPointsToTeam(team, value);
                         ArDataBase.muteAdvancement(advname,team);
                         ArTeamManager.addAdvancementToTeam(team, adv.getKey());
