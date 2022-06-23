@@ -89,22 +89,6 @@ public class ArTestCommand implements CommandExecutor {
                 }
     
             }
-            /*String name = "UwUBois";
-            ArTeam team = new ArTeam(name, Color.LIME);
-            UUID id = ((Player) sender).getUniqueId();
-            team.addMember(id);
-            team.addMember(id);
-            team.addMember(id);
-            team.addMember(id);
-            //String test = DataBase.teamMembersSerialize(team);
-            
-            try{
-                ArDataBase.registerTeam(team);
-            } catch(KeyAlreadyExistsException e){
-                sender.sendMessage(ChatColor.RED+"sorry, a team already exists with this name ("+team.getName()+")");
-                return true;
-            }*/
-            
             return true;
         }
         

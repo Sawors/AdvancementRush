@@ -34,6 +34,7 @@ public class AdvancementListeners implements Listener {
             String team = ArTeamManager.getPlayerTeam(p.getUniqueId());
             if(!p.getAdvancementProgress(event.getAdvancement()).isDone() && !ArDataBase.isAdvancementMuted(adv.getKey(),team)){
                 ArTeamManager.addCriterionToTeam(team,adv.getKey(),event.getCriterion());
+                ArTeamManager.syncTeamAdvancement(team, adv);
                 Main.logAdmin(ChatColor.RED+event.getCriterion());
             }
         } catch(SQLException | NullPointerException e){
@@ -90,7 +91,7 @@ public class AdvancementListeners implements Listener {
     }
     
     @EventHandler
-    public static void addRootsAdvancementsOnPlayerConnect(PlayerJoinEvent e){
+    public static void addRootsAndSync(PlayerJoinEvent e){
         
         // TODO :
         //  Add a section to the config "base advancements" to add more advancement to be unlocked from the start
