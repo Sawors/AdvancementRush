@@ -437,7 +437,7 @@ public class ArTeamManager {
         }
     }
     
-    public static void syncPlayerColorWithTeam(Player p) throws NullPointerException{
+    public static void syncPlayerColorWithTeam(Player p){
         Component pname = p.displayName();
         try{
             String team = ArTeamManager.getPlayerTeam(p.getUniqueId());

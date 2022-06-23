@@ -1,10 +1,10 @@
 package com.github.sawors;
 
 import com.github.sawors.advancements.AdvancementListeners;
-import com.github.sawors.commands.ArLinkCommand;
-import com.github.sawors.commands.ArPointCommand;
+import com.github.sawors.commands.ArNickCommand;
 import com.github.sawors.commands.ArTeamCommand;
 import com.github.sawors.commands.ArTestCommand;
+import com.github.sawors.commands.ArUnNickCommand;
 import com.github.sawors.teams.TeamListeners;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.TextComponent;
@@ -46,9 +46,9 @@ public final class Main extends JavaPlugin {
         getServer().getPluginManager().registerEvents(new TeamListeners(), this);
     
         getServer().getPluginCommand("arteam").setExecutor(new ArTeamCommand());
-        getServer().getPluginCommand("arpoint").setExecutor(new ArPointCommand());
         getServer().getPluginCommand("artest").setExecutor(new ArTestCommand());
-        getServer().getPluginCommand("arlink").setExecutor(new ArLinkCommand());
+        getServer().getPluginCommand("arnick").setExecutor(new ArNickCommand());
+        getServer().getPluginCommand("arunnick").setExecutor(new ArUnNickCommand());
     
         ArDataBase.connectInit();
     }
