@@ -4,6 +4,9 @@ import com.destroystokyo.paper.event.player.PlayerAdvancementCriterionGrantEvent
 import com.github.sawors.ArDataBase;
 import com.github.sawors.Main;
 import com.github.sawors.teams.ArTeamManager;
+import io.papermc.paper.advancement.AdvancementDisplay;
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.format.TextColor;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.NamespacedKey;
@@ -14,6 +17,7 @@ import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerAdvancementDoneEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
+import org.bukkit.scheduler.BukkitRunnable;
 
 import java.sql.SQLException;
 import java.util.ArrayList;
@@ -42,9 +46,18 @@ public class AdvancementListeners implements Listener {
         
     }
     
+    
+    //  THIS LISTENER IS USED FOR :
+    //      - Granting points to teams
+    //      - Muting advancements for other players when not in team
+    //      - Checking and granting bonus for the first team to earn an advancement
+    //      - Checking and granting other bonuses
+    
+    
     @EventHandler(priority = EventPriority.HIGH)
     public static void onPlayerCompleteAdvancement(PlayerAdvancementDoneEvent event){
         Advancement adv = event.getAdvancement();
+        Component advmessage = event.message();
     
         if(AdvancementManager.isRecipe(adv) || adv.getKey().getKey().contains("/root")){
             return;
@@ -55,8 +68,8 @@ public class AdvancementListeners implements Listener {
         try{
             ArTeamManager.getPlayerTeam(p.getUniqueId());
         } catch (SQLException e) {
-            if(event.message() != null){
-                p.sendMessage(event.message());
+            if(advmessage != null){
+                p.sendMessage(advmessage);
                 event.message(null);
                 return;
             }
@@ -65,26 +78,81 @@ public class AdvancementListeners implements Listener {
             String team = ArTeamManager.getPlayerTeam(p.getUniqueId());
             NamespacedKey advname = event.getAdvancement().getKey();
         
-            if(p.getAdvancementProgress(event.getAdvancement()).isDone()){
+            if(p.getAdvancementProgress(event.getAdvancement()).isDone() && !ArTeamManager.hasTeamAdvancementCompleted(team, advname)){
                 int value = ArDataBase.getAdvancementValue(advname.getKey());
                 if(value != 0){
                     if (ArDataBase.isAdvancementMuted(advname, team)) {
                         event.message(null);
                     } else {
-                        // VALUE ADD AND SYNC
-                        ArTeamManager.addPointsToTeam(team, value);
+                        // THE ADVANCEMENT IS VALIDATED FOR THE TEAM, NOW ADD VALUE AND CHECK FOR BONUSES
+                        
+                        // add advancement to team in database + sync
                         ArDataBase.muteAdvancement(advname,team);
                         ArTeamManager.addAdvancementToTeam(team, adv.getKey());
                         ArTeamManager.syncTeamAdvancement(team, adv);
                         ArDataBase.unmuteAdvancement(advname,team);
+    
+                        // give points to team
+                        ArTeamManager.addPointsToTeam(team, value);
+                        
+                        //  TODO :
+                        //      add team's points display on HoverEvent for all team's name occurrence in chat (maybe team's members list too ?)
+                        
+                        
+                        // change event message to display team name
+                        Component msg = event.message();
+                        String valuesign = "+";
+                        if(value <= 0){
+                            valuesign = "";
+                        }
+                        event.message(Component.text("["+team+"] ").color(TextColor.fromCSSHexString(ArTeamManager.getTeamColor(team))).append(msg.color(TextColor.color(0xFFFFFF))).append(Component.text(" "+valuesign+value+"pts").color(TextColor.color(0x00AA00))));
+                        
+    
+                        // check for "pioneer" bonus
+                        if(ArTeamManager.isTeamFirst(team, event.getAdvancement())){
+                            // team is effectively first, giving "pioneer" bonus
+                            
+                            // TODO:
+                            //  this value (pioneerbonus) must be set in config !!!
+                            final int pioneerbonus = 5;
+                            
+                            final AdvancementDisplay display = event.getAdvancement().getDisplay();
+                            
+                            ArTeamManager.addPointsToTeam(team, pioneerbonus);
+                            new BukkitRunnable(){
+                                @Override
+                                public void run() {
+                                    Bukkit.broadcast(
+                                            Component.text(ChatColor.DARK_PURPLE+""+ChatColor.BOLD+"Team ")
+                                                    .append(
+                                                            ArTeamManager.getTeamColoredName(team)
+                                                    )
+                                                    .append(
+                                                            Component.text(ChatColor.DARK_PURPLE+""+ChatColor.BOLD+" is the first team to unlock "+ChatColor.GOLD+"[")
+                                                    )
+                                                    .append(
+                                                            display.title().color(TextColor.color(0xFFAA00))
+                                                    )
+                                                    .append(
+                                                            Component.text(ChatColor.GOLD+"] "+ChatColor.RESET+""+ChatColor.DARK_PURPLE+"(Bonus +"+pioneerbonus+"pts)")
+                                                    )
+    
+                                    );
+                                }
+                            }.runTaskLater(Main.getPlugin(), 1);
+                        }
                     }
                 }
+            } else {
+                event.message(null);
             }
         } catch(SQLException | NullPointerException e){
             e.printStackTrace();
         }
         
     }
+    
+    
     
     @EventHandler
     public static void addRootsAndSync(PlayerJoinEvent e){

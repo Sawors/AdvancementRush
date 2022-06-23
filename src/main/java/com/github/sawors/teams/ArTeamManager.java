@@ -341,7 +341,15 @@ public class ArTeamManager {
         
     }
     
-    
+    public static boolean isTeamFirst(String team, Advancement advancement){
+        try{
+            ArrayList<String> teamlist = getTeamsWithAdvancement(advancement.getKey());
+            return teamlist.contains(team) && teamlist.size() <= 1;
+        } catch (SQLException e){
+            e.printStackTrace();
+        }
+        return false;
+    }
     
     
     
@@ -443,5 +451,15 @@ public class ArTeamManager {
             p.displayName(pname.color(TextColor.color(0xFFFFFF)));
             p.playerListName(pname.color(TextColor.color(0xFFFFFF)));
         }
+    }
+    
+    public static Component getTeamColoredName(String team){
+        try{
+            return Component.text(team).color(TextColor.color(UsefulTools.stringToColorElseRandom(ArTeamManager.getTeamColor(team)).asRGB()));
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return Component.text(team);
+        }
+    
     }
 }

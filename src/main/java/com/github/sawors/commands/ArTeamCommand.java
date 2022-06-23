@@ -173,8 +173,7 @@ public class ArTeamCommand implements CommandExecutor {
                         if(args.length == 1){
                             sender.sendMessage(ChatColor.YELLOW+"=====[Team List]=====");
                             for(String team : ArTeamManager.getTeamList()){
-                                Component teamname = Component.text(team).color(TextColor.color(UsefulTools.stringToColorElseRandom(ArTeamManager.getTeamColor(team)).asRGB()));
-                                sender.sendMessage(Component.text(ChatColor.YELLOW+"- ").append(teamname).append(Component.text(" : "+ArTeamManager.getTeamPoints(team))));
+                                sender.sendMessage(Component.text(ChatColor.YELLOW+"- ").append(ArTeamManager.getTeamColoredName(team)).append(Component.text(" : "+ArTeamManager.getTeamPoints(team))));
                             }
                             sender.sendMessage(ChatColor.YELLOW+"===================");
                             return true;
@@ -182,7 +181,7 @@ public class ArTeamCommand implements CommandExecutor {
                             try{
                                 Main.logAdmin("arg : "+args[1]);
                                 ArrayList<UUID> players = ArDataBase.teamMembersDeserialize(ArTeamManager.getTeamPlayers(args[1]));
-                                sender.sendMessage(ChatColor.YELLOW+"==[Team "+args[1]+" Players]==");
+                                sender.sendMessage(Component.text(ChatColor.YELLOW+"==[Team ").append(ArTeamManager.getTeamColoredName(args[1])).append(Component.text(ChatColor.YELLOW+" Players]==")));
                                 for(UUID pid : players){
                                     try{
                                         sender.sendMessage(ChatColor.YELLOW+"- "+Bukkit.getOfflinePlayer(pid).getName());
@@ -200,23 +199,6 @@ public class ArTeamCommand implements CommandExecutor {
                             }
                             return true;
                         }
-                        /*sender.sendMessage("yep");
-                        ArrayList<ArTeam> tms = ArTeamManager.getTeams();
-                        sender.sendMessage(tms.toString());
-                        TextComponent msg = Component.text("");
-                        if(tms.size() > 0){
-                            for(ArTeam t : tms){
-                                msg.append(Component.text(t.getName()+"\n").color(TextColor.color(t.getColor().asRGB())));
-                            }
-                        } else{
-                            msg = Component.text("there is no team existing yet");
-                        }
-                        if(sender instanceof Player){
-                            sender.sendMessage(msg);
-                        } else {
-                            Bukkit.getLogger().log(Level.INFO, msg.content());
-                        }
-                        return true;*/
                 }
             } catch (
                     ArrayIndexOutOfBoundsException e){
