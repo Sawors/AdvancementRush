@@ -33,4 +33,10 @@ public class UsefulTools {
             Integer.toHexString((int) (Math.random() * 255)) +
             Integer.toHexString((int) (Math.random() * 255));
     }
+    
+    public static String getColorHex(Color color) {
+        String hex = String.format("#%02x%02x%02x", color.getRed(), color.getGreen(), color.getBlue());
+        hex=hex.toUpperCase();
+        return hex;
+    }
 }

@@ -2,6 +2,7 @@ package com.github.sawors.teams;
 
 import com.github.sawors.ArDataBase;
 import com.github.sawors.Main;
+import com.github.sawors.UsefulTools;
 import com.github.sawors.advancements.AdvancementManager;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
@@ -35,11 +36,7 @@ public class ArTeamManager {
     // |==================================================================================|
     
     public static void createTeam(String name, Color color) throws KeyAlreadyExistsException {
-        ArTeam tm = new ArTeam(name, color);
-        ArDataBase.registerTeam(tm);
-    }
-    public static void createTeam(ArTeam team) throws KeyAlreadyExistsException {
-        ArDataBase.registerTeam(team);
+        ArDataBase.registerTeam(name, UsefulTools.getColorHex(color), 0, new ArrayList<>());
     }
     
     public static void removeTeam(String name) throws NullPointerException{

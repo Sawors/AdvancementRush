@@ -1,6 +1,5 @@
 package com.github.sawors;
 
-import com.github.sawors.teams.ArTeam;
 import com.github.sawors.teams.ArTeamData;
 import org.bukkit.ChatColor;
 import org.bukkit.NamespacedKey;
@@ -55,26 +54,6 @@ public class ArDataBase {
     public static void printMuteMap(){
         Main.logAdmin(ChatColor.RED+"Mute Map : \n"+advancementmutemap.toString());
     }
-    /*private static HashMap<UUID, String> playerteams = new HashMap<>();
-    public static void setPlayerTeamLink(UUID playerid, String teamname){
-        playerteams.put(playerid, teamname);
-    }
-    public static String getPlayerTeam(UUID playerid) throws MalformedParametersException, NullPointerException{
-        if(playerteams.containsKey(playerid)){
-            String teamname = playerteams.get(playerid);
-            if(teamname.length() > 1){
-                return teamname;
-            } else {
-                throw new NullPointerException("Player has no team");
-            }
-        } else {
-            throw new MalformedParametersException("Player not found (severe error)");
-        }
-    }
-    public static void printPlayerTeamLink(){
-        Main.logAdmin(playerteams.toString());
-    }*/
-    
     
     public static void connectInit(){
         try(Connection co = connect()){
@@ -133,10 +112,10 @@ public class ArDataBase {
                 + ");";
     }
     
-    public static void registerTeam(ArTeam team) throws KeyAlreadyExistsException{
+    public static void registerTeam(String name, String colorhex, int points, ArrayList<UUID> members) throws KeyAlreadyExistsException{
         try(Connection co = connect()){
-            String query = "INSERT INTO teams("+ArTeamData.NAME+","+ArTeamData.COLOR+","+ArTeamData.POINTS+","+ArTeamData.PLAYERS+") VALUES('"+team.getName()+"','"+team.getColorHex()+"',"+team.getPoints()+",'"+teamMembersSerialize(team)+"')";
-            if(!doesTeamExist(team.getName())){
+            String query = "INSERT INTO teams("+ArTeamData.NAME+","+ArTeamData.COLOR+","+ArTeamData.POINTS+","+ArTeamData.PLAYERS+") VALUES('"+name+"','"+colorhex+"',"+points+",'"+teamMembersSerialize(members)+"')";
+            if(!doesTeamExist(name)){
                 co.createStatement().execute(query);
             } else{
                 throw new KeyAlreadyExistsException("this team is already registered");
@@ -176,10 +155,6 @@ public class ArDataBase {
         }
         msg.append("]");
         return msg.toString();
-    }
-    
-    public static String teamMembersSerialize(ArTeam team){
-        return teamMembersSerialize(team.getMembers());
     }
     
     public static ArrayList<UUID> teamMembersDeserialize(String str) throws MalformedParametersException {
