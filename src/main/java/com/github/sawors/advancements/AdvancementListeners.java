@@ -6,6 +6,7 @@ import com.github.sawors.Main;
 import com.github.sawors.teams.ArTeamManager;
 import net.kyori.adventure.text.Component;
 import org.bukkit.Bukkit;
+import org.bukkit.ChatColor;
 import org.bukkit.NamespacedKey;
 import org.bukkit.advancement.Advancement;
 import org.bukkit.entity.Player;
@@ -24,15 +25,16 @@ public class AdvancementListeners implements Listener {
     @EventHandler(priority = EventPriority.LOW)
     public static void playerCriteriaProgress(PlayerAdvancementCriterionGrantEvent event){
         Advancement adv = event.getAdvancement();
-        if(adv.getKey().getKey().contains("recipes/")){
+        if(AdvancementManager.isRecipe(adv)){
             return;
         }
         Main.logAdmin("you're fired!");
         Player p = event.getPlayer();
         try{
             String team = ArTeamManager.getPlayerTeam(p.getUniqueId());
-            if(!p.getAdvancementProgress(event.getAdvancement()).isDone()){
-                ArTeamManager.syncTeamAdvancement(team, adv, p);
+            if(!p.getAdvancementProgress(event.getAdvancement()).isDone() && !ArDataBase.isAdvancementMuted(adv.getKey(),team)){
+                ArTeamManager.addCriterionToTeam(team,adv.getKey(),event.getCriterion());
+                Main.logAdmin(ChatColor.RED+event.getCriterion());
             }
         } catch(SQLException | NullPointerException e){
             e.printStackTrace();
@@ -43,17 +45,31 @@ public class AdvancementListeners implements Listener {
     @EventHandler(priority = EventPriority.HIGH)
     public static void onPlayerCompleteAdvancement(PlayerAdvancementDoneEvent event){
         Advancement adv = event.getAdvancement();
-        if(adv.getKey().getKey().contains("recipes/")){
-            return;
-        }
         Player p = event.getPlayer();
         try{
+            ArTeamManager.getPlayerTeam(p.getUniqueId());
+        } catch (SQLException e) {
+            if(event.message() != null){
+                p.sendMessage(event.message());
+                event.message(null);
+                return;
+            }
+        }
+    
+        p.sendMessage(Component.text("C1"));
+        if(AdvancementManager.isRecipe(adv) || adv.getKey().getKey().contains("/root")){
+            return;
+        }
+        try{
+            p.sendMessage(Component.text("C2"));
             String team = ArTeamManager.getPlayerTeam(p.getUniqueId());
-            String advname = event.getAdvancement().getKey().getKey();
+            NamespacedKey advname = event.getAdvancement().getKey();
         
             if(p.getAdvancementProgress(event.getAdvancement()).isDone()){
-                int value = ArDataBase.getAdvancementValue(advname);
+                p.sendMessage(Component.text("C3"));
+                int value = ArDataBase.getAdvancementValue(advname.getKey());
                 if(value != 0){
+                    p.sendMessage(Component.text("C4"));
                     if (ArDataBase.isAdvancementMuted(advname, team)) {
                         event.message(null);
                     } else {
@@ -61,7 +77,8 @@ public class AdvancementListeners implements Listener {
                         p.sendMessage(Component.text("Value : "+value));
                         ArTeamManager.addPointsToTeam(team, value);
                         ArDataBase.muteAdvancement(advname,team);
-                        ArTeamManager.syncTeamAdvancement(team, adv, p);
+                        ArTeamManager.addAdvancementToTeam(team, adv.getKey());
+                        ArTeamManager.syncTeamAdvancement(team, adv);
                         ArDataBase.unmuteAdvancement(advname,team);
                     }
                 }
@@ -77,8 +94,13 @@ public class AdvancementListeners implements Listener {
         
         // TODO :
         //  Add a section to the config "base advancements" to add more advancement to be unlocked from the start
-        
         Player p = e.getPlayer();
+        try{
+            ArTeamManager.syncPlayerAllAdvancementsWithTeam(p,ArTeamManager.getPlayerTeam(p.getUniqueId()));
+        } catch (SQLException | NullPointerException ex) {
+            Main.logAdmin("player "+p.getName()+" has no team, couldn't sync advancements");
+        }
+        
         ArrayList<String> unlocklist = new ArrayList<>();
         unlocklist.add("story/root");
         unlocklist.add("nether/root");
@@ -91,12 +113,6 @@ public class AdvancementListeners implements Listener {
             for(String c : p.getAdvancementProgress(Objects.requireNonNull(ad)).getRemainingCriteria()){
                 p.getAdvancementProgress(ad).awardCriteria(c);
             }
-        }
-        
-        try{
-            ArTeamManager.syncPlayerAllAdvancementsWithTeam(p,ArTeamManager.getPlayerTeam(p.getUniqueId()));
-        } catch (SQLException ex) {
-            ex.printStackTrace();
         }
     }
 }

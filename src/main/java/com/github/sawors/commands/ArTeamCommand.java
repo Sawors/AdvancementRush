@@ -98,10 +98,16 @@ public class ArTeamCommand implements CommandExecutor {
                         //      /arteam join [teamname]
                         if(args.length >=2 && sender instanceof Player){
                             String team = args[1];
+                            Player p = (Player) sender;
                             try{
-                                ArTeamManager.changePlayerTeam(team, ((Player) sender).getUniqueId());
+                                ArTeamManager.changePlayerTeam(team, p.getUniqueId());
                                 TextComponent p1 = Component.text(ChatColor.YELLOW+"you are now a member of team ");
                                 TextComponent namepart = Component.text(team).color(TextColor.fromHexString(ArTeamManager.getTeamColor(team)));
+                                if(p.isOnline()) {
+                                    ArTeamManager.syncPlayerAllAdvancementsWithTeam(p, team);
+                                } else {
+                                    Main.logAdmin("could not sync player "+p.getName()+" with team "+team+" for this player is offline");
+                                }
                                 sender.sendMessage(p1.append(namepart));
                             } catch (SQLException | MalformedParametersException e){
                                 e.printStackTrace();
@@ -123,6 +129,11 @@ public class ArTeamCommand implements CommandExecutor {
                                 ArTeamManager.changePlayerTeam(team, Bukkit.getPlayerUniqueId(player));
                                 TextComponent p1 = Component.text(ChatColor.YELLOW+player+" is now a member of team ");
                                 TextComponent namepart = Component.text(team).color(TextColor.fromHexString(ArTeamManager.getTeamColor(team)));
+                                if(Bukkit.getPlayer(player) != null && Bukkit.getPlayer(player).isOnline()) {
+                                    ArTeamManager.syncPlayerAllAdvancementsWithTeam(Bukkit.getPlayer(player), team);
+                                } else {
+                                    Main.logAdmin("could not sync player "+player+" with team "+team+" for this player is offline");
+                                }
                                 sender.sendMessage(p1.append(namepart));
                             } catch (SQLException | MalformedParametersException | NullPointerException e){
                                 e.printStackTrace();
