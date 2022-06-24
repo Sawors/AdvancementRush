@@ -1,0 +1,14 @@
+{
+"advancementrush.first_bonus": {
+    "category": "player",
+    "sounds": [
+      "first_bonus"
+    ]
+  },
+"advancementrush.advancement_unlocked": {
+    "category": "player",
+    "sounds": [
+      "advancement_unlocked"
+    ]
+  }
+

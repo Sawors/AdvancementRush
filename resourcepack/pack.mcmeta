@@ -1,0 +1,9 @@
+{
+  "pack": {
+    "pack_format": 8,
+    "description": "§dResource pack for §o§aAdvancement §o§6Rush §dplugin"
+  },
+  "meta": {
+    "game_version": "1.18.2"
+  }
+}

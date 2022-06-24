@@ -198,6 +198,7 @@ public class AdvancementListeners implements Listener {
                         public void run() {
                             
                             if(i == 4){
+                                soundtarget.playSound(soundtarget.getLocation(),"minecraft:advancementrush.first_bonus",1,1);
                                 soundtarget.playSound(soundtarget.getLocation(), Sound.ENTITY_FIREWORK_ROCKET_BLAST, 1, 1.2f);
                             } else {
                                 soundtarget.playSound(soundtarget.getLocation(), Sound.BLOCK_AMETHYST_BLOCK_HIT, 1, 1+(0.4f*i));
@@ -232,6 +233,7 @@ public class AdvancementListeners implements Listener {
                         @Override
                         public void run() {
                             if(i == 2){
+                                soundtarget.playSound(soundtarget.getLocation(),"minecraft:advancementrush.advancement_unlocked",1,1);
                                 soundtarget.playSound(soundtarget.getLocation(), Sound.ENTITY_PLAYER_LEVELUP, 1, 1.5f);
                             } else {
                                 soundtarget.playSound(soundtarget.getLocation(), Sound.BLOCK_AMETHYST_BLOCK_HIT, 1, 1);
