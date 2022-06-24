@@ -30,6 +30,7 @@ public class ArNickCommand implements CommandExecutor {
         if(target != null){
             target.displayName(name);
             target.playerListName(name);
+            target.customName(name);
             ArTeamManager.syncPlayerColorWithTeam(target);
             return true;
         }

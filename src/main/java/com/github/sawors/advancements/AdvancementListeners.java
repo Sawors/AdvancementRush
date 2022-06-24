@@ -10,6 +10,7 @@ import net.kyori.adventure.text.format.TextColor;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.NamespacedKey;
+import org.bukkit.Sound;
 import org.bukkit.advancement.Advancement;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
@@ -19,9 +20,11 @@ import org.bukkit.event.player.PlayerAdvancementDoneEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.scheduler.BukkitRunnable;
 
+import java.lang.reflect.MalformedParametersException;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Objects;
+import java.util.UUID;
 
 public class AdvancementListeners implements Listener {
     
@@ -98,7 +101,6 @@ public class AdvancementListeners implements Listener {
                         //  TODO :
                         //      add team's points display on HoverEvent for all team's name occurrence in chat (maybe team's members list too ?)
                         
-                        
                         // change event message to display team name
                         Component msg = event.message();
                         String valuesign = "+";
@@ -106,8 +108,10 @@ public class AdvancementListeners implements Listener {
                             valuesign = "";
                         }
                         event.message(Component.text("["+team+"] ").color(TextColor.fromCSSHexString(ArTeamManager.getTeamColor(team))).append(msg.color(TextColor.color(0xFFFFFF))).append(Component.text(" "+valuesign+value+"pts").color(TextColor.color(0x00AA00))));
-                        
     
+                        // Play unlock sound
+                        playUnlockSoundForTeam(team);
+                        
                         // check for "pioneer" bonus
                         if(ArTeamManager.isTeamFirst(team, event.getAdvancement())){
                             // team is effectively first, giving "pioneer" bonus
@@ -117,7 +121,8 @@ public class AdvancementListeners implements Listener {
                             final int pioneerbonus = 5;
                             
                             final AdvancementDisplay display = event.getAdvancement().getDisplay();
-                            
+                            // Play bonus sound
+                            playBonusSoundForTeam(team);
                             ArTeamManager.addPointsToTeam(team, pioneerbonus);
                             new BukkitRunnable(){
                                 @Override
@@ -178,6 +183,69 @@ public class AdvancementListeners implements Listener {
             for(String c : p.getAdvancementProgress(Objects.requireNonNull(ad)).getRemainingCriteria()){
                 p.getAdvancementProgress(ad).awardCriteria(c);
             }
+        }
+    }
+    
+    private static void playBonusSoundForTeam(String team){
+        try{
+            ArrayList<UUID> players = ArDataBase.teamMembersDeserialize(ArTeamManager.getTeamPlayers(team));
+            for(UUID id : players){
+                Player soundtarget = Bukkit.getPlayer(id);
+                if( soundtarget != null && soundtarget.isOnline()){
+                    new BukkitRunnable(){
+                        int i = 1;
+                        @Override
+                        public void run() {
+                            
+                            if(i == 4){
+                                soundtarget.playSound(soundtarget.getLocation(), Sound.ENTITY_FIREWORK_ROCKET_BLAST, 1, 1.2f);
+                            } else {
+                                soundtarget.playSound(soundtarget.getLocation(), Sound.BLOCK_AMETHYST_BLOCK_HIT, 1, 1+(0.4f*i));
+                            }
+                            
+                            i++;
+                            if(i > 4){
+                                this.cancel();
+                            }
+                        }
+                    }.runTaskTimer(Main.getPlugin(),0,2);
+                }
+            }
+        } catch (MalformedParametersException | SQLException e){
+            e.printStackTrace();
+        }
+    }
+    
+    
+    // TODO :
+    //  add a little sound when a criterion is obtained ?
+    //  send a message in chat to player when a criterion is obtained (+ progress/total at the end or progress as "%" ?)?
+    
+    private static void playUnlockSoundForTeam(String team){
+        try{
+            ArrayList<UUID> players = ArDataBase.teamMembersDeserialize(ArTeamManager.getTeamPlayers(team));
+            for(UUID id : players){
+                Player soundtarget = Bukkit.getPlayer(id);
+                if( soundtarget != null && soundtarget.isOnline()){
+                    new BukkitRunnable(){
+                        int i = 1;
+                        @Override
+                        public void run() {
+                            if(i == 2){
+                                soundtarget.playSound(soundtarget.getLocation(), Sound.ENTITY_PLAYER_LEVELUP, 1, 1.5f);
+                            } else {
+                                soundtarget.playSound(soundtarget.getLocation(), Sound.BLOCK_AMETHYST_BLOCK_HIT, 1, 1);
+                            }
+                            i++;
+                            if(i > 2){
+                                this.cancel();
+                            }
+                        }
+                    }.runTaskTimer(Main.getPlugin(),0,2);
+                }
+            }
+        } catch (MalformedParametersException | SQLException e){
+            e.printStackTrace();
         }
     }
 }

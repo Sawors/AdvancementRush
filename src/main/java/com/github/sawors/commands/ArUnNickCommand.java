@@ -1,7 +1,7 @@
 package com.github.sawors.commands;
 
 import com.github.sawors.teams.ArTeamManager;
-import net.kyori.adventure.text.Component;
+import org.bukkit.Bukkit;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
@@ -13,10 +13,11 @@ public class ArUnNickCommand implements CommandExecutor {
     public boolean onCommand(@NotNull CommandSender sender, @NotNull Command command, @NotNull String label, @NotNull String[] args) {
         Player target;
         
-        if (args.length >= 1 && sender instanceof Player){
-            target = (Player) sender;
-            target.displayName(Component.text(""));
-            target.playerListName(Component.text(""));
+        if (args.length >= 1 && Bukkit.getPlayer(args[0]) != null){
+            target = Bukkit.getPlayer(args[0]);
+            target.displayName(null);
+            target.playerListName(null);
+            target.customName(null);
             ArTeamManager.syncPlayerColorWithTeam(target);
             return true;
         }

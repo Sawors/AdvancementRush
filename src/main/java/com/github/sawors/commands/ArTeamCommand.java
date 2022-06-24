@@ -27,7 +27,7 @@ import java.util.UUID;
 public class ArTeamCommand implements CommandExecutor {
     @Override
     public boolean onCommand(@NotNull CommandSender sender, @NotNull Command command, @NotNull String label, @NotNull String[] args) {
-        if(args.length >= 1){
+        if(args.length >= 1 && sender.isOp()){
             String action = args[0];
             try{
                 switch(action){

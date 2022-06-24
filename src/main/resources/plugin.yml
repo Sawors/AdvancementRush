@@ -6,16 +6,10 @@ authors: [ Sawors ]
 commands:
   arteam:
     usage: /<command> <action> <parameters>
-    aliases: [advancementrushteam, artm]
-  arpoint:
-    usage: /<command> <action> <parameters>
-    aliases: [advancementrushpoint, arpt]
+    aliases: [advancementrushteam]
   artest:
     usage: /<command>
-    aliases: [advancementrushtest, arts]
-  arlink:
-    usage: /<command>
-    aliases: [arlk]
+    aliases: [advancementrushtest]
   arnick:
     usage: /<command> <nickname> or /<command> <player> <nickname>
   arunnick:

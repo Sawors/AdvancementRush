@@ -6,10 +6,7 @@ import com.github.sawors.UsefulTools;
 import com.github.sawors.advancements.AdvancementManager;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.TextColor;
-import org.bukkit.Bukkit;
-import org.bukkit.ChatColor;
-import org.bukkit.Color;
-import org.bukkit.NamespacedKey;
+import org.bukkit.*;
 import org.bukkit.advancement.Advancement;
 import org.bukkit.advancement.AdvancementProgress;
 import org.bukkit.entity.Player;
@@ -460,6 +457,19 @@ public class ArTeamManager {
             e.printStackTrace();
             return Component.text(team);
         }
+    }
     
+    public static void playSoundForTeam(String team, Sound sound, float pitch){
+        try{
+            ArrayList<UUID> players = ArDataBase.teamMembersDeserialize(ArTeamManager.getTeamPlayers(team));
+            for(UUID id : players){
+                Player soundtarget = Bukkit.getPlayer(id);
+                if( soundtarget != null && soundtarget.isOnline()){
+                    soundtarget.playSound(soundtarget.getLocation(), sound,1,pitch);
+                }
+            }
+        } catch (MalformedParametersException | SQLException e){
+            e.printStackTrace();
+        }
     }
 }
