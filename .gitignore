@@ -112,4 +112,4 @@ buildNumber.properties
 # Common working directory
 run/
 *.bat
-!resourcepack/rp.zip
+!resourcepack/AdvancementRush-1.18.zip
