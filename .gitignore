@@ -112,3 +112,4 @@ buildNumber.properties
 # Common working directory
 run/
 *.bat
+!resourcepack/rp.zip
