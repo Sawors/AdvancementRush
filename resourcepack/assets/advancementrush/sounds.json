@@ -1,0 +1,8 @@
+{
+"advancementrush:info.first_bonus": {
+    "category": "player",
+    "sounds": [
+      "first_bonus"
+    ]
+  }
+}
