@@ -5,6 +5,7 @@ import com.github.sawors.commands.ArNickCommand;
 import com.github.sawors.commands.ArTeamCommand;
 import com.github.sawors.commands.ArTestCommand;
 import com.github.sawors.commands.ArUnNickCommand;
+import com.github.sawors.teams.ArTeamDisplay;
 import com.github.sawors.teams.TeamListeners;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.TextComponent;
@@ -51,6 +52,8 @@ public final class Main extends JavaPlugin {
         getServer().getPluginCommand("arunnick").setExecutor(new ArUnNickCommand());
     
         ArDataBase.connectInit();
+        ArTeamDisplay.initScoreboard();
+        
     }
     
     @Override
