@@ -4,6 +4,9 @@ import com.github.sawors.ArDataBase;
 import com.github.sawors.Main;
 import com.github.sawors.advancements.AdvancementManager;
 import com.github.sawors.teams.ArTeamManager;
+import net.kyori.adventure.bossbar.BossBar;
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.title.Title;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.NamespacedKey;
@@ -13,6 +16,7 @@ import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
+import org.bukkit.scheduler.BukkitRunnable;
 import org.jetbrains.annotations.NotNull;
 
 import java.sql.SQLException;
@@ -25,6 +29,7 @@ public class ArTestCommand implements CommandExecutor {
     public boolean onCommand(@NotNull CommandSender sender, @NotNull Command command, @NotNull String label, @NotNull String[] args) {
         
         if(sender instanceof Player){
+            final Player p = (Player) sender;
             if(args.length > 0){
                 switch(args[0]){
                     case"getcrits":
@@ -57,6 +62,20 @@ public class ArTestCommand implements CommandExecutor {
                         break;
                     case"mutelist":
                         ArDataBase.printMuteMap();
+                        break;
+                    case"places":
+                        p.sendMessage(ChatColor.GREEN+"Chat Message");
+                        p.sendActionBar(Component.text(ChatColor.RED+"Action Bar"));
+                        p.showTitle(Title.title(Component.text(ChatColor.GOLD+"Title"), Component.text(ChatColor.YELLOW+"Subtitle")));
+                        final BossBar bar = BossBar.bossBar(Component.text(ChatColor.DARK_AQUA+"Bossbar"), 1f, BossBar.Color.YELLOW, BossBar.Overlay.NOTCHED_6);
+                        p.showBossBar(bar);
+                        new BukkitRunnable(){
+                            @Override
+                            public void run(){
+                                p.hideBossBar(bar);
+                            }
+                        }.runTaskLater(Main.getPlugin(), 4*20);
+                        break;
     
                 }
             } else {

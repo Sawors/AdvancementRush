@@ -6,7 +6,10 @@ import com.github.sawors.UsefulTools;
 import com.github.sawors.advancements.AdvancementManager;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.TextColor;
-import org.bukkit.*;
+import org.bukkit.Bukkit;
+import org.bukkit.Color;
+import org.bukkit.NamespacedKey;
+import org.bukkit.Sound;
 import org.bukkit.advancement.Advancement;
 import org.bukkit.advancement.AdvancementProgress;
 import org.bukkit.entity.Player;
@@ -18,10 +21,7 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.Objects;
-import java.util.UUID;
+import java.util.*;
 
 public class ArTeamManager {
     
@@ -82,13 +82,15 @@ public class ArTeamManager {
         }
     }
     
-    public static String getTeamColor(String teamname) throws SQLException{
+    public static String getTeamColor(String teamname){
         try(Connection co = ArDataBase.connect()){
             String target = ArTeamData.COLOR.toString();
             String query = "SELECT "+target+" FROM teams WHERE "+ArTeamData.NAME+"='"+teamname+"'";
             PreparedStatement statement = co.prepareStatement(query);
             ResultSet rs = statement.executeQuery();
             return rs.getString(target);
+        } catch(SQLException e){
+            return UsefulTools.getColorHex(Color.WHITE);
         }
     }
     public static int getTeamPoints(String teamname) throws SQLException{
@@ -119,32 +121,33 @@ public class ArTeamManager {
         if (!output.contains(playerid)) {
             output.add(playerid);
         } else {
-            //ArDataBase.setPlayerTeamLink(playerid, teamname);
             throw new KeyAlreadyExistsException("this player is already in this team");
            
         }
         setTeamPlayers(teamname, ArDataBase.teamMembersSerialize(output));
-        Main.logAdmin(ArDataBase.teamMembersSerialize(output));
-        //ArDataBase.setPlayerTeamLink(playerid, teamname);
+        Player p = Bukkit.getPlayer(playerid);
+        if(p != null && p.isOnline()) {
+            ArTeamManager.syncPlayerAllAdvancementsWithTeam(p, teamname);
+            ArTeamManager.syncPlayerColorWithTeam(p);
+            ArTeamDisplay.updatePlayerScoreboard(p, teamname);
+        } else {
+            Main.logAdmin("could not sync player "+p.getName()+" with team "+teamname+" for this player is offline");
+        }
     }
     public static void changePlayerTeam(String newteam, UUID playerid) throws SQLException, MalformedParametersException, KeyAlreadyExistsException{
-        try{
-            ArTeamManager.removePlayerFromTeam(getPlayerTeam(playerid), playerid);
-        } catch (Exception e){
-            //catch everything NOT RECOMMENDED
-            Main.logAdmin("player has no team");
+        String team = getPlayerTeam(playerid);
+        if(team != null){
+            ArTeamManager.removePlayerFromTeam(team, playerid);
+        } else {
+            Main.logAdmin("Player "+Bukkit.getOfflinePlayer(playerid).getName()+" has no team");
         }
         ArrayList<UUID> output = ArDataBase.teamMembersDeserialize(getTeamPlayers(newteam));
         // add player to team if not in it
-        if (!output.contains(playerid)) {
-            output.add(playerid);
-        } else {
-            //ArDataBase.setPlayerTeamLink(playerid, newteam);
-            throw new KeyAlreadyExistsException("this player is already in this team");
-        
+        try{
+            addPlayerToTeam(newteam,playerid);
+        } catch (KeyAlreadyExistsException e){
+            e.printStackTrace();
         }
-        setTeamPlayers(newteam, ArDataBase.teamMembersSerialize(output));
-        //ArDataBase.setPlayerTeamLink(playerid, newteam);
     }
     
     public static void removePlayerFromTeam(String teamname, UUID playerid) throws SQLException, MalformedParametersException {
@@ -155,6 +158,12 @@ public class ArTeamManager {
     }
     public static void addPointsToTeam(String teamname, int points) throws SQLException, MalformedParametersException {
         setTeamPoints(teamname, getTeamPoints(teamname)+points);
+        for(Player p : Bukkit.getOnlinePlayers()){
+            String team = getPlayerTeam(p.getUniqueId());
+            if(team != null){
+                ArTeamDisplay.updatePlayerScoreboard(p, teamname);
+            }
+        }
     }
     
     private static void setTeamData(ArTeamData datatype, String teamname, String data){
@@ -166,7 +175,6 @@ public class ArTeamManager {
             } else {
                 query = "UPDATE teams SET "+datatype+"='"+data+"' WHERE "+ArTeamData.NAME+"='"+teamname+"'";
             }
-            Main.logAdmin("update query -> "+query);
             co.createStatement().execute(query);
         }catch (SQLException e){
             e.printStackTrace();
@@ -187,16 +195,18 @@ public class ArTeamManager {
         return teamlist;
     }
     
-    public static String getPlayerTeam(UUID id) throws SQLException, NullPointerException{
+    public static String getPlayerTeam(UUID id){
         try(Connection co = ArDataBase.connect()){
             PreparedStatement statement = co.prepareStatement("SELECT NAME FROM teams WHERE PLAYERS LIKE '%"+id+"%'");
-            Main.logAdmin("SELECT NAME FROM teams WHERE PLAYERS LIKE '%"+id+"%'");
             ResultSet rset = statement.executeQuery();
             if(!rset.isClosed() && rset.getString("NAME") != null){
                 return rset.getString("NAME");
             } else {
-                throw new NullPointerException("player is not in a team");
+                return null;
             }
+        } catch (SQLException e){
+            e.printStackTrace();
+            return null;
         }
     }
     
@@ -229,7 +239,6 @@ public class ArTeamManager {
             ArrayList<String> list = new ArrayList<>();
             String stmt = "SELECT NAME FROM teams WHERE "+ArTeamData.ADVANCEMENTS+" LIKE '%"+AdvancementManager.getAdvancementWithoutKey(adv.toString())+"(%'";
             PreparedStatement statement = co.prepareStatement(stmt);
-            Main.logAdmin(stmt);
             ResultSet rset = statement.executeQuery();
             if(!rset.isClosed() && rset.getString("NAME") != null){
                 while(rset.next()){
@@ -256,7 +265,6 @@ public class ArTeamManager {
             throw new KeyAlreadyExistsException("this advancement is already unlocked for this team");
         }
         setTeamAdvancements(teamname, ArDataBase.teamAdvancementsSerialize(output));
-        Main.logAdmin(ArDataBase.teamAdvancementsSerialize(output));
     }
     public static void removeAdvancementFromTeam(String teamname, NamespacedKey advancement) throws SQLException, MalformedParametersException {
         ArrayList<String> output = ArDataBase.teamAdvancementsDeserialize(getTeamAdvancements(teamname));
@@ -310,7 +318,6 @@ public class ArTeamManager {
             String newadv = ArDataBase.advancementCriteriaSerialize(advancement, crits);
             advs.add(newadv);
             setTeamAdvancements(teamname, ArDataBase.teamAdvancementsSerialize(advs));
-            Main.logAdmin(ArDataBase.teamAdvancementsSerialize(advs));
         } else {
             for(String checkadv : advs){
                 if(checkadv.contains(advancement.toString())){
@@ -326,11 +333,9 @@ public class ArTeamManager {
                     }
             
                     String newadv = ArDataBase.advancementCriteriaSerialize(advancement, crits);
-                    Main.logAdmin(ChatColor.GREEN+newadv);
                     advs.remove(checkadv);
                     advs.add(newadv);
                     setTeamAdvancements(teamname, ArDataBase.teamAdvancementsSerialize(advs));
-                    Main.logAdmin(ArDataBase.teamAdvancementsSerialize(advs));
                     break;
                 }
             }
@@ -338,7 +343,7 @@ public class ArTeamManager {
         
     }
     
-    public static boolean isTeamFirst(String team, Advancement advancement){
+    public static boolean isTeamFirstOnAdvancement(String team, Advancement advancement){
         try{
             ArrayList<String> teamlist = getTeamsWithAdvancement(advancement.getKey());
             return teamlist.contains(team) && teamlist.size() <= 1;
@@ -372,7 +377,6 @@ public class ArTeamManager {
                 ArDataBase.muteAdvancement(adv.getKey(),teamsource);
                 //delete every criteria
                 for(String crit : targetprogress.getAwardedCriteria()){
-                    Main.logAdmin(ChatColor.BLUE+"REVOKE : "+crit);
                     targetprogress.revokeCriteria(crit);
                 }
                 //add back team's criteria
@@ -380,7 +384,6 @@ public class ArTeamManager {
                     for(String advcheck : ArDataBase.teamAdvancementsDeserialize(getTeamAdvancements(teamsource))){
                         if(advcheck.contains(adv.getKey().getKey())){
                             for(String crit : ArDataBase.advancementCriteriaDeserialize(advcheck)){
-                                Main.logAdmin(ChatColor.BLUE+"AWARD : "+crit);
                                 targetprogress.awardCriteria(crit);
                             }
                         }
@@ -419,31 +422,26 @@ public class ArTeamManager {
     //sync every player's advancement with his team
     public static void syncPlayerAllAdvancementsWithTeam(Player target, String teamsource){
         try {
-            Main.logAdmin(ChatColor.BLUE+"SYNC ALL");
             for (@NotNull Iterator<Advancement> it = Bukkit.advancementIterator(); it.hasNext(); ) {
                 Advancement adv = it.next();
                 if(!AdvancementManager.isRecipe(adv)){
-                    Main.logAdmin(String.valueOf(hasTeamAdvancement(teamsource, adv.getKey())));
                     syncPlayerAdvancementWithTeam(target,teamsource,adv);
                 }
                 
             }
         
-        } catch (SQLException | NullPointerException e){
+        } catch (NullPointerException e){
             e.printStackTrace();
         }
     }
     
     public static void syncPlayerColorWithTeam(Player p){
         Component pname = p.displayName();
-        try{
-            String team = ArTeamManager.getPlayerTeam(p.getUniqueId());
+        String team = ArTeamManager.getPlayerTeam(p.getUniqueId());
+        if(team != null){
             p.displayName(pname.color(TextColor.fromCSSHexString(ArTeamManager.getTeamColor(team))));
             p.playerListName(p.playerListName().color(TextColor.fromCSSHexString(ArTeamManager.getTeamColor(team))));
-        } catch (
-                SQLException e) {
-            e.printStackTrace();
-        } catch (NullPointerException e){
+        } else {
             Main.logAdmin("Player "+p.getName()+" has no team");
             p.displayName(pname.color(TextColor.color(0xFFFFFF)));
             p.playerListName(pname.color(TextColor.color(0xFFFFFF)));
@@ -451,12 +449,7 @@ public class ArTeamManager {
     }
     
     public static Component getTeamColoredName(String team){
-        try{
-            return Component.text(team).color(TextColor.color(UsefulTools.stringToColorElseRandom(ArTeamManager.getTeamColor(team)).asRGB()));
-        } catch (SQLException e) {
-            e.printStackTrace();
-            return Component.text(team);
-        }
+        return Component.text(team).color(TextColor.color(UsefulTools.stringToColorElseRandom(ArTeamManager.getTeamColor(team)).asRGB()));
     }
     
     public static void playSoundForTeam(String team, Sound sound, float pitch){
@@ -471,5 +464,26 @@ public class ArTeamManager {
         } catch (MalformedParametersException | SQLException e){
             e.printStackTrace();
         }
+    }
+    
+    public static List<String> getTeamsRanking(){
+        ArrayList<String> ranking = new ArrayList();
+        try(Connection co = ArDataBase.connect()){
+            String query = "SELECT "+ArTeamData.NAME+
+                    " FROM teams" +
+                    " ORDER BY "+ArTeamData.POINTS+" DESC;";
+            PreparedStatement stmt = co.prepareStatement(query);
+            ResultSet rset = stmt.executeQuery();
+            while(rset.next()){
+                ranking.add(rset.getString(ArTeamData.NAME.toString()));
+            }
+        }catch (SQLException e){
+            e.printStackTrace();
+        }
+        return Collections.unmodifiableList(ranking);
+    }
+    
+    public static int getTeamRank(String teamname){
+        return getTeamsRanking().indexOf(teamname)+1;
     }
 }

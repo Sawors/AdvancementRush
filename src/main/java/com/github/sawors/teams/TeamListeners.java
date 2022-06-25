@@ -17,6 +17,10 @@ public class TeamListeners implements Listener {
     @EventHandler
     public static void updateOnJoin(PlayerJoinEvent event){
         Player p = event.getPlayer();
-        ArTeamManager.syncPlayerColorWithTeam(p);
+        String team = ArTeamManager.getPlayerTeam(p.getUniqueId());
+        if(team != null){
+            ArTeamManager.syncPlayerColorWithTeam(p);
+        }
+        ArTeamDisplay.updatePlayerScoreboard(p, team);
     }
 }

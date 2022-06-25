@@ -103,13 +103,13 @@ public class ArDataBase {
     //                  ||
     
     private static String initTeamsTableQuery(){
-        return "CREATE TABLE IF NOT EXISTS teams (\n"
-                + "	"+ArTeamData.NAME+" text PRIMARY KEY,\n"
-                + "	"+ArTeamData.COLOR+" text NOT NULL,\n"
-                + "	"+ArTeamData.POINTS+" int NOT NULL,\n"
-                + "	"+ArTeamData.PLAYERS+" text NOT NULL DEFAULT '[]',\n"
-                + "	"+ArTeamData.ADVANCEMENTS+" text NOT NULL DEFAULT '[]'\n"
-                + ");";
+        return "CREATE TABLE IF NOT EXISTS teams ("
+                +ArTeamData.NAME+" text NOT NULL UNIQUE,"
+                +ArTeamData.COLOR+" text NOT NULL,"
+                +ArTeamData.POINTS+" int NOT NULL,"
+                +ArTeamData.PLAYERS+" text NOT NULL DEFAULT '[]',"
+                +ArTeamData.ADVANCEMENTS+" text NOT NULL DEFAULT '[]'"
+                +");";
     }
     
     public static void registerTeam(String name, String colorhex, int points, ArrayList<UUID> members) throws KeyAlreadyExistsException{

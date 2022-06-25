@@ -4,6 +4,7 @@ import com.github.sawors.ArDataBase;
 import com.github.sawors.Main;
 import com.github.sawors.UsefulTools;
 import com.github.sawors.teams.ArTeamData;
+import com.github.sawors.teams.ArTeamDisplay;
 import com.github.sawors.teams.ArTeamManager;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.TextComponent;
@@ -35,6 +36,16 @@ public class ArTeamCommand implements CommandExecutor {
                         //      /arteam create [teamname] [color]
                         if(args.length >= 2){
                             String teamname = args[1];
+                            for(char c : teamname.toCharArray()){
+                                if(!(Character.isLetterOrDigit(c) || c=='-')){
+                                    
+                                    // team names created by PLAYERS cannot contain other chars than alphanumerical and "-"
+                                    // team names created by the API or DB can contain any char, even the ones forbidden for players
+                                    
+                                    sender.sendMessage(ChatColor.RED+"team's name can only contain alphanumerical characters or \"-\"");
+                                    return false;
+                                }
+                            }
                             String colorhex = "";
                             if(args.length >= 3){
                                 colorhex = args[2];
@@ -44,6 +55,15 @@ public class ArTeamCommand implements CommandExecutor {
                             Color color = UsefulTools.stringToColorElseRandom(colorhex);
                             try{
                                 ArTeamManager.createTeam(teamname, color);
+                                for(UUID id1 : ArDataBase.teamMembersDeserialize(ArTeamManager.getTeamPlayers(teamname))){
+                                    Player p1 = Bukkit.getPlayer(id1);
+                                    if(p1 != null && p1.isOnline()){
+                                        ArTeamManager.syncPlayerColorWithTeam(p1);
+                                    }
+                                }
+                                for(Player p2 : Bukkit.getOnlinePlayers()){
+                                    ArTeamDisplay.updatePlayerScoreboard(p2, ArTeamManager.getPlayerTeam(p2.getUniqueId()));
+                                }
                                 
                                 TextComponent p1 = Component.text(ChatColor.YELLOW+"team \"");
                                 TextComponent namepart = Component.text(teamname).color(TextColor.color(color.asRGB()));
@@ -65,7 +85,21 @@ public class ArTeamCommand implements CommandExecutor {
                         if(args.length >=2){
                             String name = args[1];
                             try{
+                                ArrayList<UUID> teamoldplayers = ArDataBase.teamMembersDeserialize(ArTeamManager.getTeamPlayers(name));
                                 ArTeamManager.removeTeam(name);
+                                try{
+                                    for(UUID id1 : teamoldplayers){
+                                        Player p1 = Bukkit.getPlayer(id1);
+                                        if(p1 != null && p1.isOnline()){
+                                            ArTeamManager.syncPlayerColorWithTeam(p1);
+                                        }
+                                    }
+                                    for(Player p2 : Bukkit.getOnlinePlayers()){
+                                        ArTeamDisplay.updatePlayerScoreboard(p2, ArTeamManager.getPlayerTeam(p2.getUniqueId()));
+                                    }
+                                }catch (ArrayIndexOutOfBoundsException e){
+                                    e.printStackTrace();
+                                }
                                 sender.sendMessage(ChatColor.YELLOW+"team \""+name+"\" successfully deleted");
                             } catch(NullPointerException e){
                                 e.printStackTrace();
@@ -104,12 +138,7 @@ public class ArTeamCommand implements CommandExecutor {
                                 ArTeamManager.changePlayerTeam(team, p.getUniqueId());
                                 TextComponent p1 = Component.text(ChatColor.YELLOW+"you are now a member of team ");
                                 TextComponent namepart = Component.text(team).color(TextColor.fromHexString(ArTeamManager.getTeamColor(team)));
-                                if(p.isOnline()) {
-                                    ArTeamManager.syncPlayerAllAdvancementsWithTeam(p, team);
-                                    ArTeamManager.syncPlayerColorWithTeam(p);
-                                } else {
-                                    Main.logAdmin("could not sync player "+p.getName()+" with team "+team+" for this player is offline");
-                                }
+                                
                                 sender.sendMessage(p1.append(namepart));
                             } catch (SQLException | MalformedParametersException e){
                                 e.printStackTrace();
@@ -200,11 +229,8 @@ public class ArTeamCommand implements CommandExecutor {
                             return true;
                         }
                 }
-            } catch (
-                    ArrayIndexOutOfBoundsException e){
-                if(sender instanceof Player){
-                    sender.sendMessage(ChatColor.RED+"Command failed, missing argument");
-                }
+            } catch (ArrayIndexOutOfBoundsException e){
+                sender.sendMessage(ChatColor.RED+"Command failed, missing argument");
             } catch (
                     SQLException e) {
                 e.printStackTrace();

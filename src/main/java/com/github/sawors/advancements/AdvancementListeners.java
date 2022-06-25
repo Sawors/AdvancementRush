@@ -34,11 +34,10 @@ public class AdvancementListeners implements Listener {
         if(AdvancementManager.isRecipe(adv)){
             return;
         }
-        Main.logAdmin("you're fired!");
         Player p = event.getPlayer();
         try{
             String team = ArTeamManager.getPlayerTeam(p.getUniqueId());
-            if(!p.getAdvancementProgress(event.getAdvancement()).isDone() && !ArDataBase.isAdvancementMuted(adv.getKey(),team)){
+            if(!p.getAdvancementProgress(event.getAdvancement()).isDone() && !ArDataBase.isAdvancementMuted(adv.getKey(),team) && team != null){
                 ArTeamManager.addCriterionToTeam(team,adv.getKey(),event.getCriterion());
                 ArTeamManager.syncTeamAdvancement(team, adv);
                 Main.logAdmin(ChatColor.RED+event.getCriterion());
@@ -68,9 +67,7 @@ public class AdvancementListeners implements Listener {
         
         
         Player p = event.getPlayer();
-        try{
-            ArTeamManager.getPlayerTeam(p.getUniqueId());
-        } catch (SQLException e) {
+        if(ArTeamManager.getPlayerTeam(p.getUniqueId()) == null){
             if(advmessage != null){
                 p.sendMessage(advmessage);
                 event.message(null);
@@ -81,7 +78,7 @@ public class AdvancementListeners implements Listener {
             String team = ArTeamManager.getPlayerTeam(p.getUniqueId());
             NamespacedKey advname = event.getAdvancement().getKey();
         
-            if(p.getAdvancementProgress(event.getAdvancement()).isDone() && !ArTeamManager.hasTeamAdvancementCompleted(team, advname)){
+            if(team != null && p.getAdvancementProgress(event.getAdvancement()).isDone() && !ArTeamManager.hasTeamAdvancementCompleted(team, advname)){
                 int value = ArDataBase.getAdvancementValue(advname.getKey());
                 if(value != 0){
                     if (ArDataBase.isAdvancementMuted(advname, team)) {
@@ -113,7 +110,7 @@ public class AdvancementListeners implements Listener {
                         playUnlockSoundForTeam(team);
                         
                         // check for "pioneer" bonus
-                        if(ArTeamManager.isTeamFirst(team, event.getAdvancement())){
+                        if(ArTeamManager.isTeamFirstOnAdvancement(team, event.getAdvancement())){
                             // team is effectively first, giving "pioneer" bonus
                             
                             // TODO:
@@ -165,25 +162,15 @@ public class AdvancementListeners implements Listener {
         // TODO :
         //  Add a section to the config "base advancements" to add more advancement to be unlocked from the start
         Player p = e.getPlayer();
-        try{
-            ArTeamManager.syncPlayerAllAdvancementsWithTeam(p,ArTeamManager.getPlayerTeam(p.getUniqueId()));
-        } catch (SQLException | NullPointerException ex) {
+        String team = ArTeamManager.getPlayerTeam(p.getUniqueId());
+        if (team != null) {
+            ArTeamManager.syncPlayerAllAdvancementsWithTeam(p,team);
+        } else {
             Main.logAdmin("player "+p.getName()+" has no team, couldn't sync advancements");
         }
         
-        ArrayList<String> unlocklist = new ArrayList<>();
-        unlocklist.add("story/root");
-        unlocklist.add("nether/root");
-        unlocklist.add("adventure/root");
-        unlocklist.add("end/root");
-        unlocklist.add("husbandry/root");
+        grantRootAdvancements(p);
         
-        for(String adkey : unlocklist){
-            Advancement ad = Bukkit.getAdvancement(NamespacedKey.minecraft(adkey));
-            for(String c : p.getAdvancementProgress(Objects.requireNonNull(ad)).getRemainingCriteria()){
-                p.getAdvancementProgress(ad).awardCriteria(c);
-            }
-        }
     }
     
     private static void playBonusSoundForTeam(String team){
@@ -248,6 +235,22 @@ public class AdvancementListeners implements Listener {
             }
         } catch (MalformedParametersException | SQLException e){
             e.printStackTrace();
+        }
+    }
+    
+    public static void grantRootAdvancements(Player p){
+        ArrayList<String> unlocklist = new ArrayList<>();
+        unlocklist.add("story/root");
+        unlocklist.add("nether/root");
+        unlocklist.add("adventure/root");
+        unlocklist.add("end/root");
+        unlocklist.add("husbandry/root");
+    
+        for(String adkey : unlocklist){
+            Advancement ad = Bukkit.getAdvancement(NamespacedKey.minecraft(adkey));
+            for(String c : p.getAdvancementProgress(Objects.requireNonNull(ad)).getRemainingCriteria()){
+                p.getAdvancementProgress(ad).awardCriteria(c);
+            }
         }
     }
 }
