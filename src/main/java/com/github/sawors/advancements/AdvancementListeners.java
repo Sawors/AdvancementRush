@@ -199,7 +199,8 @@ public class AdvancementListeners implements Listener {
                     }.runTaskTimer(Main.getPlugin(),0,2);
                 }
             }
-        } catch (MalformedParametersException | SQLException e){
+        } catch (
+                MalformedParametersException e){
             e.printStackTrace();
         }
     }
@@ -233,7 +234,8 @@ public class AdvancementListeners implements Listener {
                     }.runTaskTimer(Main.getPlugin(),0,2);
                 }
             }
-        } catch (MalformedParametersException | SQLException e){
+        } catch (
+                MalformedParametersException e){
             e.printStackTrace();
         }
     }

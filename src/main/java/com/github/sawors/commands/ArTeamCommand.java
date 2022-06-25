@@ -207,25 +207,21 @@ public class ArTeamCommand implements CommandExecutor {
                             sender.sendMessage(ChatColor.YELLOW+"===================");
                             return true;
                         } else {
-                            try{
-                                Main.logAdmin("arg : "+args[1]);
-                                ArrayList<UUID> players = ArDataBase.teamMembersDeserialize(ArTeamManager.getTeamPlayers(args[1]));
-                                sender.sendMessage(Component.text(ChatColor.YELLOW+"==[Team ").append(ArTeamManager.getTeamColoredName(args[1])).append(Component.text(ChatColor.YELLOW+" Players]==")));
-                                for(UUID pid : players){
-                                    try{
-                                        sender.sendMessage(ChatColor.YELLOW+"- "+Bukkit.getOfflinePlayer(pid).getName());
-                                    } catch(NullPointerException e){
-                                        e.printStackTrace();
-                                    }
+                            Main.logAdmin("arg : "+args[1]);
+                            ArrayList<UUID> players = ArDataBase.teamMembersDeserialize(ArTeamManager.getTeamPlayers(args[1]));
+                            sender.sendMessage(Component.text(ChatColor.YELLOW+"==[Team ").append(ArTeamManager.getTeamColoredName(args[1])).append(Component.text(ChatColor.YELLOW+" Players]==")));
+                            for(UUID pid : players){
+                                try{
+                                    sender.sendMessage(ChatColor.YELLOW+"- "+Bukkit.getOfflinePlayer(pid).getName());
+                                } catch(NullPointerException e){
+                                    e.printStackTrace();
                                 }
-                                StringBuilder lowbar = new StringBuilder("=================");
-                                for(int i = 1; i<= args[1].length(); i++){
-                                    lowbar.append('=');
-                                }
-                                sender.sendMessage(ChatColor.YELLOW+lowbar.toString());
-                            } catch(SQLException e){
-                                e.printStackTrace();
                             }
+                            StringBuilder lowbar = new StringBuilder("=================");
+                            for(int i = 1; i<= args[1].length(); i++){
+                                lowbar.append('=');
+                            }
+                            sender.sendMessage(ChatColor.YELLOW+lowbar.toString());
                             return true;
                         }
                 }

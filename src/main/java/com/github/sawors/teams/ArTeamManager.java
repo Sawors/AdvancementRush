@@ -102,16 +102,18 @@ public class ArTeamManager {
             return rs.getInt(target);
         }
     }
-    public static String getTeamPlayers(String teamname) throws SQLException{
+    public static String getTeamPlayers(String teamname) {
         try(Connection co = ArDataBase.connect()){
             String target = ArTeamData.PLAYERS.toString();
             String query = "SELECT "+target+" FROM teams WHERE "+ArTeamData.NAME+"='"+teamname+"'";
             PreparedStatement statement = co.prepareStatement(query);
             ResultSet rs = statement.executeQuery();
             if(rs.isClosed()){
-                return "";
+                return "[]";
             }
             return rs.getString(target);
+        } catch (SQLException e){
+            return "[]";
         }
     }
     
@@ -358,13 +360,9 @@ public class ArTeamManager {
     
     //Sync an advancement for the whole team
     public static void syncTeamAdvancement(String teamname, Advancement adv){
-        try{
-            ArrayList<UUID> players = ArDataBase.teamMembersDeserialize(getTeamPlayers(teamname));
-            for(UUID id : players){
-                syncPlayerAdvancementWithTeam(Bukkit.getPlayer(id),teamname,adv);
-            }
-        } catch (SQLException e){
-            e.printStackTrace();
+        ArrayList<UUID> players = ArDataBase.teamMembersDeserialize(getTeamPlayers(teamname));
+        for(UUID id : players){
+            syncPlayerAdvancementWithTeam(Bukkit.getPlayer(id),teamname,adv);
         }
     }
     
@@ -461,7 +459,8 @@ public class ArTeamManager {
                     soundtarget.playSound(soundtarget.getLocation(), sound,1,pitch);
                 }
             }
-        } catch (MalformedParametersException | SQLException e){
+        } catch (
+                MalformedParametersException e){
             e.printStackTrace();
         }
     }
@@ -485,5 +484,15 @@ public class ArTeamManager {
     
     public static int getTeamRank(String teamname){
         return getTeamsRanking().indexOf(teamname)+1;
+    }
+    
+    
+    //  TODO :
+    //      some methods still use the getPlayerTeam(p) != null to check if a player has team, they should use doesPlayerHasTeam(Player/UUID)
+    public static boolean doesPlayerHaveTeam(Player p){
+        return doesPlayerHaveTeam(p.getUniqueId());
+    }
+    public static boolean doesPlayerHaveTeam(UUID pid){
+        return getPlayerTeam(pid) != null;
     }
 }
