@@ -58,7 +58,7 @@ public class TeamListeners implements Listener {
             }
             event.renderer(cht);
         }
-        
+        //
     }
     
     @EventHandler
