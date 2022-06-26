@@ -147,11 +147,10 @@ public class ArTeamCommand implements CommandExecutor {
                                 } catch (KeyAlreadyExistsException e){
                                     sender.sendMessage(ChatColor.GOLD+"You are already in team "+team);
                                 }
-                                return true;
                             } else {
                                 sender.sendMessage(ChatColor.YELLOW+"Team "+team+" does not exist");
                             }
-                            
+                            return true;
                         } else {
                             sender.sendMessage("this command must be used by a player");
                             return false;
