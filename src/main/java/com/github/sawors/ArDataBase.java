@@ -298,10 +298,10 @@ public class ArDataBase {
                 + ");";
     }
     
-    public static int getAdvancementValue(String advancement){
+    public static int getAdvancementValue(NamespacedKey advancement){
         try(Connection co = connect()){
             PreparedStatement statement = co.prepareStatement("SELECT * FROM advancements WHERE name=?;");
-            statement.setString(1,advancement);
+            statement.setString(1,advancement.toString());
             //co.createStatement();
             return statement.executeQuery().getInt("value");
         } catch (SQLException e) {
@@ -318,96 +318,96 @@ public class ArDataBase {
         //  - Find a better way to edit adv (maybe set default values here and then allow for overwrite in config ? define them all directly in the config ?
         //  - CHANGE THE READING METHOD : NOW HAS NAMESPACE INCLUDED !!!!!!!!!!!!!!!!!!!!!!!!!!
         return  "INSERT INTO advancements(name,value) VALUES" +
-                "('story/mine_stone',5)," +
-                "('story/upgrade_tools',5)," +
-                "('story/smelt_iron',5)," +
-                "('story/obtain_armor',5)," +
-                "('story/deflect_arrow',10)," +
-                "('story/lava_bucket',5)," +
-                "('story/form_obsidian',15)," +
-                "('story/enter_the_nether',10)," +
-                "('story/cure_zombie_villager',125)," +
-                "('story/follow_ender_eye',25)," +
-                "('story/enter_the_end',25)," +
-                "('story/iron_tools',5)," +
-                "('story/mine_diamond',10)," +
-                "('story/shiny_gear',15)," +
-                "('story/enchant_item',15)," +
-                "('adventure/kill_a_mob',5)," +
-                "('adventure/shoot_arrow',5)," +
-                "('adventure/sniper_duel',50)," +
-                "('adventure/bullseye',100)," +
-                "('adventure/kill_all_mobs',650)," +
-                "('adventure/totem_of_undying',50)," +
-                "('adventure/throw_trident',75)," +
-                "('adventure/very_very_frightening',30)," +
-                "('adventure/trade',10)," +
-                "('adventure/summon_iron_golem',25)," +
-                "('adventure/trade_at_world_height',75)," +
-                "('adventure/sleep_in_bed',5)," +
-                "('adventure/adventuring_time',650)," +
-                "('adventure/walk_on_powder_snow_with_leather_boots',25)," +
-                "('adventure/play_jukebox_in_meadows',75)," +
-                "('adventure/ol_betsy',15)," +
-                "('adventure/whos_the_pillager_now',35)," +
-                "('adventure/arbalistic',100)," +
-                "('adventure/two_birds_one_arrow',75)," +
-                "('adventure/voluntary_exile',30)," +
-                "('adventure/hero_of_the_village',150)," +
-                "('adventure/honey_block_slide',35)," +
-                "('adventure/lightning_rod_with_villager_no_fire',20)," +
-                "('adventure/spyglass_at_parrot',15)," +
-                "('adventure/spyglass_at_ghast',10)," +
-                "('adventure/spyglass_at_dragon',20)," +
-                "('adventure/fall_from_world_height',75)," +
-                "('husbandry/breed_an_animal',5)," +
-                "('husbandry/bred_all_animals',150)," +
-                "('husbandry/tame_an_animal',15)," +
-                "('husbandry/complete_catalogue',75)," +
-                "('husbandry/plant_seed',5)," +
-                "('husbandry/balanced_diet',125)," +
-                "('husbandry/obtain_netherite_hoe',69)," +
-                "('husbandry/fishy_business',10)," +
-                "('husbandry/tactical_fishing',5)," +
-                "('husbandry/axolotl_in_a_bucket',15)," +
-                "('husbandry/kill_axolotl_target',20)," +
-                "('husbandry/safely_harvest_honey',15)," +
-                "('husbandry/wax_on',15)," +
-                "('husbandry/wax_off',10)," +
-                "('husbandry/silk_touch_nest',50)," +
-                "('husbandry/make_a_sign_glow',10)," +
-                "('husbandry/ride_a_boat_with_a_goat',15)," +
-                "('nether/fast_travel',20)," +
-                "('nether/find_fortress',15)," +
-                "('nether/obtain_blaze_rod',20)," +
-                "('nether/brew_potion',20)," +
-                "('nether/all_potions',450)," +
-                "('nether/all_effects',1250)," +
-                "('nether/get_wither_skull',75)," +
-                "('nether/summon_wither',400)," +
-                "('nether/create_beacon',150)," +
-                "('nether/create_full_beacon',450)," +
-                "('nether/return_to_sender',50)," +
-                "('nether/uneasy_alliance',200)," +
-                "('nether/obtain_ancient_debris',35)," +
-                "('nether/netherite_armor',150)," +
-                "('nether/use_lodestone',-5)," +
-                "('nether/obtain_crying_obsidian',15)," +
-                "('nether/charge_respawn_anchor',35)," +
-                "('nether/ride_strider',20)," +
-                "('nether/explore_nether',75)," +
-                "('nether/ride_strider_in_overworld_lava',50)," +
-                "('nether/find_bastion',75)," +
-                "('nether/loot_bastion',25)," +
-                "('nether/distract_piglin',15)," +
-                "('end/kill_dragon',400)," +
-                "('end/dragon_egg',300)," +
-                "('end/enter_end_gateway',20)," +
-                "('end/find_end_city',200)," +
-                "('end/elytra',350)," +
-                "('end/levitate',300)," +
-                "('end/respawn_dragon',100)," +
-                "('end/dragon_breath',30)" +
+                "('minecraft:story/mine_stone',5)," +
+                "('minecraft:story/upgrade_tools',5)," +
+                "('minecraft:story/smelt_iron',5)," +
+                "('minecraft:story/obtain_armor',5)," +
+                "('minecraft:story/deflect_arrow',10)," +
+                "('minecraft:story/lava_bucket',5)," +
+                "('minecraft:story/form_obsidian',15)," +
+                "('minecraft:story/enter_the_nether',10)," +
+                "('minecraft:story/cure_zombie_villager',125)," +
+                "('minecraft:story/follow_ender_eye',25)," +
+                "('minecraft:story/enter_the_end',25)," +
+                "('minecraft:story/iron_tools',5)," +
+                "('minecraft:story/mine_diamond',10)," +
+                "('minecraft:story/shiny_gear',15)," +
+                "('minecraft:story/enchant_item',15)," +
+                "('minecraft:adventure/kill_a_mob',5)," +
+                "('minecraft:adventure/shoot_arrow',5)," +
+                "('minecraft:adventure/sniper_duel',50)," +
+                "('minecraft:adventure/bullseye',100)," +
+                "('minecraft:adventure/kill_all_mobs',650)," +
+                "('minecraft:adventure/totem_of_undying',50)," +
+                "('minecraft:adventure/throw_trident',75)," +
+                "('minecraft:adventure/very_very_frightening',30)," +
+                "('minecraft:adventure/trade',10)," +
+                "('minecraft:adventure/summon_iron_golem',25)," +
+                "('minecraft:adventure/trade_at_world_height',75)," +
+                "('minecraft:adventure/sleep_in_bed',5)," +
+                "('minecraft:adventure/adventuring_time',650)," +
+                "('minecraft:adventure/walk_on_powder_snow_with_leather_boots',25)," +
+                "('minecraft:adventure/play_jukebox_in_meadows',75)," +
+                "('minecraft:adventure/ol_betsy',15)," +
+                "('minecraft:adventure/whos_the_pillager_now',35)," +
+                "('minecraft:adventure/arbalistic',100)," +
+                "('minecraft:adventure/two_birds_one_arrow',75)," +
+                "('minecraft:adventure/voluntary_exile',30)," +
+                "('minecraft:adventure/hero_of_the_village',150)," +
+                "('minecraft:adventure/honey_block_slide',35)," +
+                "('minecraft:adventure/lightning_rod_with_villager_no_fire',20)," +
+                "('minecraft:adventure/spyglass_at_parrot',15)," +
+                "('minecraft:adventure/spyglass_at_ghast',10)," +
+                "('minecraft:adventure/spyglass_at_dragon',20)," +
+                "('minecraft:adventure/fall_from_world_height',75)," +
+                "('minecraft:husbandry/breed_an_animal',5)," +
+                "('minecraft:husbandry/bred_all_animals',150)," +
+                "('minecraft:husbandry/tame_an_animal',15)," +
+                "('minecraft:husbandry/complete_catalogue',75)," +
+                "('minecraft:husbandry/plant_seed',5)," +
+                "('minecraft:husbandry/balanced_diet',125)," +
+                "('minecraft:husbandry/obtain_netherite_hoe',69)," +
+                "('minecraft:husbandry/fishy_business',10)," +
+                "('minecraft:husbandry/tactical_fishing',5)," +
+                "('minecraft:husbandry/axolotl_in_a_bucket',15)," +
+                "('minecraft:husbandry/kill_axolotl_target',20)," +
+                "('minecraft:husbandry/safely_harvest_honey',15)," +
+                "('minecraft:husbandry/wax_on',15)," +
+                "('minecraft:husbandry/wax_off',10)," +
+                "('minecraft:husbandry/silk_touch_nest',50)," +
+                "('minecraft:husbandry/make_a_sign_glow',10)," +
+                "('minecraft:husbandry/ride_a_boat_with_a_goat',15)," +
+                "('minecraft:nether/fast_travel',20)," +
+                "('minecraft:nether/find_fortress',15)," +
+                "('minecraft:nether/obtain_blaze_rod',20)," +
+                "('minecraft:nether/brew_potion',20)," +
+                "('minecraft:nether/all_potions',450)," +
+                "('minecraft:nether/all_effects',1250)," +
+                "('minecraft:nether/get_wither_skull',75)," +
+                "('minecraft:nether/summon_wither',400)," +
+                "('minecraft:nether/create_beacon',150)," +
+                "('minecraft:nether/create_full_beacon',450)," +
+                "('minecraft:nether/return_to_sender',50)," +
+                "('minecraft:nether/uneasy_alliance',200)," +
+                "('minecraft:nether/obtain_ancient_debris',35)," +
+                "('minecraft:nether/netherite_armor',150)," +
+                "('minecraft:nether/use_lodestone',-5)," +
+                "('minecraft:nether/obtain_crying_obsidian',15)," +
+                "('minecraft:nether/charge_respawn_anchor',35)," +
+                "('minecraft:nether/ride_strider',20)," +
+                "('minecraft:nether/explore_nether',75)," +
+                "('minecraft:nether/ride_strider_in_overworld_lava',50)," +
+                "('minecraft:nether/find_bastion',75)," +
+                "('minecraft:nether/loot_bastion',25)," +
+                "('minecraft:nether/distract_piglin',15)," +
+                "('minecraft:end/kill_dragon',400)," +
+                "('minecraft:end/dragon_egg',300)," +
+                "('minecraft:end/enter_end_gateway',20)," +
+                "('minecraft:end/find_end_city',200)," +
+                "('minecraft:end/elytra',350)," +
+                "('minecraft:end/levitate',300)," +
+                "('minecraft:end/respawn_dragon',100)," +
+                "('minecraft:end/dragon_breath',30)" +
                 ";";
     }
     

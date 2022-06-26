@@ -239,7 +239,7 @@ public class ArTeamManager {
     public static ArrayList<String> getTeamsWithAdvancement(NamespacedKey adv) throws SQLException, NullPointerException{
         try(Connection co = ArDataBase.connect()){
             ArrayList<String> list = new ArrayList<>();
-            String stmt = "SELECT NAME FROM teams WHERE "+ArTeamData.ADVANCEMENTS+" LIKE '%"+AdvancementManager.getAdvancementWithoutKey(adv.toString())+"(%'";
+            String stmt = "SELECT NAME FROM teams WHERE "+ArTeamData.ADVANCEMENTS+" LIKE '%"+adv.toString()+"(%'";
             PreparedStatement statement = co.prepareStatement(stmt);
             ResultSet rset = statement.executeQuery();
             if(!rset.isClosed() && rset.getString("NAME") != null){
@@ -259,9 +259,8 @@ public class ArTeamManager {
             output = ArDataBase.teamAdvancementsDeserialize(getTeamAdvancements(teamname));
         }
         // add advancement to team if not in it
-        String nokeyadv = AdvancementManager.getAdvancementWithoutKey(advancement.toString());
         
-        if (!output.contains(nokeyadv) && !output.contains(advancement.toString())) {
+        if (!output.contains(advancement.toString())) {
             output.add(ArDataBase.advancementCriteriaSerialize(advancement, Bukkit.getAdvancement(advancement).getCriteria()));
         } else {
             throw new KeyAlreadyExistsException("this advancement is already unlocked for this team");
@@ -270,7 +269,7 @@ public class ArTeamManager {
     }
     public static void removeAdvancementFromTeam(String teamname, NamespacedKey advancement) throws SQLException, MalformedParametersException {
         ArrayList<String> output = ArDataBase.teamAdvancementsDeserialize(getTeamAdvancements(teamname));
-        output.removeIf(adv -> adv.contains(AdvancementManager.getAdvancementWithoutKey(advancement.toString())));
+        output.removeIf(adv -> adv.contains(advancement.toString()));
         setTeamAdvancements(teamname, ArDataBase.teamAdvancementsSerialize(output));
     }
     public static boolean hasTeamAdvancement(String team, NamespacedKey advancement) throws SQLException{
@@ -286,7 +285,7 @@ public class ArTeamManager {
         try{
             if(getTeamsWithAdvancement(advancement).contains(team)){
                 for(String adv : ArDataBase.teamAdvancementsDeserialize(getTeamAdvancements(team))) {
-                    if(adv.contains(AdvancementManager.getAdvancementWithoutKey(advancement.toString()))){
+                    if(adv.contains(advancement.toString())){
                         ArrayList<String> criteria = ArDataBase.advancementCriteriaDeserialize(adv);
                         try{
                             for(String refcrit : Objects.requireNonNull(Bukkit.getAdvancement(advancement)).getCriteria()){
@@ -466,7 +465,7 @@ public class ArTeamManager {
     }
     
     public static List<String> getTeamsRanking(){
-        ArrayList<String> ranking = new ArrayList();
+        ArrayList<String> ranking = new ArrayList<>();
         try(Connection co = ArDataBase.connect()){
             String query = "SELECT "+ArTeamData.NAME+
                     " FROM teams" +
@@ -498,10 +497,11 @@ public class ArTeamManager {
     
     public static boolean doesTeamExist(String team){
         try(Connection co = ArDataBase.connect()){
-            String query = "SELECT "+ArTeamData.POINTS+" FROM teams WHERE "+ArTeamData.NAME+"='"+team+"'";
+            String query = "SELECT "+ArTeamData.NAME+" FROM teams WHERE "+ArTeamData.NAME+"='"+team+"'";
             PreparedStatement statement = co.prepareStatement(query);
             ResultSet rs = statement.executeQuery();
-            if(!rs.isClosed() && rs.getFetchSize() >= 1){
+            Main.logAdmin(!rs.isClosed()+" "+rs.getString(ArTeamData.NAME.toString()));
+            if(!rs.isClosed() && !Objects.equals(rs.getString(ArTeamData.NAME.toString()), "")){
                 return true;
             }
         } catch (SQLException e){

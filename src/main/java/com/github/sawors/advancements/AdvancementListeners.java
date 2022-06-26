@@ -79,7 +79,7 @@ public class AdvancementListeners implements Listener {
             NamespacedKey advname = event.getAdvancement().getKey();
         
             if(team != null && p.getAdvancementProgress(event.getAdvancement()).isDone() && !ArTeamManager.hasTeamAdvancementCompleted(team, advname)){
-                int value = ArDataBase.getAdvancementValue(advname.getKey());
+                int value = ArDataBase.getAdvancementValue(advname);
                 if(value != 0){
                     if (ArDataBase.isAdvancementMuted(advname, team)) {
                         event.message(null);
