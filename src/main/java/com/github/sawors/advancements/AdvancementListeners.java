@@ -23,7 +23,6 @@ import org.bukkit.scheduler.BukkitRunnable;
 import java.lang.reflect.MalformedParametersException;
 import java.sql.SQLException;
 import java.util.ArrayList;
-import java.util.Objects;
 import java.util.UUID;
 
 public class AdvancementListeners implements Listener {
@@ -169,7 +168,7 @@ public class AdvancementListeners implements Listener {
             Main.logAdmin("player "+p.getName()+" has no team, couldn't sync advancements");
         }
         
-        grantRootAdvancements(p);
+        AdvancementManager.grantRootAdvancements(p);
         
     }
     
@@ -237,22 +236,6 @@ public class AdvancementListeners implements Listener {
         } catch (
                 MalformedParametersException e){
             e.printStackTrace();
-        }
-    }
-    
-    public static void grantRootAdvancements(Player p){
-        ArrayList<String> unlocklist = new ArrayList<>();
-        unlocklist.add("story/root");
-        unlocklist.add("nether/root");
-        unlocklist.add("adventure/root");
-        unlocklist.add("end/root");
-        unlocklist.add("husbandry/root");
-    
-        for(String adkey : unlocklist){
-            Advancement ad = Bukkit.getAdvancement(NamespacedKey.minecraft(adkey));
-            for(String c : p.getAdvancementProgress(Objects.requireNonNull(ad)).getRemainingCriteria()){
-                p.getAdvancementProgress(ad).awardCriteria(c);
-            }
         }
     }
 }
