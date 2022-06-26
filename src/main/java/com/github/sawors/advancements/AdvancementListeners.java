@@ -66,7 +66,7 @@ public class AdvancementListeners implements Listener {
         
         
         Player p = event.getPlayer();
-        if(ArTeamManager.getPlayerTeam(p.getUniqueId()) == null){
+        if(!ArTeamManager.doesPlayerHaveTeam(p)){
             if(advmessage != null){
                 p.sendMessage(advmessage);
                 event.message(null);
@@ -143,6 +143,8 @@ public class AdvancementListeners implements Listener {
                             }.runTaskLater(Main.getPlugin(), 1);
                         }
                     }
+                }else {
+                    event.message(null);
                 }
             } else {
                 event.message(null);

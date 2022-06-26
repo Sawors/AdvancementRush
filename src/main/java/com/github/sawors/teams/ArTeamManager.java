@@ -370,7 +370,7 @@ public class ArTeamManager {
         ArDataBase.muteAdvancement(adv.getKey(), teamsource);
         try {
             AdvancementProgress targetprogress = target.getAdvancementProgress(adv);
-            if(target.isOnline() && !adv.getKey().getKey().contains("/root")){
+            if(target.isOnline() && ArDataBase.shouldSync(adv) && !AdvancementManager.isRecipe(adv)){
                 ArDataBase.muteAdvancement(adv.getKey(),teamsource);
                 //delete every criteria
                 for(String crit : targetprogress.getAwardedCriteria()){
@@ -394,23 +394,6 @@ public class ArTeamManager {
         } finally {
             ArDataBase.unmuteAdvancement(adv.getKey(), teamsource);
         }
-        
-        /*try {
-            ArrayList<UUID> players = ArDataBase.teamMembersDeserialize(getTeamPlayers(teamsource));
-            
-            for (UUID id : players) {
-                if (id != target.getUniqueId() && Bukkit.getPlayer(id) != null && Objects.requireNonNull(Bukkit.getPlayer(id)).isOnline()) {
-                    AdvancementProgress referenceprogress = Objects.requireNonNull(Bukkit.getPlayer(id)).getAdvancementProgress(adv);
-                    for(String crit : referenceprogress.getAwardedCriteria()){
-                        target.getAdvancementProgress(adv).awardCriteria(crit);
-                    }
-                    return;
-                }
-            }
-            
-        } catch (SQLException | NullPointerException e){
-            e.printStackTrace();
-        }*/
     }
     
     

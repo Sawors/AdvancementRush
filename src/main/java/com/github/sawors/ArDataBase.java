@@ -1,8 +1,12 @@
 package com.github.sawors;
 
+import com.github.sawors.advancements.AdvancementManager;
 import com.github.sawors.teams.ArTeamData;
+import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.NamespacedKey;
+import org.bukkit.advancement.Advancement;
+import org.jetbrains.annotations.NotNull;
 
 import javax.management.openmbean.KeyAlreadyExistsException;
 import java.io.IOException;
@@ -11,10 +15,8 @@ import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.UUID;
+import java.util.*;
+import java.util.logging.Level;
 
 public class ArDataBase {
     
@@ -29,6 +31,7 @@ public class ArDataBase {
     
     //                 <team, advancementsname>
     private static HashMap<String, ArrayList<NamespacedKey>> advancementmutemap = new HashMap<>();
+    private static HashSet<Advancement> nosynclist = new HashSet<>();
     
     public static void muteAdvancement(NamespacedKey advancement, String team){
         ArrayList<NamespacedKey> check = new ArrayList<>();
@@ -53,6 +56,28 @@ public class ArDataBase {
     
     public static void printMuteMap(){
         Main.logAdmin(ChatColor.RED+"Mute Map : \n"+advancementmutemap.toString());
+    }
+    
+    public static void setNoSync(Advancement adv){
+        nosynclist.add(adv);
+    }
+    public static boolean shouldSync(Advancement adv){
+        return !nosynclist.contains(adv);
+    }
+    
+    
+    // TODO
+    //  Making this async ?
+    public static void initNoSyncList(){
+        for (@NotNull Iterator<Advancement> it = Bukkit.advancementIterator(); it.hasNext(); ) {
+            Advancement adv = it.next();
+            if(getAdvancementValue(adv.getKey()) == 0 && !AdvancementManager.isRecipe(adv)){
+                // TODO : config
+                //  Log excluded advancements to console = true/false
+                Bukkit.getLogger().log(Level.INFO, "[Advancement Rush] Ignoring advancement "+adv.getKey()+" : value = 0 (or not referenced)");
+                setNoSync(adv);
+            }
+        }
     }
     
     public static void connectInit(){
@@ -407,7 +432,8 @@ public class ArDataBase {
                 "('minecraft:end/elytra',350)," +
                 "('minecraft:end/levitate',300)," +
                 "('minecraft:end/respawn_dragon',100)," +
-                "('minecraft:end/dragon_breath',30)" +
+                "('minecraft:end/dragon_breath',30)," +
+                "('platy:building/flower_pot',231)" +
                 ";";
     }
     

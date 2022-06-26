@@ -50,8 +50,11 @@ public final class Main extends JavaPlugin {
         getServer().getPluginCommand("arnick").setExecutor(new ArNickCommand());
         getServer().getPluginCommand("arunnick").setExecutor(new ArUnNickCommand());
     
+        // ALWAYS init this first
         ArDataBase.connectInit();
         
+        // then we can safely use the database
+        ArDataBase.initNoSyncList();
     }
     
     @Override
