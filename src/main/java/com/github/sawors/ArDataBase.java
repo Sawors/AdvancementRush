@@ -92,7 +92,8 @@ public class ArDataBase {
             co.createStatement().execute(initAdvancementsTableQuery());
             co.createStatement().execute("DELETE FROM advancements;");
             co.createStatement().execute(initDBAdvancements());
-            //List<Map<?, ?>> valuemap = Main.getMainConfig().getMapList("advancements-values");
+            co.createStatement().execute(initGameTableQuery());
+            //co.createStatement().execute("INSERT INTO game(DATA,VALUE) VALUES "+"("+ArGameData.TIMER +",0), ("+ArGameData.EGG_HOLDER+",[])");
             ConfigurationSection section = Main.getMainConfig().getConfigurationSection("advancements-values");
             if(section != null){
                 Map<String,Object> map = section.getValues(false);
@@ -111,7 +112,7 @@ public class ArDataBase {
                
             }
         } catch (SQLException | ArrayIndexOutOfBoundsException e) {
-            throw new RuntimeException(e);
+            e.printStackTrace();
         }
     }
     
@@ -329,13 +330,26 @@ public class ArDataBase {
     }
     
     
-    /*
-            |=====================|
-            |ADVANCEMENTS DATABASE|
-            |=====================|
-                      ||
-                      ||
-    */
+    //        |=====================|
+    //        |    GAME DATABASE    |
+    //        |=====================|
+    //                  ||
+    //                  ||
+    private static String initGameTableQuery(){
+        return "CREATE TABLE IF NOT EXISTS game (\n"
+                + "	DATA text UNIQUE,"
+                + "	VALUE text NOT NULL"
+                + ");";
+    }
+    
+    
+    
+    //        |=====================|
+    //        |ADVANCEMENTS DATABASE|
+    //        |=====================|
+    //                  ||
+    //                  ||
+    
     private static String initAdvancementsTableQuery(){
         return "CREATE TABLE IF NOT EXISTS advancements (\n"
                 + "	name text UNIQUE,\n"

@@ -93,13 +93,16 @@ public class ArTeamManager {
             return UsefulTools.getColorHex(Color.WHITE);
         }
     }
-    public static int getTeamPoints(String teamname) throws SQLException{
+    public static int getTeamPoints(String teamname) {
         try(Connection co = ArDataBase.connect()){
             String target = ArTeamData.POINTS.toString();
             String query = "SELECT "+target+" FROM teams WHERE "+ArTeamData.NAME+"='"+teamname+"'";
             PreparedStatement statement = co.prepareStatement(query);
             ResultSet rs = statement.executeQuery();
             return rs.getInt(target);
+        } catch (SQLException e){
+            e.printStackTrace();
+            return 0;
         }
     }
     public static String getTeamPlayers(String teamname) {

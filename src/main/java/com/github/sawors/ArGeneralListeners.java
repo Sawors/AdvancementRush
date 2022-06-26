@@ -12,7 +12,7 @@ import org.bukkit.event.player.PlayerQuitEvent;
 
 import java.util.Objects;
 
-public class GeneralListeners implements Listener {
+public class ArGeneralListeners implements Listener {
     
     
     /*// FANCY TRAIL FOR THE BEST PLAYER (ME OFC)

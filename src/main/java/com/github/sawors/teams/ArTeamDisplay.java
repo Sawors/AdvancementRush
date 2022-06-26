@@ -11,7 +11,6 @@ import org.bukkit.scoreboard.Objective;
 import org.bukkit.scoreboard.Scoreboard;
 import org.bukkit.scoreboard.Team;
 
-import java.sql.SQLException;
 import java.util.List;
 
 public class ArTeamDisplay {
@@ -64,9 +63,7 @@ public class ArTeamDisplay {
             if(ranking.size() > i){
                 String team = ranking.get(i);
                 int points = 0;
-                try{
-                    points = ArTeamManager.getTeamPoints(team);
-                } catch(SQLException ignored){}
+                points = ArTeamManager.getTeamPoints(team);
     
                 String position = String.valueOf(i+1);
                 Team displayself = objective.getScoreboard().getTeam(team) == null ? objective.getScoreboard().registerNewTeam(team) : objective.getScoreboard().getTeam(team);
@@ -91,6 +88,7 @@ public class ArTeamDisplay {
             }
         }
         objective.getScore(ChatColor.LIGHT_PURPLE+"           ...").setScore(4);
+        objective.getScore(" ").setScore(3);
         //objective.getScore(ChatColor.RESET+" "+ChatColor.GRAY+""+ChatColor.STRIKETHROUGH+"                   ").setScore(3);
     }
     
@@ -103,10 +101,8 @@ public class ArTeamDisplay {
         objective.getScore(ChatColor.RESET+" "+ChatColor.RESET+""+ChatColor.GRAY+""+ChatColor.STRIKETHROUGH+"                   ").setScore(0);
         
         int points = 0;
-        try{
-            points = ArTeamManager.getTeamPoints(team);
-        } catch(SQLException ignored){}
-        
+        points = ArTeamManager.getTeamPoints(team);
+    
         int pos = ArTeamManager.getTeamRank(team);
         String position = String.valueOf(pos);
         Team displayself = objective.getScoreboard().getTeam(team+"_") == null ? objective.getScoreboard().registerNewTeam(team+"_") : objective.getScoreboard().getTeam(team+"_");

@@ -4,6 +4,7 @@ import com.github.sawors.ArDataBase;
 import com.github.sawors.Main;
 import com.github.sawors.UsefulTools;
 import com.github.sawors.advancements.AdvancementManager;
+import com.github.sawors.game.ArGameManager;
 import com.github.sawors.teams.ArTeamManager;
 import net.kyori.adventure.bossbar.BossBar;
 import net.kyori.adventure.text.Component;
@@ -79,8 +80,10 @@ public class ArTestCommand implements CommandExecutor {
                         }.runTaskLater(Main.getPlugin(), 4*20);
                         break;
                     case"compact":
-                        
                         sender.sendMessage(Component.text("[BigChungus] ").color(TextColor.fromCSSHexString(UsefulTools.getRandomColorHex())).append(Component.text(ChatColor.WHITE+"Sawors has made the advancement ")).append(Component.text(ChatColor.GREEN+"[Diamonds!]")).append(Component.text(ChatColor.DARK_GREEN+" +10pts")).append(Component.text(ChatColor.GOLD+" "+ChatColor.MAGIC+"A"+ChatColor.GOLD+"+5pts"+ChatColor.MAGIC+"A")));
+                        break;
+                    case"timer":
+                        ArGameManager.startTimer();
                         break;
     
                 }

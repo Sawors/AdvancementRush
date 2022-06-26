@@ -1,19 +1,15 @@
 package com.github.sawors;
 
 import com.github.sawors.advancements.AdvancementListeners;
-import com.github.sawors.commands.ArNickCommand;
-import com.github.sawors.commands.ArTeamCommand;
-import com.github.sawors.commands.ArTestCommand;
-import com.github.sawors.commands.ArUnNickCommand;
-import com.github.sawors.discordbot.DiscordBotManager;
+import com.github.sawors.commands.*;
+import com.github.sawors.discordbot.ArDBotManager;
+import com.github.sawors.game.ArGameManager;
 import com.github.sawors.teams.ArTeamDisplay;
 import com.github.sawors.teams.TeamListeners;
 import net.dv8tion.jda.api.JDA;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.TextComponent;
-import org.bukkit.Bukkit;
-import org.bukkit.ChatColor;
-import org.bukkit.NamespacedKey;
+import org.bukkit.*;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.Plugin;
@@ -54,7 +50,7 @@ public final class Main extends JavaPlugin {
                 IOException e) {
             throw new RuntimeException(e);
         }
-        getServer().getPluginManager().registerEvents(new GeneralListeners(), this);
+        getServer().getPluginManager().registerEvents(new ArGeneralListeners(), this);
         getServer().getPluginManager().registerEvents(new AdvancementListeners(), this);
         getServer().getPluginManager().registerEvents(new TeamListeners(), this);
     
@@ -62,6 +58,7 @@ public final class Main extends JavaPlugin {
         getServer().getPluginCommand("artest").setExecutor(new ArTestCommand());
         getServer().getPluginCommand("arnick").setExecutor(new ArNickCommand());
         getServer().getPluginCommand("arunnick").setExecutor(new ArUnNickCommand());
+        getServer().getPluginCommand("artime").setExecutor(new ArTimeCommand());
     
         
         //initMainConfig();
@@ -76,14 +73,8 @@ public final class Main extends JavaPlugin {
         //load ignored namespaces
         ignorednamespaces.addAll(getMainConfig().getStringList("ignored-namespaces"));
         
-        
-        // Discord bot init
-        try {
-            jda = DiscordBotManager.initDiscordBot();
-            Main.logAdmin("Bot on");
-        } catch (LoginException e) {
-            Bukkit.getLogger().log(Level.WARNING, "[Advancement Rush] Discord bot couldn't start : wrong token, disabling Discord bot...");
-        }
+        //init gamemode manager
+        ArGameManager.initGameMode();
         
         //load scoreboard appearance from config
         int rksize = getMainConfig().getInt("ranking-size");
@@ -92,6 +83,24 @@ public final class Main extends JavaPlugin {
         }
         if(getMainConfig().getBoolean("show-points")){
             ArTeamDisplay.setShowPoints(getMainConfig().getBoolean("show-points"));
+        }
+        
+        //set gamerules and difficulty
+        for(World w : Bukkit.getWorlds()){
+            w.setGameRule(GameRule.DO_FIRE_TICK, !getMainConfig().getBoolean("disable-fire-spread"));
+            w.setGameRule(GameRule.KEEP_INVENTORY, getMainConfig().getBoolean("keep-inventory"));
+            w.setGameRule(GameRule.NATURAL_REGENERATION, !getMainConfig().getBoolean("no-natural-health-regen"));
+            if(getMainConfig().getBoolean("difficulty-hard")){w.setDifficulty(Difficulty.HARD);} else {w.setDifficulty(Difficulty.NORMAL);}
+        }
+        
+    
+    
+        // Discord bot init
+        try {
+            jda = ArDBotManager.initDiscordBot();
+            Main.logAdmin("Bot on");
+        } catch (LoginException e) {
+            Bukkit.getLogger().log(Level.WARNING, "[Advancement Rush] Discord bot couldn't start : wrong token, disabling Discord bot...");
         }
         
         

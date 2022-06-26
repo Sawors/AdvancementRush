@@ -14,3 +14,5 @@ commands:
     usage: /<command> <nickname> or /<command> <player> <nickname>
   arunnick:
     usage: /<command> <player>
+  artime:
+    usage: /<command> <action> <parameter>

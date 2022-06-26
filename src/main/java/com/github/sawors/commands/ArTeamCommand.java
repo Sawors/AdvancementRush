@@ -231,9 +231,6 @@ public class ArTeamCommand implements CommandExecutor {
                 }
             } catch (ArrayIndexOutOfBoundsException e){
                 sender.sendMessage(ChatColor.RED+"Command failed, missing argument");
-            } catch (
-                    SQLException e) {
-                e.printStackTrace();
             }
         }
         

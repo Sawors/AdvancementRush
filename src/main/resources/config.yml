@@ -17,6 +17,12 @@ discreet-connections: true
 #   default : true
 discreet-death-messages: true
 
+# auto gamerule and difficulty attribution
+disable-fire-spread: true
+difficulty-hard: true
+keep-inventory: false
+no-natural-health-regen: false
+
 # set this to change how the game ends (win condition)
 #   allowed values are : TIMER, VALUE, HYBRID
 #   TIMER : the game ends on a timer and the team with the most points at the end win the game
@@ -46,7 +52,7 @@ value-options:
 
 hybrid-options:
   # the goal value teams must reach to win the game
-  #   default: 1000
+  #   default:1000
   target-value: 1000
   # duration of the game in minutes
   #   default : 120 (2h)

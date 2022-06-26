@@ -6,7 +6,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Locale;
 
-public class DiscordListeners extends ListenerAdapter {
+public class ArDiscordListeners extends ListenerAdapter {
     
     @Override
     public void onMessageReceived(@NotNull MessageReceivedEvent e){
