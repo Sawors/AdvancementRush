@@ -41,7 +41,7 @@ public final class Main extends JavaPlugin {
                 IOException e) {
             throw new RuntimeException(e);
         }
-        getServer().getPluginManager().registerEvents(new SmallListeners(), this);
+        getServer().getPluginManager().registerEvents(new GeneralListeners(), this);
         getServer().getPluginManager().registerEvents(new AdvancementListeners(), this);
         getServer().getPluginManager().registerEvents(new TeamListeners(), this);
     

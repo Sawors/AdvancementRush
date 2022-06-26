@@ -495,4 +495,18 @@ public class ArTeamManager {
     public static boolean doesPlayerHaveTeam(UUID pid){
         return getPlayerTeam(pid) != null;
     }
+    
+    public static boolean doesTeamExist(String team){
+        try(Connection co = ArDataBase.connect()){
+            String query = "SELECT "+ArTeamData.POINTS+" FROM teams WHERE "+ArTeamData.NAME+"='"+team+"'";
+            PreparedStatement statement = co.prepareStatement(query);
+            ResultSet rs = statement.executeQuery();
+            if(!rs.isClosed() && rs.getFetchSize() >= 1){
+                return true;
+            }
+        } catch (SQLException e){
+            return false;
+        }
+        return false;
+    }
 }

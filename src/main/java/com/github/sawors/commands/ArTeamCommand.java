@@ -134,19 +134,24 @@ public class ArTeamCommand implements CommandExecutor {
                         if(args.length >=2 && sender instanceof Player){
                             String team = args[1];
                             Player p = (Player) sender;
-                            try{
-                                ArTeamManager.changePlayerTeam(team, p.getUniqueId());
-                                TextComponent p1 = Component.text(ChatColor.YELLOW+"you are now a member of team ");
-                                TextComponent namepart = Component.text(team).color(TextColor.fromHexString(ArTeamManager.getTeamColor(team)));
-                                
-                                sender.sendMessage(p1.append(namepart));
-                            } catch (SQLException | MalformedParametersException e){
-                                e.printStackTrace();
-                                sender.sendMessage(ChatColor.RED+"Query to database failed, no further information (is team name correct ?)");
-                            } catch (KeyAlreadyExistsException e){
-                                sender.sendMessage(ChatColor.GOLD+"You are already in team "+team);
+                            if(ArTeamManager.doesTeamExist(team)){
+                                try{
+                                    ArTeamManager.changePlayerTeam(team, p.getUniqueId());
+                                    TextComponent p1 = Component.text(ChatColor.YELLOW+"you are now a member of team ");
+                                    TextComponent namepart = Component.text(team).color(TextColor.fromHexString(ArTeamManager.getTeamColor(team)));
+        
+                                    sender.sendMessage(p1.append(namepart));
+                                } catch (SQLException | MalformedParametersException e){
+                                    e.printStackTrace();
+                                    sender.sendMessage(ChatColor.RED+"Query to database failed, no further information (is team name correct ?)");
+                                } catch (KeyAlreadyExistsException e){
+                                    sender.sendMessage(ChatColor.GOLD+"You are already in team "+team);
+                                }
+                                return true;
+                            } else {
+                                sender.sendMessage(ChatColor.YELLOW+"Team "+team+" does not exist");
                             }
-                            return true;
+                            
                         } else {
                             sender.sendMessage("this command must be used by a player");
                             return false;

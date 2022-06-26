@@ -25,12 +25,13 @@ public class ArTeamDisplay {
     // 1    your team
     
     
+    
     public static void updatePlayerScoreboard(Player player, String team){
         Scoreboard sb = Bukkit.getScoreboardManager().getNewScoreboard();
         resetScoreboard(sb);
         
         Objective test = sb.getObjective("ar_teams");
-        Component title = Component.text(ChatColor.DARK_GRAY+">> "+ChatColor.GREEN+""+ChatColor.BOLD+"Advancement"+ChatColor.DARK_GRAY+" <<  ");
+        Component title = Component.text(ChatColor.GREEN+""+ChatColor.BOLD+"Advancement  "+ChatColor.DARK_GRAY+"<<");
         if(test == null){
             test = sb.registerNewObjective("ar_teams","none",title);
         }
@@ -57,7 +58,9 @@ public class ArTeamDisplay {
         }
         List<String> ranking = ArTeamManager.getTeamsRanking();
         Main.logAdmin(ranking.toString());
-        for(int i = 0; i<5; i++){
+        // TODO : config
+        int topteamssize = 3;
+        for(int i = 0; i<topteamssize; i++){
             if(ranking.size() > i){
                 String team = ranking.get(i);
                 int points = 0;
@@ -108,20 +111,20 @@ public class ArTeamDisplay {
     }
     
     public static void setDisplayFormat(Objective objective){
-        objective.getScore(ChatColor.YELLOW+""+ChatColor.BOLD+"        Rush").setScore(12);
-        objective.getScore(ChatColor.GRAY+" "+ChatColor.STRIKETHROUGH+"                      ").setScore(11);
-        objective.getScore(ChatColor.GOLD+"      Top Teams").setScore(10);
+        objective.getScore(ChatColor.YELLOW+""+ChatColor.BOLD+"     Rush").setScore(12);
+        objective.getScore(ChatColor.GRAY+" "+ChatColor.STRIKETHROUGH+"                   ").setScore(11);
+        objective.getScore(ChatColor.GOLD+"    Top Teams").setScore(10);
         objective.getScore(ChatColor.LIGHT_PURPLE+" ...").setScore(4);
-        objective.getScore(ChatColor.RESET+" "+ChatColor.GRAY+""+ChatColor.STRIKETHROUGH+"                       ").setScore(3);
-        objective.getScore(ChatColor.GOLD+"      Your Team").setScore(2);
-        objective.getScore(ChatColor.RESET+" "+ChatColor.RESET+""+ChatColor.GRAY+""+ChatColor.STRIKETHROUGH+"                       ").setScore(0);
+        objective.getScore(ChatColor.RESET+" "+ChatColor.GRAY+""+ChatColor.STRIKETHROUGH+"                   ").setScore(3);
+        objective.getScore(ChatColor.GOLD+"    Your Team").setScore(2);
+        objective.getScore(ChatColor.RESET+" "+ChatColor.RESET+""+ChatColor.GRAY+""+ChatColor.STRIKETHROUGH+"                   ").setScore(0);
     }
     
     public static Component getTeamDisplayWithPoints(String team, int pts){
         String teamname = team;
         String points = String.valueOf(pts);
         // = total characters per line - fixed amount of chars (format) - points chars
-        int maxlength = 21-8-points.length();
+        int maxlength = 20-8-points.length();
         if(team.length() > maxlength){
             StringBuilder newname = new StringBuilder();
             char[] teamchar = team.toCharArray();
