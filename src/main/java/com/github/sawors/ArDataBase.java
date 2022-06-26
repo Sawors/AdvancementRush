@@ -6,6 +6,7 @@ import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.NamespacedKey;
 import org.bukkit.advancement.Advancement;
+import org.bukkit.configuration.ConfigurationSection;
 import org.jetbrains.annotations.NotNull;
 
 import javax.management.openmbean.KeyAlreadyExistsException;
@@ -69,15 +70,19 @@ public class ArDataBase {
     // TODO
     //  Making this async ?
     public static void initNoSyncList(){
+        int ignored = 0;
         for (@NotNull Iterator<Advancement> it = Bukkit.advancementIterator(); it.hasNext(); ) {
             Advancement adv = it.next();
             if(getAdvancementValue(adv.getKey()) == 0 && !AdvancementManager.isRecipe(adv)){
                 // TODO : config
                 //  Log excluded advancements to console = true/false
-                Bukkit.getLogger().log(Level.INFO, "[Advancement Rush] Ignoring advancement "+adv.getKey()+" : value = 0 (or not referenced)");
+                //Bukkit.getLogger().log(Level.INFO, "[Advancement Rush] Ignoring advancement "+adv.getKey()+" : value = 0 (or not referenced)");
                 setNoSync(adv);
+                ignored++;
             }
         }
+        Bukkit.getLogger().log(Level.INFO, "[Advancement Rush] Ignoring "+ignored+" advancements : value = 0 (or not referenced)");
+        
     }
     
     public static void connectInit(){
@@ -89,8 +94,25 @@ public class ArDataBase {
             co.createStatement().execute(initAdvancementsTableQuery());
             co.createStatement().execute("DELETE FROM advancements;");
             co.createStatement().execute(initDBAdvancements());
-        } catch (
-                SQLException e) {
+            //List<Map<?, ?>> valuemap = Main.getMainConfig().getMapList("advancements-values");
+            ConfigurationSection section = Main.getMainConfig().getConfigurationSection("advancements-values");
+            if(section != null){
+                Map<String,Object> map = section.getValues(false);
+                Main.logAdmin(map.toString());
+                HashMap<NamespacedKey, Integer> editadv = new HashMap<>();
+                for(int i = 0; i<map.size();i++){
+                    editadv.put(NamespacedKey.fromString(String.valueOf(map.keySet().toArray()[i])), Integer.valueOf(String.valueOf(map.values().toArray()[i])));
+                }
+                Main.logAdmin(editadv.toString());
+                for(NamespacedKey key : editadv.keySet()){
+                    Integer value = editadv.get(key);
+                    String query = "REPLACE INTO advancements (name, value) VALUES ('"+key+"',"+value+");";
+                    //String query = "INSERT INTO advancements(name,value) VALUES ('"+key.toString()+"', "+value+")"+" ON CONFLICT(name) DO UPDATE SET value="+value+";";
+                    co.createStatement().execute(query);
+                }
+               
+            }
+        } catch (SQLException | ArrayIndexOutOfBoundsException e) {
             throw new RuntimeException(e);
         }
     }
@@ -335,13 +357,8 @@ public class ArDataBase {
         }
     }
     
-    public static String initDBAdvancements(){
-        // EDIT THIS TO ADD/MODIFY ADVANCEMENTS
-        // TODO
-        //  - Add a config file for this
-        //  - Add a check for adv validity
-        //  - Find a better way to edit adv (maybe set default values here and then allow for overwrite in config ? define them all directly in the config ?
-        //  - CHANGE THE READING METHOD : NOW HAS NAMESPACE INCLUDED !!!!!!!!!!!!!!!!!!!!!!!!!!
+    private static String initDBAdvancements(){
+        // DEFAULT VALUES, DO NOT MODIFY HERE, USE THE CONFIG FOR THAT
         return  "INSERT INTO advancements(name,value) VALUES" +
                 "('minecraft:story/mine_stone',5)," +
                 "('minecraft:story/upgrade_tools',5)," +
@@ -432,8 +449,7 @@ public class ArDataBase {
                 "('minecraft:end/elytra',350)," +
                 "('minecraft:end/levitate',300)," +
                 "('minecraft:end/respawn_dragon',100)," +
-                "('minecraft:end/dragon_breath',30)," +
-                "('platy:building/flower_pot',231)" +
+                "('minecraft:end/dragon_breath',30)" +
                 ";";
     }
     

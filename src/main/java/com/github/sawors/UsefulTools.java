@@ -2,6 +2,8 @@ package com.github.sawors;
 
 import org.bukkit.Color;
 
+import java.time.LocalDateTime;
+
 public class UsefulTools {
     
     
@@ -38,5 +40,10 @@ public class UsefulTools {
         String hex = String.format("#%02x%02x%02x", color.getRed(), color.getGreen(), color.getBlue());
         hex=hex.toUpperCase();
         return hex;
+    }
+    
+    static String getTimeText(){
+        LocalDateTime time = LocalDateTime.now();
+        return "["+time.getDayOfMonth()+"."+time.getMonthValue()+"."+time.getYear()+" "+time.getHour()+":"+time.getMinute()+":"+time.getSecond()+"]";
     }
 }

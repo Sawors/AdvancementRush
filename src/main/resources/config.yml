@@ -1,0 +1,131 @@
+# plugin default config
+
+
+#   [========== ADMIN ==========]
+# log excluded advancements to console
+log-excluded: true
+
+
+#   [========== GAMEPLAY ==========]
+# set this to change join/leave messages to a more subtle message
+# player TestPlayer joins : → TestPlayer
+# player TestPlayer leaves : ← TestPlayer
+#   default : true
+discreet-connections: true
+
+# set this to change death messages to a more subtle message (default message but in gray)
+#   default : true
+discreet-death-messages: true
+
+# set this to change how the game ends (win condition)
+#   allowed values are : TIMER, VALUE, HYBRID
+#   TIMER : the game ends on a timer and the team with the most points at the end win the game
+#   VALUE : the game ends when a team reach a certain value -> first team to xxx points
+#   HYBRID : a mix of both gamemodes, ends when a team reach a certain value or if no one reach the value in time
+#            the winner team is the one with the most points at the end of the timer
+#   default: TIMER
+gamemode: TIMER
+
+timer-options:
+  # duration of the game (in minutes)
+  #   default : 240 (4h)
+  duration: 240
+  # if you want players to be able to see the scores in the scoreboard
+  # this does not disable the display of ranking
+  #   default: true
+  show-scores: true
+  # hide the scores in the scoreboard x minutes before the game end (in minutes)
+  # set to 0 to disable
+  #   default: 30
+  hide-scores-timer: 30
+
+value-options:
+  # the goal value teams must reach to win the game
+  #   default: 1000
+  target-value: 1000
+
+hybrid-options:
+  # the goal value teams must reach to win the game
+  #   default: 1000
+  target-value: 1000
+  # duration of the game in minutes
+  #   default : 120 (2h)
+  duration: 120
+  # hide the scores in the scoreboard x minutes before the game end (in minutes)
+  # set to 0 to disable
+  #   default: 30
+  hide-scores-timer: 30
+
+# since the dragon egg advancement is almost granted when you kill the dragon and is a unique item
+# you can enable a different way of earning points with it : earning points for holding it
+# OR the team which hold the dragon egg at the end of the game earns its points.
+# The advantage of earning points for holding it through the game is that players cannot hide
+# the egg in a chest until the game end and are forced to play with it
+dragon-egg-bonus:
+  # enable the feature
+  # enabling it makes the advancement worth 5 points, you can earn points through the 2 new modes
+  enabled: true
+  # way of earning points
+  # HOLD : earn points for holding it, you earn a fixed amount of points for each minute you have the egg in your inventory
+  # END : the player (team) which has the egg in its INVENTORY at the end of the game earn the total amount of points of the egg
+  bonus-mode: HOLD
+  # number of points a team earn per minute for having the dragon egg in one of its players inventory if bonus-mode is HOLD
+  #   default: 10
+  hold-points-per-minute: 10
+  # number of points a team earn for having the dragon egg in one of its players inventory at the end of the game if bonus-mode is END
+  #   default: 300
+  end-bonus-points: 300
+  # show the coordinate of the player holding the dragon egg in the tablist
+  #   default: true
+  show-coordinates: true
+  # number of minutes before the game end at which the player holding the dragon egg gain the Glowing potion effect
+  # set to 0 to disable
+  #   default : 30
+  glowing-timer: 30
+
+
+#   [========== INTERFACE ==========]
+# maximum of team displayed in the scoreboard "top teams" section
+#   range : (1-7)
+#   set 0 if you want to disable this category entirely
+#     default: 5
+ranking-size: 5
+# show points, this does not disable the ranking
+#   default: true
+show-points: true
+
+
+#   [========== DISCORD BOT ==========]
+# your bot token got from https://discord.com/developers/applications
+# NEVER SHARE THIS TOKEN ON THE INTERNET
+# follow this tutorial if you want to know how to get it and create a Discord bot : https://discordpy.readthedocs.io/en/stable/discord.html
+# for the sake of simplicity please give the Administrator perm to the bot, otherwise many features will not work
+discord-bot-token:
+# channel ID of the discord channel where commands and team management can be used (admin/team_manager channel)
+discord-bot-management-channelID:
+
+
+#   [========== ADVANCEMENTS ==========]
+# bonus when a team is the first one to unlock an advancement
+#   default: 5
+pioneer-bonus: 5
+# special bonus for the first team to reach certain advancements (user defined)
+# example config :
+# special-bonuses:
+#   "minecraft:story/enter_the_nether": 100
+#   "minecraft:story/mine_diamond": 100
+special-bonuses:
+# edit advancements values or add new ones
+# format : namespace:category/advancement
+advancements-values:
+  "minecraft:story/mine_diamond": 123
+  "test:customcherry/executabl": 12
+# set here root advancements
+#   these advancements are automatically unlocked and are used to show the player
+#   the different categories and advancements
+auto-unlock:
+  - "minecraft:story/root"
+  - "minecraft:end/root"
+  - "minecraft:nether/root"
+  - "minecraft:husbandry/root"
+  - "minecraft:adventure/root"

@@ -330,7 +330,7 @@ public class ArTeamManager {
                     if (!crits.contains(criterion)) {
                         crits.add(criterion);
                     } else {
-                        throw new KeyAlreadyExistsException("this criterion is already unlocked for this team");
+                        throw new KeyAlreadyExistsException("criterion "+criterion+" is already unlocked for this team");
                     }
             
                     String newadv = ArDataBase.advancementCriteriaSerialize(advancement, crits);
@@ -370,14 +370,14 @@ public class ArTeamManager {
         ArDataBase.muteAdvancement(adv.getKey(), teamsource);
         try {
             AdvancementProgress targetprogress = target.getAdvancementProgress(adv);
-            if(target.isOnline() && ArDataBase.shouldSync(adv) && !AdvancementManager.isRecipe(adv)){
+            if(target.isOnline() && !AdvancementManager.isRecipe(adv)){
                 ArDataBase.muteAdvancement(adv.getKey(),teamsource);
                 //delete every criteria
                 for(String crit : targetprogress.getAwardedCriteria()){
                     targetprogress.revokeCriteria(crit);
                 }
                 //add back team's criteria
-                if(hasTeamAdvancement(teamsource, adv.getKey())){
+                if(hasTeamAdvancement(teamsource, adv.getKey()) && ArDataBase.shouldSync(adv)){
                     for(String advcheck : ArDataBase.teamAdvancementsDeserialize(getTeamAdvancements(teamsource))){
                         if(advcheck.contains(adv.getKey().getKey())){
                             for(String crit : ArDataBase.advancementCriteriaDeserialize(advcheck)){
@@ -391,7 +391,9 @@ public class ArTeamManager {
         
         } catch (SQLException | NullPointerException e){
             e.printStackTrace();
-        } finally {
+        } catch (KeyAlreadyExistsException exception){
+            Main.logAdmin(exception.getMessage());
+        }finally {
             ArDataBase.unmuteAdvancement(adv.getKey(), teamsource);
         }
     }

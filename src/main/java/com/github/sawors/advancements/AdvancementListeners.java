@@ -36,7 +36,7 @@ public class AdvancementListeners implements Listener {
         Player p = event.getPlayer();
         try{
             String team = ArTeamManager.getPlayerTeam(p.getUniqueId());
-            if(!p.getAdvancementProgress(event.getAdvancement()).isDone() && !ArDataBase.isAdvancementMuted(adv.getKey(),team) && team != null){
+            if(!p.getAdvancementProgress(event.getAdvancement()).isDone() && !ArDataBase.isAdvancementMuted(adv.getKey(),team) && team != null && ArDataBase.shouldSync(adv)){
                 ArTeamManager.addCriterionToTeam(team,adv.getKey(),event.getCriterion());
                 ArTeamManager.syncTeamAdvancement(team, adv);
                 Main.logAdmin(ChatColor.RED+event.getCriterion());
@@ -114,7 +114,7 @@ public class AdvancementListeners implements Listener {
                             
                             // TODO:
                             //  this value (pioneerbonus) must be set in config !!!
-                            final int pioneerbonus = 5;
+                            final int pioneerbonus = Main.getMainConfig().getInt("pioneer-bonus");
                             
                             final AdvancementDisplay display = event.getAdvancement().getDisplay();
                             // Play bonus sound

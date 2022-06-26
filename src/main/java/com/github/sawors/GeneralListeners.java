@@ -10,6 +10,8 @@ import org.bukkit.event.entity.PlayerDeathEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 
+import java.util.Objects;
+
 public class GeneralListeners implements Listener {
     
     
@@ -48,20 +50,25 @@ public class GeneralListeners implements Listener {
     
     @EventHandler(priority = EventPriority.LOW)
     public static void discreetConnectionMessages(PlayerJoinEvent e){
-        // TODO : config
-        e.joinMessage(Component.text(ChatColor.GRAY+"→ "+e.getPlayer().getName()));
+        if(Objects.equals(Main.getMainConfig().getBoolean("discreet-connections"), true)){
+            e.joinMessage(Component.text(ChatColor.GRAY+"→ "+e.getPlayer().getName()));
+        }
+       
     }
     
     @EventHandler(priority = EventPriority.LOW)
     public static void discreetLeavingMessages(PlayerQuitEvent e){
-        // TODO : config
-        e.quitMessage(Component.text(ChatColor.GRAY+"← "+e.getPlayer().getName()));
+        if(Objects.equals(Main.getMainConfig().getBoolean("discreet-connections"), true)){
+            e.quitMessage(Component.text(ChatColor.GRAY+"← "+e.getPlayer().getName()));
+        }
+        
     }
     
     @EventHandler
     public static void discreetDeathMessage(PlayerDeathEvent event){
-        Component dm = event.deathMessage() != null ? event.deathMessage() : Component.text("");
-        event.deathMessage(dm.color(TextColor.color(0xAAAAAA)));
-        Main.logAdmin("LAUNCHED");
+        if(Objects.equals(Main.getMainConfig().getBoolean("discreet-death-messages"), true)){
+            Component dm = event.deathMessage() != null ? event.deathMessage() : Component.text("");
+            event.deathMessage(dm.color(TextColor.color(0x555555)));
+        }
     }
 }

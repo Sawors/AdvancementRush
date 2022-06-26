@@ -1,11 +1,13 @@
 package com.github.sawors.advancements;
 
+import com.github.sawors.Main;
 import org.bukkit.Bukkit;
 import org.bukkit.NamespacedKey;
 import org.bukkit.advancement.Advancement;
 import org.bukkit.entity.Player;
 
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Objects;
 
 public class AdvancementManager {
@@ -21,20 +23,15 @@ public class AdvancementManager {
     
     public static void grantRootAdvancements(Player p){
         ArrayList<NamespacedKey> unlocklist = new ArrayList<>();
-        unlocklist.add(NamespacedKey.minecraft("story/root"));
-        unlocklist.add(NamespacedKey.minecraft("nether/root"));
-        unlocklist.add(NamespacedKey.minecraft("adventure/root"));
-        unlocklist.add(NamespacedKey.minecraft("end/root"));
-        unlocklist.add(NamespacedKey.minecraft("husbandry/root"));
-        // TODO : config
-        //  add config for custom auto-unlock advancements here
-        
-        
-        
-        for(NamespacedKey adkey : unlocklist){
-            Advancement ad = Bukkit.getAdvancement(adkey);
-            for(String c : p.getAdvancementProgress(Objects.requireNonNull(ad)).getRemainingCriteria()){
-                p.getAdvancementProgress(ad).awardCriteria(c);
+        List<String> unlocklist2 = Main.getMainConfig().getStringList("auto-unlock");
+        NamespacedKey namekey;
+        for(String key : unlocklist2){
+            namekey = !key.contains(":") ? NamespacedKey.minecraft(key) : NamespacedKey.fromString(key);
+            if(Bukkit.getAdvancement(namekey) != null){
+                Advancement ad = Bukkit.getAdvancement(namekey);
+                for(String c : p.getAdvancementProgress(Objects.requireNonNull(ad)).getRemainingCriteria()){
+                    p.getAdvancementProgress(ad).awardCriteria(c);
+                }
             }
         }
     }

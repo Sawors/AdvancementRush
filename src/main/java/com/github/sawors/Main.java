@@ -5,19 +5,22 @@ import com.github.sawors.commands.ArNickCommand;
 import com.github.sawors.commands.ArTeamCommand;
 import com.github.sawors.commands.ArTestCommand;
 import com.github.sawors.commands.ArUnNickCommand;
+import com.github.sawors.discordbot.DiscordBotManager;
+import com.github.sawors.teams.ArTeamDisplay;
 import com.github.sawors.teams.TeamListeners;
+import net.dv8tion.jda.api.JDA;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.TextComponent;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
+import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.java.JavaPlugin;
 
+import javax.security.auth.login.LoginException;
 import java.io.File;
 import java.io.IOException;
-import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
 import java.util.logging.Level;
 
 public final class Main extends JavaPlugin {
@@ -26,7 +29,14 @@ public final class Main extends JavaPlugin {
     private static File dbfile;
     
     //
+    // Discord bot
+    private static JDA jda;
+    private JDA getJDA(){
+        return jda;
+    }
     
+    //
+    // startup
     @Override
     public void onEnable() {
         // Plugin startup logic
@@ -50,11 +60,37 @@ public final class Main extends JavaPlugin {
         getServer().getPluginCommand("arnick").setExecutor(new ArNickCommand());
         getServer().getPluginCommand("arunnick").setExecutor(new ArUnNickCommand());
     
+        
+        //initMainConfig();
+        this.saveDefaultConfig();
+        
+        
+        
+        
         // ALWAYS init this first
         ArDataBase.connectInit();
         
         // then we can safely use the database
         ArDataBase.initNoSyncList();
+        
+        // Discord bot init
+        try {
+            jda = DiscordBotManager.initDiscordBot();
+            Main.logAdmin("Bot on");
+        } catch (LoginException e) {
+            Bukkit.getLogger().log(Level.WARNING, "[Advancement Rush] Discord bot couldn't start : wrong token, disabling Discord bot...");
+        }
+        
+        //load scoreboard appearance from config
+        int rksize = getMainConfig().getInt("ranking-size");
+        if(rksize >= 0 && rksize <= 7){
+            ArTeamDisplay.setTopTeamSize(rksize);
+        }
+        if(getMainConfig().getBoolean("show-points")){
+            ArTeamDisplay.setShowPoints(getMainConfig().getBoolean("show-points"));
+        }
+        
+        
     }
     
     @Override
@@ -74,12 +110,16 @@ public final class Main extends JavaPlugin {
         Bukkit.getLogger().log(Level.INFO, "[AdvancementRush] "+msg.content().replaceAll("§e", ""));
         for(Player p : Bukkit.getOnlinePlayers()){
             if(p.isOp()){
-                p.sendMessage(ChatColor.YELLOW+"[DEBUG] "+ LocalDateTime.now().format(DateTimeFormatter.ISO_TIME)+" : "+msg.content().replaceAll("§e", ""));
+                p.sendMessage(ChatColor.YELLOW+"[DEBUG] "+UsefulTools.getTimeText()+" : "+msg.content().replaceAll("§e", ""));
             }
         }
     }
     
     public static void logAdmin(String msg){
         logAdmin(Component.text(ChatColor.YELLOW+msg));
+    }
+    
+    public static FileConfiguration getMainConfig(){
+        return getPlugin().getConfig();
     }
 }
