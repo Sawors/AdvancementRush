@@ -470,9 +470,6 @@ public class ArTeamManager {
         return getTeamsRanking().indexOf(teamname)+1;
     }
     
-    
-    //  TODO :
-    //      some methods still use the getPlayerTeam(p) != null to check if a player has team, they should use doesPlayerHasTeam(Player/UUID)
     public static boolean doesPlayerHaveTeam(Player p){
         return doesPlayerHaveTeam(p.getUniqueId());
     }

@@ -30,7 +30,7 @@ public class AdvancementListeners implements Listener {
     @EventHandler(priority = EventPriority.LOW)
     public static void playerCriteriaProgress(PlayerAdvancementCriterionGrantEvent event){
         Advancement adv = event.getAdvancement();
-        if(AdvancementManager.isRecipe(adv)){
+        if(AdvancementManager.isRecipe(adv) || adv.getKey().getKey().contains("/root") || Main.isIgnored(adv.getKey())){
             return;
         }
         Player p = event.getPlayer();
@@ -60,7 +60,8 @@ public class AdvancementListeners implements Listener {
         Advancement adv = event.getAdvancement();
         Component advmessage = event.message();
     
-        if(AdvancementManager.isRecipe(adv) || adv.getKey().getKey().contains("/root")){
+        if(AdvancementManager.isRecipe(adv) || adv.getKey().getKey().contains("/root") || Main.isIgnored(adv.getKey())){
+            event.message(null);
             return;
         }
         
@@ -112,8 +113,6 @@ public class AdvancementListeners implements Listener {
                         if(ArTeamManager.isTeamFirstOnAdvancement(team, event.getAdvancement())){
                             // team is effectively first, giving "pioneer" bonus
                             
-                            // TODO:
-                            //  this value (pioneerbonus) must be set in config !!!
                             final int pioneerbonus = Main.getMainConfig().getInt("pioneer-bonus");
                             
                             final AdvancementDisplay display = event.getAdvancement().getDisplay();
@@ -160,8 +159,6 @@ public class AdvancementListeners implements Listener {
     @EventHandler
     public static void addRootsAndSync(PlayerJoinEvent e){
         
-        // TODO :
-        //  Add a section to the config "base advancements" to add more advancement to be unlocked from the start
         Player p = e.getPlayer();
         String team = ArTeamManager.getPlayerTeam(p.getUniqueId());
         if (team != null) {

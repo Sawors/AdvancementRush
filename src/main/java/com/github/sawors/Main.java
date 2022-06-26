@@ -13,6 +13,7 @@ import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.TextComponent;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
+import org.bukkit.NamespacedKey;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.Plugin;
@@ -21,12 +22,14 @@ import org.bukkit.plugin.java.JavaPlugin;
 import javax.security.auth.login.LoginException;
 import java.io.File;
 import java.io.IOException;
+import java.util.HashSet;
 import java.util.logging.Level;
 
 public final class Main extends JavaPlugin {
     
     private static Main instance;
     private static File dbfile;
+    private static HashSet<String> ignorednamespaces = new HashSet<>();
     
     //
     // Discord bot
@@ -63,15 +66,16 @@ public final class Main extends JavaPlugin {
         
         //initMainConfig();
         this.saveDefaultConfig();
-        
-        
-        
-        
         // ALWAYS init this first
         ArDataBase.connectInit();
         
+        
         // then we can safely use the database
         ArDataBase.initNoSyncList();
+        
+        //load ignored namespaces
+        ignorednamespaces.addAll(getMainConfig().getStringList("ignored-namespaces"));
+        
         
         // Discord bot init
         try {
@@ -121,5 +125,12 @@ public final class Main extends JavaPlugin {
     
     public static FileConfiguration getMainConfig(){
         return getPlugin().getConfig();
+    }
+    
+    public static boolean isIgnored(String namespace){
+        return ignorednamespaces.contains(namespace);
+    }
+    public static boolean isIgnored(NamespacedKey key){
+        return isIgnored(key.namespace());
     }
 }

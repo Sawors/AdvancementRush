@@ -109,6 +109,14 @@ discord-bot-management-channelID:
 # bonus when a team is the first one to unlock an advancement
 #   default: 5
 pioneer-bonus: 5
+# ignored namespaces
+# use this to ignore completely advancements from a plugin/vanilla. This list prevent them from being
+# earned in game
+# a namespace is the text before the ":" in advancements IDs -> "minecraft:story/mine_diamond" -> namespace = minecraft
+# exemple to disable all vanilla advancements :
+#   ignored-namespaces:
+#     - "minecraft"
+ignored-namespaces:
 # special bonus for the first team to reach certain advancements (user defined)
 # example config :
 # special-bonuses:
@@ -118,8 +126,6 @@ special-bonuses:
 # edit advancements values or add new ones
 # format : namespace:category/advancement
 advancements-values:
-  "minecraft:story/mine_diamond": 123
-  "test:customcherry/executabl": 12
 # set here root advancements
 #   these advancements are automatically unlocked and are used to show the player
 #   the different categories and advancements

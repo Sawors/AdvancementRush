@@ -74,8 +74,6 @@ public class ArDataBase {
         for (@NotNull Iterator<Advancement> it = Bukkit.advancementIterator(); it.hasNext(); ) {
             Advancement adv = it.next();
             if(getAdvancementValue(adv.getKey()) == 0 && !AdvancementManager.isRecipe(adv)){
-                // TODO : config
-                //  Log excluded advancements to console = true/false
                 //Bukkit.getLogger().log(Level.INFO, "[Advancement Rush] Ignoring advancement "+adv.getKey()+" : value = 0 (or not referenced)");
                 setNoSync(adv);
                 ignored++;
