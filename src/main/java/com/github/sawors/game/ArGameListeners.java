@@ -86,7 +86,7 @@ public class ArGameListeners implements Listener {
     public static void chatSoundEffects(AsyncChatEvent event){
         if(ArGameManager.getGamephase().equals(ArGamePhase.WINNER_ANNOUNCEMENT) && ((TextComponent)event.message()).content().toLowerCase(Locale.ENGLISH).contains("gg")){
             for(Player p : Bukkit.getOnlinePlayers()){
-                p.playSound(p.getLocation(), Sound.ENTITY_VILLAGER_CELEBRATE,1,1);
+                p.playSound(p.getLocation(), Sound.ENTITY_VILLAGER_CELEBRATE,1,1.5f);
             }
         }
     }

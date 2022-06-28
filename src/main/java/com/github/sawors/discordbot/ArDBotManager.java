@@ -1,7 +1,7 @@
 package com.github.sawors.discordbot;
 
-import com.github.sawors.ArDataBase;
 import com.github.sawors.Main;
+import com.github.sawors.database.ArDataBase;
 import com.github.sawors.teams.ArTeamManager;
 import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.JDABuilder;

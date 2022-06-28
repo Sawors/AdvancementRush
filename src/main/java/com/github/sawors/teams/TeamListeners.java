@@ -1,6 +1,6 @@
 package com.github.sawors.teams;
 
-import com.github.sawors.ArDataBase;
+import com.github.sawors.database.ArDataBase;
 import io.papermc.paper.chat.ChatRenderer;
 import io.papermc.paper.event.player.AsyncChatEvent;
 import net.kyori.adventure.audience.Audience;

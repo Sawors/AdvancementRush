@@ -1,9 +1,9 @@
 package com.github.sawors.commands;
 
-import com.github.sawors.ArDataBase;
 import com.github.sawors.Main;
 import com.github.sawors.UsefulTools;
-import com.github.sawors.teams.ArTeamData;
+import com.github.sawors.database.ArDataBase;
+import com.github.sawors.database.ArTeamData;
 import com.github.sawors.teams.ArTeamDisplay;
 import com.github.sawors.teams.ArTeamManager;
 import net.kyori.adventure.text.Component;

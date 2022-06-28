@@ -1,7 +1,7 @@
 package com.github.sawors.discordbot;
 
-import com.github.sawors.ArDataBase;
 import com.github.sawors.Main;
+import com.github.sawors.database.ArDataBase;
 import net.dv8tion.jda.api.entities.User;
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;

@@ -62,6 +62,8 @@ public class ArTeamDisplay {
         objective.getScore(ChatColor.YELLOW+""+ChatColor.BOLD+"      Rush").setScore(20);
         objective.getScore(ChatColor.GRAY+" "+ChatColor.STRIKETHROUGH+"                   ").setScore(19);
     
+        player.sendPlayerListHeader(Component.text(ChatColor.GOLD+""+ChatColor.STRIKETHROUGH+"============"+ChatColor.GREEN+"  "+ChatColor.BOLD+"Advancement "+ChatColor.YELLOW+""+ChatColor.BOLD+"Rush  "+ChatColor.GOLD+""+ChatColor.STRIKETHROUGH+"============"));
+        
         switch(ArGameManager.getGamephase()){
             case TEAM_SELECTION:
                 setDisplayTeamSelectionFormat(objective, team);

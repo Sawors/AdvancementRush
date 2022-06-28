@@ -1,8 +1,8 @@
 package com.github.sawors.advancements;
 
 import com.destroystokyo.paper.event.player.PlayerAdvancementCriterionGrantEvent;
-import com.github.sawors.ArDataBase;
 import com.github.sawors.Main;
+import com.github.sawors.database.ArDataBase;
 import com.github.sawors.game.ArGameManager;
 import com.github.sawors.game.ArGamePhase;
 import com.github.sawors.teams.ArTeamManager;

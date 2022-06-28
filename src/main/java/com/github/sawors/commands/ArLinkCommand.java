@@ -1,6 +1,6 @@
 package com.github.sawors.commands;
 
-import com.github.sawors.ArDataBase;
+import com.github.sawors.database.ArDataBase;
 import com.github.sawors.discordbot.ArDBotManager;
 import org.bukkit.ChatColor;
 import org.bukkit.command.Command;

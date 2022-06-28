@@ -1,9 +1,10 @@
 package com.github.sawors.teams;
 
-import com.github.sawors.ArDataBase;
 import com.github.sawors.Main;
 import com.github.sawors.UsefulTools;
 import com.github.sawors.advancements.AdvancementManager;
+import com.github.sawors.database.ArDataBase;
+import com.github.sawors.database.ArTeamData;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.TextColor;
 import org.bukkit.Bukkit;

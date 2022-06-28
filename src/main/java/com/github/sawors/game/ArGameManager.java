@@ -1,8 +1,9 @@
 package com.github.sawors.game;
 
-import com.github.sawors.ArDataBase;
 import com.github.sawors.Main;
 import com.github.sawors.UsefulTools;
+import com.github.sawors.database.ArDataBase;
+import com.github.sawors.database.ArGameData;
 import com.github.sawors.teams.ArTeamDisplay;
 import com.github.sawors.teams.ArTeamManager;
 import net.kyori.adventure.text.Component;
@@ -109,7 +110,7 @@ public class ArGameManager {
     
     public static UUID getLastKnownHolder(){
         try(Connection co = ArDataBase.connect()){
-            String query = "SELECT VALUE FROM game WHERE DATA = '"+ArGameData.EGG_HOLDER+"'";
+            String query = "SELECT VALUE FROM game WHERE DATA = '"+ ArGameData.EGG_HOLDER+"'";
             String output = co.prepareStatement(query).executeQuery().getString("VALUE");
             if(Objects.equals(output, "[]")){
                 return null;

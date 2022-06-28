@@ -1,8 +1,8 @@
-package com.github.sawors;
+package com.github.sawors.database;
 
+import com.github.sawors.Main;
 import com.github.sawors.advancements.AdvancementManager;
 import com.github.sawors.discordbot.ArDBotManager;
-import com.github.sawors.teams.ArTeamData;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.NamespacedKey;
