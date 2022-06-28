@@ -5,6 +5,7 @@ import com.github.sawors.game.ArGameManager;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.TextComponent;
 import net.kyori.adventure.text.format.TextColor;
+import net.kyori.adventure.title.Title;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.configuration.file.FileConfiguration;
@@ -14,6 +15,7 @@ import org.bukkit.scoreboard.Objective;
 import org.bukkit.scoreboard.Scoreboard;
 import org.bukkit.scoreboard.Team;
 
+import java.time.Duration;
 import java.util.List;
 
 public class ArTeamDisplay {
@@ -39,6 +41,7 @@ public class ArTeamDisplay {
     }
     
     public static void updatePlayerDisplay(Player player, String team){
+        showpoints = ArGameManager.showScores();
         if(!showpoints){
             spacer = "     ";
             maxlinelength = maxlinelength_final-(spacer.length()/2);
@@ -70,7 +73,11 @@ public class ArTeamDisplay {
                 setDisplayEndGameFormat(objective, team);
                 break;
             case WINNER_ANNOUNCEMENT:
-                setDisplayWinnerAnnouncementFormat(objective, team);
+                int index = ArTeamManager.getTeamsRanking().size()-ArGameManager.getFinalRankingShowLength();
+                if(index >= 0){
+                    showPlayerTeamScoreTitle(player,ArTeamManager.getTeamsRanking().get(index));
+                }
+                setDisplayWinnerAnnouncementFormat(objective, ArGameManager.getFinalRankingShowLength());
                 break;
         }
         
@@ -99,7 +106,8 @@ public class ArTeamDisplay {
         setSelfTeam(objective,team,5);
         setTimerDisplay(objective);
     }
-    private static void setDisplayWinnerAnnouncementFormat(Objective objective, String team){
+    private static void setDisplayWinnerAnnouncementFormat(Objective objective, int showlength){
+        setFinalRankingDisplayFormat(objective, showlength);
     }
     
     
@@ -211,6 +219,36 @@ public class ArTeamDisplay {
         
     }
     
+    private static void setFinalRankingDisplayFormat(Objective objective, int showlength){
+        if(objective.getScoreboard() == null){
+            return;
+        }
+        List<String> ranking = ArTeamManager.getTeamsRanking();
+        Main.logAdmin(ranking.toString());
+        int rankingsize = ranking.size();
+        objective.getScore(ChatColor.GOLD+"    Top Teams").setScore(rankingsize+2);
+        Main.logAdmin(showlength+"");
+        for(int i = 0; i<showlength; i++){
+            String team = ranking.get(rankingsize-i-1);
+            int points = ArTeamManager.getTeamPoints(team);
+            int pos = ranking.indexOf(team)+1;
+            String position = String.valueOf(pos);
+            Team displayself = objective.getScoreboard().getTeam(team) == null ? objective.getScoreboard().registerNewTeam(team) : objective.getScoreboard().getTeam(team);
+            displayself.suffix(Component.text(ChatColor.LIGHT_PURPLE+spacer+position+". ").append(getTeamDisplay(team, points)));
+            StringBuilder identifierunique = new StringBuilder();
+            for(int i2 = 0; i2<=i; i2++){
+                identifierunique.append(ChatColor.RESET + "");
+            }
+            String identifier = identifierunique.toString();
+            for(String entry : displayself.getEntries()){
+                displayself.removeEntry(entry);
+            }
+            displayself.addEntry(identifier);
+            objective.getScore(identifier).setScore(rankingsize-pos+1);
+        }
+        objective.getScore(ChatColor.RESET+" "+ChatColor.RESET+""+ChatColor.GRAY+""+ChatColor.STRIKETHROUGH+"                   ").setScore(0);
+    }
+    
     private static TextComponent getTeamDisplay(String team, int pts, boolean showpoints){
         String teamname = team;
         String points = String.valueOf(pts);
@@ -247,5 +285,28 @@ public class ArTeamDisplay {
     }
     public static void setShowPoints(boolean show){
         showpoints = show;
+    }
+    private static void showPlayerTeamScoreTitle(Player p, String team){
+        int points = ArTeamManager.getTeamPoints(team);
+        int baseduration = ArGameManager.getRankTitleDuration();
+        int duration = baseduration;
+        String color = ArTeamManager.getTeamColor(team);
+        TextColor rankcolor = TextColor.color(0xFFFF55);
+        int rank = ArTeamManager.getTeamRank(team);
+        switch(rank){
+            case 3:
+                rankcolor = TextColor.color(0x6A3805);
+                duration = baseduration*2;
+                break;
+            case 2:
+                rankcolor = TextColor.color(0xB4B4B4);
+                duration = baseduration*2;
+                break;
+            case 1:
+                rankcolor = TextColor.color(0xFFAA00);
+                duration = baseduration*2;
+                break;
+        }
+        p.showTitle(Title.title(Component.text(rank).color(rankcolor), Component.text(team+" with "+points+" points").color(TextColor.fromHexString(color)), Title.Times.times(Duration.ofMillis(duration*250L),Duration.ofMillis(duration* 500L),Duration.ofMillis(duration*250L))));
     }
 }

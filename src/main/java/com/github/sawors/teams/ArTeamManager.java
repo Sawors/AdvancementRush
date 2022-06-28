@@ -82,13 +82,17 @@ public class ArTeamManager {
         }
     }
     
-    public static String getTeamColor(String teamname){
+    public static @NotNull String getTeamColor(String teamname){
         try(Connection co = ArDataBase.connect()){
             String target = ArTeamData.COLOR.toString();
             String query = "SELECT "+target+" FROM teams WHERE "+ArTeamData.NAME+"='"+teamname+"'";
             PreparedStatement statement = co.prepareStatement(query);
             ResultSet rs = statement.executeQuery();
-            return rs.getString(target);
+            if(!rs.isClosed() && rs.getString(target) != null){
+                return rs.getString(target);
+            } else {
+                return UsefulTools.getRandomColorHex();
+            }
         } catch(SQLException e){
             return UsefulTools.getColorHex(Color.WHITE);
         }
@@ -99,7 +103,11 @@ public class ArTeamManager {
             String query = "SELECT "+target+" FROM teams WHERE "+ArTeamData.NAME+"='"+teamname+"'";
             PreparedStatement statement = co.prepareStatement(query);
             ResultSet rs = statement.executeQuery();
-            return rs.getInt(target);
+            if(!rs.isClosed()){
+                return rs.getInt(target);
+            } else {
+                return 0;
+            }
         } catch (SQLException e){
             e.printStackTrace();
             return 0;

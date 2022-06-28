@@ -39,6 +39,8 @@ public class ArGameManager {
     private static int timer = 0;
     private static ArGamePhase gamephase = ArGamePhase.TEAM_SELECTION;
     private static boolean showranks = true;
+    private static int finalrankshowlength = 1;
+    private static int ranktitleduration = 4;
     
     public static void initGameMode(){
         FileConfiguration config = Main.getMainConfig();
@@ -165,20 +167,6 @@ public class ArGameManager {
     public static void setGameDuration(int durationinminutes){
         duration = durationinminutes;
     }
-    public static void startWinnerAnnouncementSequence(){
-        timer=duration*60;
-        setGamephase(ArGamePhase.WINNER_ANNOUNCEMENT);
-        refreshTimerDisplay();
-        for(Player p : Bukkit.getOnlinePlayers()){
-            p.playSound(p.getLocation(), Sound.ENTITY_ENDER_DRAGON_GROWL,1,1);
-            try{
-                String team = ArTeamManager.getTeamsRanking().get(0);
-                p.showTitle(Title.title(Component.text(ChatColor.GOLD+"WINNER"),Component.text(team+" : "+ArTeamManager.getTeamPoints(team)).color(TextColor.fromHexString(ArTeamManager.getTeamColor(team)))));
-            } catch(IndexOutOfBoundsException e){
-                Main.logAdmin("no team in first place");
-            }
-        }
-    }
     public static void forceSetTimer(int timerinminutes){
         // do this check first because we cannot know if at this time timer is used, we do this to avoid assigning it by mistake to a negative value for an instant
         if (timerinminutes*60 < 0) {timer = 0;return;}
@@ -300,7 +288,6 @@ public class ArGameManager {
         } else {
             return seconds+" seconds remaining";
         }
-        
     }
     
     
@@ -341,5 +328,52 @@ public class ArGameManager {
     }
     public static int getEndGameTime(){
         return hiderankstimer;
+    }
+    
+    public static int getFinalRankingShowLength(){
+        return finalrankshowlength;
+    }
+    
+    public static void startWinnerAnnouncementSequence(){
+        timer=duration*60;
+        setGamephase(ArGamePhase.WINNER_ANNOUNCEMENT);
+        showscores = true;
+        showranks = true;
+        refreshTimerDisplay();
+        for(Player p : Bukkit.getOnlinePlayers()){
+            p.playSound(p.getLocation(), Sound.ENTITY_ENDER_DRAGON_GROWL,1,1);
+            try{
+                String team = ArTeamManager.getTeamsRanking().get(0);
+                p.showTitle(Title.title(Component.text(ChatColor.GOLD+"WINNER"),Component.text(team+" : "+ArTeamManager.getTeamPoints(team)).color(TextColor.fromHexString(ArTeamManager.getTeamColor(team)))));
+            } catch(IndexOutOfBoundsException e){
+                Main.logAdmin("no team in first place");
+            }
+        }
+        int imax = ArTeamManager.getTeamsRanking().size();
+        new BukkitRunnable(){
+            int i = 1;
+            @Override
+            public void run() {
+                if(i>imax){
+                    this.cancel();
+                    return;
+                }
+                for(Player p : Bukkit.getOnlinePlayers()){
+                    try{
+                        String team = "not_used";
+                        finalrankshowlength = i;
+                        ArTeamDisplay.updatePlayerDisplay(p,team);
+                        //p.showTitle(Title.title(Component.text(ChatColor.GOLD+"WINNER"),Component.text(team+" : "+ArTeamManager.getTeamPoints(team)).color(TextColor.fromHexString(ArTeamManager.getTeamColor(team)))));
+                    } catch(IndexOutOfBoundsException e){
+                        Main.logAdmin("no team in ranking");
+                    }
+                }
+                i++;
+            }
+        }.runTaskTimer(Main.getPlugin(),ranktitleduration/4,ranktitleduration*20);
+    }
+    
+    public static int getRankTitleDuration(){
+        return ranktitleduration;
     }
 }

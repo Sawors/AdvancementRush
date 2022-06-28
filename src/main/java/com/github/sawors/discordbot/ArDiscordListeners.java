@@ -17,7 +17,7 @@ public class ArDiscordListeners extends ListenerAdapter {
     @Override
     public void onMessageReceived(@NotNull MessageReceivedEvent e){
         String msg = e.getMessage().getContentDisplay();
-        if(msg.toCharArray()[0] == '!'){
+        if(msg.length() > 0 && msg.toCharArray()[0] == '!'){
             if(msg.toLowerCase(Locale.ROOT).contains("coucou le bot") && !e.getMessage().getAuthor().isBot()){
                 e.getChannel().sendMessage("Coucou "+e.getMessage().getAuthor().getAsMention()+" !").queue();
             }else if(msg.toLowerCase(Locale.ROOT).contains("!arlink")){
