@@ -2,10 +2,10 @@ package com.github.sawors.game;
 
 import com.github.sawors.ArDataBase;
 import com.github.sawors.Main;
+import com.github.sawors.UsefulTools;
 import com.github.sawors.teams.ArTeamDisplay;
 import com.github.sawors.teams.ArTeamManager;
 import net.kyori.adventure.text.Component;
-import net.kyori.adventure.text.format.TextColor;
 import net.kyori.adventure.title.Title;
 import org.bukkit.*;
 import org.bukkit.configuration.ConfigurationSection;
@@ -340,15 +340,15 @@ public class ArGameManager {
         showscores = true;
         showranks = true;
         refreshTimerDisplay();
-        for(Player p : Bukkit.getOnlinePlayers()){
+        /*for(Player p : Bukkit.getOnlinePlayers()){
             p.playSound(p.getLocation(), Sound.ENTITY_ENDER_DRAGON_GROWL,1,1);
             try{
                 String team = ArTeamManager.getTeamsRanking().get(0);
-                p.showTitle(Title.title(Component.text(ChatColor.GOLD+"WINNER"),Component.text(team+" : "+ArTeamManager.getTeamPoints(team)).color(TextColor.fromHexString(ArTeamManager.getTeamColor(team)))));
+                //p.showTitle(Title.title(Component.text(ChatColor.GOLD+"WINNER"),Component.text(team+" : "+ArTeamManager.getTeamPoints(team)).color(TextColor.fromHexString(ArTeamManager.getTeamColor(team)))));
             } catch(IndexOutOfBoundsException e){
                 Main.logAdmin("no team in first place");
             }
-        }
+        }*/
         int imax = ArTeamManager.getTeamsRanking().size();
         new BukkitRunnable(){
             int i = 1;
@@ -360,8 +360,71 @@ public class ArGameManager {
                 }
                 for(Player p : Bukkit.getOnlinePlayers()){
                     try{
+                        new BukkitRunnable(){
+                            int times = ranktitleduration;
+                            int timesi = 0;
+    
+                            @Override
+                            public void run() {
+                                new BukkitRunnable(){
+                                    final int soundnb = i;
+                                    int locali = 0;
+                                    @Override
+                                    public void run() {
+                                        if(locali >= soundnb){
+                                            this.cancel();
+                                            return;
+                                        }
+                                        p.playSound(p.getLocation(), Sound.ENTITY_FIREWORK_ROCKET_LAUNCH, 1f,1+(.01f*i));
+                                        locali++;
+                                    }
+                                }.runTaskTimer(Main.getPlugin(), 0, 1);
+                                new BukkitRunnable(){
+                                    final int soundnb = i;
+                                    int locali = 0;
+                                    @Override
+                                    public void run() {
+                                        if(locali >= soundnb){
+                                            this.cancel();
+                                            return;
+                                        }
+                                        p.playSound(p.getLocation(), Sound.ENTITY_FIREWORK_ROCKET_BLAST, 1f,1+(.01f*i));
+                                        locali++;
+                                    }
+                                }.runTaskTimer(Main.getPlugin(), 0, 2);
+                                timesi++;
+                                if(timesi >= times){
+                                    this.cancel();
+                                }
+                                
+                            }
+                           
+                        }.runTaskTimer(Main.getPlugin(),0,10);
                         String team = "not_used";
                         finalrankshowlength = i;
+                        // 1st announcement effects
+                        if(i==ArTeamManager.getTeamsRanking().size()){
+                            p.spawnParticle(Particle.REDSTONE,p.getLocation().add(0,1,0),128,2,2,2,.5, new Particle.DustOptions(UsefulTools.stringToColorElseRandom(ArTeamManager.getTeamColor(team)),1));
+                            p.spawnParticle(Particle.SOUL_FIRE_FLAME,p.getLocation().add(0,1,0),128,2,2,2,.25);
+                            p.playSound(p.getLocation(), Sound.ENTITY_WITHER_DEATH, 2f,1);
+                        }
+                        // 2nd announcement effects
+                        else if(i==ArTeamManager.getTeamsRanking().size()-1){
+                            p.spawnParticle(Particle.REDSTONE,p.getLocation().add(0,1,0),128,2,2,2,.5, new Particle.DustOptions(UsefulTools.stringToColorElseRandom(ArTeamManager.getTeamColor(team)),1));
+                            p.playSound(p.getLocation(), Sound.ENTITY_ENDER_DRAGON_GROWL, 2f,1);
+                            p.spawnParticle(Particle.END_ROD,p.getLocation().add(0,1,0),128,2,2,2,.1);
+                        }
+                        // 3rd announcement effects
+                        else if(i==ArTeamManager.getTeamsRanking().size()-2){
+                            p.spawnParticle(Particle.REDSTONE,p.getLocation().add(0,1,0),128,2,2,2,.5, new Particle.DustOptions(UsefulTools.stringToColorElseRandom(ArTeamManager.getTeamColor(team)),1));
+                            p.playSound(p.getLocation(), Sound.ENTITY_BLAZE_DEATH, 2f,1);
+                            p.spawnParticle(Particle.SPELL,p.getLocation().add(0,1,0),128,2,2,2,.25);
+                        }
+                        //other announcements effect
+                        else {
+                            p.spawnParticle(Particle.REDSTONE,p.getLocation().add(0,1,0),128,2,2,2,.5, new Particle.DustOptions(UsefulTools.stringToColorElseRandom(ArTeamManager.getTeamColor(team)),1));
+                            p.playSound(p.getLocation(), Sound.ENTITY_VILLAGER_CELEBRATE, 2f,1);
+                        }
                         ArTeamDisplay.updatePlayerDisplay(p,team);
                         //p.showTitle(Title.title(Component.text(ChatColor.GOLD+"WINNER"),Component.text(team+" : "+ArTeamManager.getTeamPoints(team)).color(TextColor.fromHexString(ArTeamManager.getTeamColor(team)))));
                     } catch(IndexOutOfBoundsException e){

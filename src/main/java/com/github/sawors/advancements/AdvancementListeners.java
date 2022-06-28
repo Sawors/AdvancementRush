@@ -3,6 +3,8 @@ package com.github.sawors.advancements;
 import com.destroystokyo.paper.event.player.PlayerAdvancementCriterionGrantEvent;
 import com.github.sawors.ArDataBase;
 import com.github.sawors.Main;
+import com.github.sawors.game.ArGameManager;
+import com.github.sawors.game.ArGamePhase;
 import com.github.sawors.teams.ArTeamManager;
 import io.papermc.paper.advancement.AdvancementDisplay;
 import net.kyori.adventure.text.Component;
@@ -29,6 +31,10 @@ public class AdvancementListeners implements Listener {
     
     @EventHandler(priority = EventPriority.LOW)
     public static void playerCriteriaProgress(PlayerAdvancementCriterionGrantEvent event){
+        if(!ArGameManager.getGamephase().equals(ArGamePhase.INGAME)){
+            event.setCancelled(true);
+            return;
+        }
         Advancement adv = event.getAdvancement();
         if(AdvancementManager.isRecipe(adv) || adv.getKey().getKey().contains("/root") || Main.isIgnored(adv.getKey())){
             return;

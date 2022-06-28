@@ -85,6 +85,8 @@ public class ArTestCommand implements CommandExecutor {
                     case"timer":
                         ArGameManager.startTimer();
                         break;
+                    case"win":
+                        ArGameManager.startWinnerAnnouncementSequence();
     
                 }
             } else {

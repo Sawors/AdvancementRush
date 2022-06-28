@@ -288,25 +288,21 @@ public class ArTeamDisplay {
     }
     private static void showPlayerTeamScoreTitle(Player p, String team){
         int points = ArTeamManager.getTeamPoints(team);
-        int baseduration = ArGameManager.getRankTitleDuration();
-        int duration = baseduration;
+        int duration = ArGameManager.getRankTitleDuration();
         String color = ArTeamManager.getTeamColor(team);
         TextColor rankcolor = TextColor.color(0xFFFF55);
         int rank = ArTeamManager.getTeamRank(team);
         switch(rank){
             case 3:
                 rankcolor = TextColor.color(0x6A3805);
-                duration = baseduration*2;
                 break;
             case 2:
                 rankcolor = TextColor.color(0xB4B4B4);
-                duration = baseduration*2;
                 break;
             case 1:
                 rankcolor = TextColor.color(0xFFAA00);
-                duration = baseduration*2;
                 break;
         }
-        p.showTitle(Title.title(Component.text(rank).color(rankcolor), Component.text(team+" with "+points+" points").color(TextColor.fromHexString(color)), Title.Times.times(Duration.ofMillis(duration*250L),Duration.ofMillis(duration* 500L),Duration.ofMillis(duration*250L))));
+        p.showTitle(Title.title(Component.text(team).color(TextColor.fromHexString(color)), Component.text(points+" points").color(rankcolor), Title.Times.times(Duration.ofMillis(duration*150L),Duration.ofMillis(duration* 500L),Duration.ofMillis(duration*350L))));
     }
 }

@@ -1,9 +1,14 @@
 package com.github.sawors.game;
 
 import com.github.sawors.Main;
+import io.papermc.paper.event.player.AsyncChatEvent;
 import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.TextComponent;
 import net.kyori.adventure.text.format.TextColor;
+import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
+import org.bukkit.Sound;
+import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
@@ -11,6 +16,7 @@ import org.bukkit.event.entity.PlayerDeathEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 
+import java.util.Locale;
 import java.util.Objects;
 
 
@@ -73,6 +79,15 @@ public class ArGameListeners implements Listener {
         if(Objects.equals(Main.getMainConfig().getBoolean("discreet-death-messages"), true)){
             Component dm = event.deathMessage() != null ? event.deathMessage() : Component.text("");
             event.deathMessage(dm.color(TextColor.color(0x555555)));
+        }
+    }
+    
+    @EventHandler
+    public static void chatSoundEffects(AsyncChatEvent event){
+        if(ArGameManager.getGamephase().equals(ArGamePhase.WINNER_ANNOUNCEMENT) && ((TextComponent)event.message()).content().toLowerCase(Locale.ENGLISH).contains("gg")){
+            for(Player p : Bukkit.getOnlinePlayers()){
+                p.playSound(p.getLocation(), Sound.ENTITY_VILLAGER_CELEBRATE,1,1);
+            }
         }
     }
 }
