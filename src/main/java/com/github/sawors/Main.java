@@ -6,6 +6,7 @@ import com.github.sawors.database.ArDataBase;
 import com.github.sawors.discordbot.ArDBotManager;
 import com.github.sawors.game.ArGameListeners;
 import com.github.sawors.game.ArGameManager;
+import com.github.sawors.game.ArGamePhase;
 import com.github.sawors.teams.ArTeamDisplay;
 import com.github.sawors.teams.TeamListeners;
 import net.dv8tion.jda.api.JDA;
@@ -85,7 +86,7 @@ public final class Main extends JavaPlugin {
         if(getMainConfig().getBoolean("show-points")){
             ArTeamDisplay.setShowPoints(getMainConfig().getBoolean("show-points"));
         }
-        
+    
         //set gamerules and difficulty
         for(World w : Bukkit.getWorlds()){
             w.setGameRule(GameRule.DO_FIRE_TICK, !getMainConfig().getBoolean("disable-fire-spread"));
@@ -108,35 +109,41 @@ public final class Main extends JavaPlugin {
         ArTeamDisplay.initDisplay();
         
         String serverid = Main.getMainConfig().getString("discord-server-id");
-            final int timoutdelay = 20;
-            new BukkitRunnable(){
-                int tries = 0;
-                @Override
-                public void run() {
-                    if(serverid != null && jda.getGuildById(serverid) != null){
-                        try{
-                            Guild server = jda.getGuildById(serverid);
-                            if(server != null){
-                                ArDBotManager.setDiscordserver(server);
-                                Bukkit.getLogger().log(Level.INFO, "[Advancement Rush] Discord server "+ArDBotManager.getDiscordserver().getName()+" correctly linked !");
-                                this.cancel();
-                                return;
-                            }
-                        } catch (NumberFormatException e){
-                            Bukkit.getLogger().log(Level.INFO, "[Advancement Rush] Could not link to Discord automatically from the ID provided in the config, new try in 1 second...");
-                            e.printStackTrace();
+        final int timoutdelay = 20;
+        new BukkitRunnable(){
+            int tries = 0;
+            @Override
+            public void run() {
+                if(serverid != null && jda.getGuildById(serverid) != null){
+                    try{
+                        Guild server = jda.getGuildById(serverid);
+                        if(server != null){
+                            ArDBotManager.setDiscordserver(server);
+                            Bukkit.getLogger().log(Level.INFO, "[Advancement Rush] Discord server "+ArDBotManager.getDiscordserver().getName()+" correctly linked !");
+                            this.cancel();
+                            return;
                         }
-                    } else {
+                    } catch (NumberFormatException e){
                         Bukkit.getLogger().log(Level.INFO, "[Advancement Rush] Could not link to Discord automatically from the ID provided in the config, new try in 1 second...");
+                        e.printStackTrace();
                     }
-                    if(tries == timoutdelay){
-                        Bukkit.getLogger().log(Level.INFO, "[Advancement Rush] Could not link to Discord automatically from the ID provided in the config, you must use /arlink <key> to link to Discord");
-                        this.cancel();
-                        return;
-                    }
-                    tries++;
+                } else {
+                    Bukkit.getLogger().log(Level.INFO, "[Advancement Rush] Could not link to Discord automatically from the ID provided in the config, new try in 1 second...");
                 }
-            }.runTaskTimer(Main.getPlugin(), 40, 20);
+                if(tries == timoutdelay){
+                    Bukkit.getLogger().log(Level.INFO, "[Advancement Rush] Could not link to Discord automatically from the ID provided in the config, you must use /arlink <key> to link to Discord");
+                    this.cancel();
+                    return;
+                }
+                tries++;
+            }
+        }.runTaskTimer(Main.getPlugin(), 40, 20);
+    
+    
+        // THIS OTHERWISE I REFUSE TO WORK ANYMORE
+        ArGameListeners.startWolf();
+    
+        ArGameManager.setGamephase(ArGamePhase.TEAM_SELECTION);
     }
     
     @Override
@@ -177,10 +184,10 @@ public final class Main extends JavaPlugin {
         return getPlugin().getConfig();
     }
     
-    public static boolean isIgnored(String namespace){
+    public static boolean isNamespaceIgnored(String namespace){
         return ignorednamespaces.contains(namespace);
     }
-    public static boolean isIgnored(NamespacedKey key){
-        return isIgnored(key.namespace());
+    public static boolean isNamespaceIgnored(NamespacedKey key){
+        return isNamespaceIgnored(key.namespace());
     }
 }

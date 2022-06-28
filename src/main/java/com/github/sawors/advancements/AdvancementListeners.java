@@ -31,12 +31,12 @@ public class AdvancementListeners implements Listener {
     
     @EventHandler(priority = EventPriority.LOW)
     public static void playerCriteriaProgress(PlayerAdvancementCriterionGrantEvent event){
-        if(!ArGameManager.getGamephase().equals(ArGamePhase.INGAME)){
+        if((ArGameManager.getGamephase().equals(ArGamePhase.WINNER_ANNOUNCEMENT) || ArGameManager.getGamephase().equals(ArGamePhase.TEAM_SELECTION))&&!event.getAdvancement().getKey().getKey().contains("/root")){
             event.setCancelled(true);
             return;
         }
         Advancement adv = event.getAdvancement();
-        if(AdvancementManager.isRecipe(adv) || adv.getKey().getKey().contains("/root") || Main.isIgnored(adv.getKey())){
+        if(AdvancementManager.isRecipe(adv) || adv.getKey().getKey().contains("/root") || Main.isNamespaceIgnored(adv.getKey())){
             return;
         }
         Player p = event.getPlayer();
@@ -66,7 +66,7 @@ public class AdvancementListeners implements Listener {
         Advancement adv = event.getAdvancement();
         Component advmessage = event.message();
     
-        if(AdvancementManager.isRecipe(adv) || adv.getKey().getKey().contains("/root") || Main.isIgnored(adv.getKey())){
+        if(AdvancementManager.isRecipe(adv) || adv.getKey().getKey().contains("/root") || Main.isNamespaceIgnored(adv.getKey())){
             event.message(null);
             return;
         }

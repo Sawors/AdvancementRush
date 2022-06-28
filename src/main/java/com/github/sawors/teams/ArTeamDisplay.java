@@ -229,7 +229,6 @@ public class ArTeamDisplay {
         Main.logAdmin(ranking.toString());
         int rankingsize = ranking.size();
         objective.getScore(ChatColor.GOLD+"    Top Teams").setScore(rankingsize+2);
-        Main.logAdmin(showlength+"");
         for(int i = 0; i<showlength; i++){
             String team = ranking.get(rankingsize-i-1);
             int points = ArTeamManager.getTeamPoints(team);
@@ -248,11 +247,46 @@ public class ArTeamDisplay {
             displayself.addEntry(identifier);
             objective.getScore(identifier).setScore(rankingsize-pos+1);
         }
+        
+        // case last team added to scoreboard
         objective.getScore(ChatColor.RESET+" "+ChatColor.RESET+""+ChatColor.GRAY+""+ChatColor.STRIKETHROUGH+"                   ").setScore(0);
     }
     
+    /*private static void showTeamPointsAnimation(String team, int points, int showduration, int showlength, Objective objective, Team displayself){
+        int pos = ArTeamManager.getTeamsRanking().indexOf(team)+1;
+        String position = String.valueOf(pos);
+        if(objective.getScoreboard() != null){
+            new BukkitRunnable(){
+                @Override
+                public void run() {
+                    displayself.suffix(Component.text(ChatColor.LIGHT_PURPLE+spacer+position+". ").append(getTeamDisplay(team, baseloop)));
+                    StringBuilder identifierunique = new StringBuilder();
+                    for(int i2 = 0; i2<showlength-1; i2++){
+                        identifierunique.append(ChatColor.RESET + "");
+                    }
+                    String identifier = identifierunique.toString();
+                *//*for(String entry : displayself.getEntries()){
+                    displayself.removeEntry(entry);
+                }*//*
+                    displayself.addEntry(identifier);
+                    objective.getScore(identifier).setScore(ArTeamManager.getTeamsRanking().size()-pos+1);
+                    for(Player p : Bukkit.getOnlinePlayers()){
+                        p.setScoreboard(objective.getScoreboard());
+                    }
+                    baseloop += points/((showduration-1)*20);
+                    if(baseloop >= points){
+                        this.cancel();
+                    }
+                }
+            }.runTaskTimer(Main.getPlugin(),0,1);
+        }
+    }*/
+    
     private static TextComponent getTeamDisplay(String team, int pts, boolean showpoints){
         String teamname = team;
+        if(team == null){
+            return Component.text(ChatColor.WHITE+"No Team");
+        }
         String points = String.valueOf(pts);
         // = total characters per line - fixed amount of chars (format) - points chars
         int maxlength = showpoints ? maxlinelength-8-points.length() : maxlinelength-8;
@@ -270,9 +304,9 @@ public class ArTeamDisplay {
             newname.append('.');
             teamname = newname.toString();
         }
-        
+    
         TextComponent pointsdisplay = showpoints ? Component.text(" : "+ChatColor.WHITE+points) : Component.text("");
-        
+    
         return Component.text(teamname).color(TextColor.fromHexString(ArTeamManager.getTeamColor(team))).append(pointsdisplay);
     }
     private static TextComponent getTeamDisplay(String team, int pts){

@@ -2,6 +2,7 @@ package com.github.sawors.commands;
 
 import com.github.sawors.Main;
 import com.github.sawors.UsefulTools;
+import com.github.sawors.advancements.AdvancementManager;
 import com.github.sawors.database.ArDataBase;
 import com.github.sawors.database.ArTeamData;
 import com.github.sawors.teams.ArTeamDisplay;
@@ -139,7 +140,8 @@ public class ArTeamCommand implements CommandExecutor {
                                     ArTeamManager.changePlayerTeam(team, p.getUniqueId());
                                     TextComponent p1 = Component.text(ChatColor.YELLOW+"you are now a member of team ");
                                     TextComponent namepart = Component.text(team).color(TextColor.fromHexString(ArTeamManager.getTeamColor(team)));
-        
+                                    ArTeamManager.syncPlayerAllAdvancementsWithTeam(p, team);
+                                    AdvancementManager.grantRootAdvancements(p);
                                     sender.sendMessage(p1.append(namepart));
                                 } catch (SQLException | MalformedParametersException e){
                                     e.printStackTrace();
@@ -167,9 +169,11 @@ public class ArTeamCommand implements CommandExecutor {
                                 if(Bukkit.getPlayer(player) != null && Bukkit.getPlayer(player).isOnline()) {
                                     ArTeamManager.syncPlayerAllAdvancementsWithTeam(Bukkit.getPlayer(player), team);
                                     ArTeamManager.syncPlayerColorWithTeam(Objects.requireNonNull(Bukkit.getPlayer(player)));
+                                    AdvancementManager.grantRootAdvancements(Bukkit.getPlayer(player));
                                 } else {
                                     Main.logAdmin("could not sync player "+player+" with team "+team+" for this player is offline");
                                 }
+                                
                                 sender.sendMessage(p1.append(namepart));
                             } catch (SQLException | MalformedParametersException | NullPointerException e){
                                 e.printStackTrace();

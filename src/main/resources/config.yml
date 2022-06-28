@@ -17,11 +17,44 @@ discreet-connections: true
 #   default : true
 discreet-death-messages: true
 
+# the name of the world (main, usually the overworld dimension) where the game is played
+game-world-name:
+
+# if you want multi-world support for a team selection lobby (pregame lobby) and a winner announcement lobby
+multi-world:
+  enabled: false
+  # lobby/spawn world name and spawnpoint coordinates, name "arush-spawn" by default
+  spawn-world-name: arush-spawn
+    X: 0
+    Y: 64
+    Z: 0
+  # name of the world for the lobby where players are teleported after the game's end and spawnpoint coordinates, name "arush-win" by default
+  win-world-name: arush-win
+    X: 0
+    Y: 64
+    Z: 0
+
 # auto gamerule and difficulty attribution
 disable-fire-spread: true
 difficulty-hard: true
 keep-inventory: false
 no-natural-health-regen: false
+
+# the "radius" of the square platform generated at the spawn
+# if set to 0 the platform won't generate
+#   default : 24
+spawn-platform-radius: 24
+# the height over the sea level (63) at which the spawn platform will generate
+# if "spawn-platform-radius" = 0 players will still spawn at the specified height
+#   default : 48
+spawn-platform-height: 48
+# enable waiting room minigame (a simple tag game to wait for the game to fill)
+#   default : true
+enable-waiting-room-minigame: true
+
+# the "radius" of the square where the teams will be spread when the game starts
+#   default : 64
+spread-teams-radius: 64
 
 # set this to change how the game ends (win condition)
 #   allowed values are : TIMER, VALUE, HYBRID

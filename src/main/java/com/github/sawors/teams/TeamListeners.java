@@ -46,8 +46,9 @@ public class TeamListeners implements Listener {
             }
     
             TextComponent channel = firstchar == '!' ? Component.text(ChatColor.DARK_GRAY+""+ChatColor.BOLD+""+"[G] ") : Component.text(ChatColor.BOLD+"[TEAM] ");
+            
             Audience aud = firstchar == '!' ? Audience.audience(Bukkit.getOnlinePlayers()) : Audience.audience(targets);
-            ChatRenderer cht = (source, sourceDisplayName, message, viewer) -> channel.append(sourceDisplayName.append(Component.text(": "))).color(tcolor).append(message.color(TextColor.color(0xFFFFFF)));
+            ChatRenderer cht = (source, sourceDisplayName, message, viewer) -> channel.append(sourceDisplayName.append(Component.text(": "))).color(tcolor).append(Component.text(msg.content().replaceFirst("!", "")).color(TextColor.color(0xFFFFFF)));
     
             try{
                 Set<Audience> vwrs = event.viewers();

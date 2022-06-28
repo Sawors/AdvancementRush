@@ -13,11 +13,14 @@ import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.potion.PotionEffect;
+import org.bukkit.potion.PotionEffectType;
 import org.bukkit.scheduler.BukkitRunnable;
 import org.bukkit.scheduler.BukkitTask;
 
 import java.sql.Connection;
 import java.sql.SQLException;
+import java.util.ArrayList;
 import java.util.Locale;
 import java.util.Objects;
 import java.util.UUID;
@@ -42,6 +45,12 @@ public class ArGameManager {
     private static boolean showranks = true;
     private static int finalrankshowlength = 1;
     private static int ranktitleduration = 4;
+    private static Location originloc;
+    private static World gameworld;
+    private static int spawnheight = 48;
+    private static int platformradius = 24;
+    private static int spreadradius = 64;
+    private static boolean enableminigame = true;
     
     public static void initGameMode(){
         FileConfiguration config = Main.getMainConfig();
@@ -84,6 +93,26 @@ public class ArGameManager {
         }
         Main.logAdmin(duration*60+"");
         cancelTimerTask();
+        
+        String worldname = config.getString("game-world-name");
+        if(worldname != null && Bukkit.getWorld(worldname) != null){
+            gameworld = Bukkit.getWorld(worldname);
+        } else {
+            gameworld = Bukkit.getWorlds().get(0);
+        }
+        
+        enableminigame = Main.getMainConfig().getBoolean("enable-waiting-room-minigame");
+        platformradius = config.getInt("spawn-platform-radius");
+        int getspawnheight = config.getInt("spawn-platform-height");
+        if(getspawnheight > 0){
+            spawnheight = getspawnheight;
+        }
+        spreadradius = config.getInt("spread-teams-radius");
+        if(spreadradius < 0){
+            spreadradius = 0;
+        }
+        
+        
     }
     
     public static Location tryToGetEggLocation(){
@@ -105,7 +134,7 @@ public class ArGameManager {
             }
         }
         
-        return new Location(Bukkit.getWorlds().get(0),0,0,0);
+        return new Location(getGameworld(),0,0,0);
     }
     
     public static UUID getLastKnownHolder(){
@@ -313,7 +342,41 @@ public class ArGameManager {
         return gamephase;
     }
     
+    
+    
+    //
+    //  GAME PHASES
+    //
     public static void setGamephase(ArGamePhase gamephase) {
+        //TODO : /!\ MOVE ALL ACTIONS TRIGGERED ON GAME PHASE CHANGE HERE
+        switch(gamephase){
+            case TEAM_SELECTION:
+                Main.logAdmin("w : "+getGameworld().getEntities().size());
+                new BukkitRunnable(){
+                    @Override
+                    public void run() {
+                        for(World w : Bukkit.getWorlds()){
+                            w.setGameRule(GameRule.DO_DAYLIGHT_CYCLE, false);
+                            w.setGameRule(GameRule.DO_WEATHER_CYCLE, false);
+                            w.setFullTime(0);
+                            w.setDifficulty(Difficulty.PEACEFUL);
+                        }
+                    }
+                }.      // I do this delay otherwise gamerules are not loaded
+                        runTaskLater(Main.getPlugin(), 200);
+    
+                Main.logAdmin("gr : "+getGameworld().getGameRuleValue(GameRule.DO_DAYLIGHT_CYCLE));
+                
+            case INGAME:
+                for(World w : Bukkit.getWorlds()){
+                    getGameworld().setGameRule(GameRule.DO_DAYLIGHT_CYCLE, true);
+                    getGameworld().setGameRule(GameRule.DO_WEATHER_CYCLE, true);
+                    if(Main.getMainConfig().getBoolean("difficulty-hard")){w.setDifficulty(Difficulty.HARD);} else {w.setDifficulty(Difficulty.NORMAL);}
+                }
+                
+            case ENDGAME:
+            case WINNER_ANNOUNCEMENT:
+        }
         ArGameManager.gamephase = gamephase;
         for(Player p : Bukkit.getOnlinePlayers()){
             ArTeamDisplay.updatePlayerDisplay(p, ArTeamManager.getPlayerTeam(p.getUniqueId()));
@@ -439,5 +502,94 @@ public class ArGameManager {
     
     public static int getRankTitleDuration(){
         return ranktitleduration;
+    }
+    
+    public static void generateSpawnLobby(Material material){
+        if(material.isBlock() || material.isAir() && getPlatformRadius() > 0){
+            World w = getGameworld();
+            Material locmat;
+            int y = w.getSeaLevel()+getSpawnheight();
+            originloc = new Location(w,0,y,0);
+            originloc.setY(y);
+            int cageradius = getPlatformRadius();
+            
+            for(int i = -cageradius; i<cageradius; i++){
+                //FLOOR
+                for(int z = -cageradius+1; z<=cageradius-1; z++){
+                    w.getBlockAt(i,y,z).setType(material);
+                }
+                
+                for(int y2 = 0; y2<9; y2++){
+                    if(y2 == 0 && !material.isAir()){
+                        locmat = Material.RED_STAINED_GLASS;
+                    } else {
+                        locmat = material;
+                    }
+                    //NORTH-SOUTH
+                    w.getBlockAt(i,y+y2,-cageradius).setType(locmat);
+                    w.getBlockAt(-i,y+y2,cageradius).setType(locmat);
+    
+                    //EAST-WEST
+                    w.getBlockAt(-cageradius,y+y2,i+1).setType(locmat);
+                    w.getBlockAt(cageradius,y+y2,-i-1).setType(locmat);
+                }
+            }
+        }
+    }
+    
+    public static void spreadSpawnTeams(){
+        ArrayList<String> teams = ArTeamManager.getTeamList();
+            World w = getGameworld();
+            int spawnradius = getSpreadradius();
+            Location baseloc = new Location(w, 0,w.getSeaLevel()+getSpawnheight()-3,0);
+            for(String team : teams){
+                Location newloc = w.getHighestBlockAt(baseloc.add(-spawnradius,0,-spawnradius).add(Math.random()*2*spawnradius,0,Math.random()*2*spawnradius)).getLocation().add(0,spawnheight/2f,0);
+                for(UUID id : ArDataBase.teamMembersDeserialize(ArTeamManager.getTeamPlayers(team))){
+                    Player p = Bukkit.getPlayer(id);
+                    if(p != null){
+                        p.addPotionEffect(new PotionEffect(PotionEffectType.INVISIBILITY,40,1,false,false,false));
+                        p.teleport(newloc);
+                    }
+                }
+            }
+    }
+    
+    public static boolean isMinigameEnabled(){
+        return enableminigame;
+    }
+    public static World getGameworld() {
+        return gameworld;
+    }
+    
+    public static void setGameworld(World gameworld) {
+        ArGameManager.gameworld = gameworld;
+    }
+    
+    public static int getSpawnheight() {
+        return spawnheight;
+    }
+    
+    public static void setSpawnheight(int spawnheight) {
+        ArGameManager.spawnheight = spawnheight;
+    }
+    
+    public static int getPlatformRadius() {
+        return platformradius;
+    }
+    
+    public static void setPlatformradius(int platformradius) {
+        ArGameManager.platformradius = platformradius;
+    }
+    
+    public static int getSpreadradius() {
+        return spreadradius;
+    }
+    
+    public static void setSpreadradius(int spreadradius) {
+        ArGameManager.spreadradius = spreadradius;
+    }
+    
+    public static void setEnableminigame(boolean enableminigame) {
+        ArGameManager.enableminigame = enableminigame;
     }
 }

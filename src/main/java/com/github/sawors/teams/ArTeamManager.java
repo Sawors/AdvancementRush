@@ -385,8 +385,10 @@ public class ArTeamManager {
             if(target.isOnline() && !AdvancementManager.isRecipe(adv)){
                 ArDataBase.muteAdvancement(adv.getKey(),teamsource);
                 //delete every criteria
-                for(String crit : targetprogress.getAwardedCriteria()){
-                    targetprogress.revokeCriteria(crit);
+                if(!adv.getKey().getKey().contains("/root")){
+                    for(String crit : targetprogress.getAwardedCriteria()){
+                        targetprogress.revokeCriteria(crit);
+                    }
                 }
                 //add back team's criteria
                 if(hasTeamAdvancement(teamsource, adv.getKey()) && ArDataBase.shouldSync(adv)){

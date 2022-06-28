@@ -4,6 +4,7 @@ import com.github.sawors.Main;
 import com.github.sawors.UsefulTools;
 import com.github.sawors.advancements.AdvancementManager;
 import com.github.sawors.database.ArDataBase;
+import com.github.sawors.game.ArGameListeners;
 import com.github.sawors.game.ArGameManager;
 import com.github.sawors.teams.ArTeamManager;
 import net.kyori.adventure.bossbar.BossBar;
@@ -12,6 +13,7 @@ import net.kyori.adventure.text.format.TextColor;
 import net.kyori.adventure.title.Title;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
+import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
 import org.bukkit.advancement.Advancement;
 import org.bukkit.advancement.AdvancementProgress;
@@ -87,7 +89,23 @@ public class ArTestCommand implements CommandExecutor {
                         break;
                     case"win":
                         ArGameManager.startWinnerAnnouncementSequence();
-    
+                        break;
+                    case"cage":
+                        ArGameManager.generateSpawnLobby(Material.BARRIER);
+                        break;
+                    case"uncage":
+                        ArGameManager.generateSpawnLobby(Material.AIR);
+                        Main.logAdmin("p1");
+                        break;
+                    case"spread":
+                        ArGameManager.spreadSpawnTeams();
+                        break;
+                    case"wolf":
+                        if(args.length >= 2){
+                            ArGameListeners.setWolf(Bukkit.getPlayer(args[1]));
+                        } else {
+                            ArGameListeners.setWolf((Player) sender);
+                        }
                 }
             } else {
                 sender.sendMessage("Phase 1");
