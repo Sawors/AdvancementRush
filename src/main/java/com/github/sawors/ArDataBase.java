@@ -1,6 +1,7 @@
 package com.github.sawors;
 
 import com.github.sawors.advancements.AdvancementManager;
+import com.github.sawors.discordbot.ArDBotManager;
 import com.github.sawors.teams.ArTeamData;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
@@ -12,10 +13,7 @@ import org.jetbrains.annotations.NotNull;
 import javax.management.openmbean.KeyAlreadyExistsException;
 import java.io.IOException;
 import java.lang.reflect.MalformedParametersException;
-import java.sql.Connection;
-import java.sql.DriverManager;
-import java.sql.PreparedStatement;
-import java.sql.SQLException;
+import java.sql.*;
 import java.util.*;
 import java.util.logging.Level;
 
@@ -93,7 +91,11 @@ public class ArDataBase {
             co.createStatement().execute("DELETE FROM advancements;");
             co.createStatement().execute(initDBAdvancements());
             co.createStatement().execute(initGameTableQuery());
+            co.createStatement().execute(initDiscordTableQuery());
             //co.createStatement().execute("INSERT INTO game(DATA,VALUE) VALUES "+"("+ArGameData.TIMER +",0), ("+ArGameData.EGG_HOLDER+",[])");
+    
+            ArDBotManager.setDiscordkey(Main.getMainConfig().getString("discord-link-key"));
+            
             ConfigurationSection section = Main.getMainConfig().getConfigurationSection("advancements-values");
             if(section != null){
                 Map<String,Object> map = section.getValues(false);
@@ -342,6 +344,66 @@ public class ArDataBase {
                 + ");";
     }
     
+    //        |=====================|
+    //        |   DISCORD DATABASE  |
+    //        |=====================|
+    //                  ||
+    //                  ||
+    private static String initDiscordTableQuery(){
+        return "CREATE TABLE IF NOT EXISTS 'discordlink' (\n"
+                + "	'MCUUID' text UNIQUE,"
+                + "	'DISCORDID' text UNIQUE"
+                + ");";
+    }
+    public static void registerLink(UUID playerid, String discordid) throws KeyAlreadyExistsException{
+        try(Connection co = connect()){
+            String query = "INSERT INTO 'discordlink'('MCUUID','DISCORDID') VALUES('"+playerid.toString()+"','"+discordid+"')";
+            co.createStatement().execute(query);
+        } catch(SQLException e){
+            e.printStackTrace();
+        }
+    }
+    public static void deleteLink(String id) throws NullPointerException {
+        try(Connection co = connect()){
+            String category = "DISCORDID";
+            if(id.contains("-")){
+                category = "MCUUID";
+            }
+            String query = "DELETE FROM 'discordlink' WHERE '"+category+"'='"+id+"'";
+            co.createStatement().execute(query);
+        } catch(SQLException e){
+            e.printStackTrace();
+        }
+    }
+    public static String getMinecraftPlayer(String discordid){
+        try(Connection co = connect()){
+            String query = "SELECT MCUUID FROM discordlink WHERE DISCORDID='"+discordid+"'";
+            ResultSet rset = co.prepareStatement(query).executeQuery();
+            if(!rset.isClosed()){
+                return rset.getString("MCUUID");
+            }
+            return null;
+        } catch(SQLException e){
+            e.printStackTrace();
+            return null;
+        }
+    }
+    public static String getDiscordUser(String mcuuid){
+        try(Connection co = connect()){
+            String query = "SELECT DISCORDID FROM discordlink WHERE MCUUID='"+mcuuid+"'";
+            Main.logAdmin(query);
+            ResultSet rset = co.prepareStatement(query).executeQuery();
+            if(!rset.isClosed()){
+                return rset.getString("DISCORDID");
+            }else {
+                return null;
+            }
+            
+        } catch(SQLException e){
+            e.printStackTrace();
+            return null;
+        }
+    }
     
     
     //        |=====================|

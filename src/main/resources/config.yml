@@ -40,10 +40,10 @@ timer-options:
   # this does not disable the display of ranking
   #   default: true
   show-scores: true
-  # hide the scores in the scoreboard x minutes before the game end (in minutes)
+  # hide the ranks in the scoreboard x minutes before the game end (in minutes)
   # set to 0 to disable
   #   default: 30
-  hide-scores-timer: 30
+  hide-ranks-timer: 30
 
 value-options:
   # the goal value teams must reach to win the game
@@ -60,7 +60,11 @@ hybrid-options:
   # hide the scores in the scoreboard x minutes before the game end (in minutes)
   # set to 0 to disable
   #   default: 30
-  hide-scores-timer: 30
+  hide-ranks-timer: 30
+  # if you want players to be able to see the scores in the scoreboard
+  # this does not disable the display of ranking
+  #   default: true
+  show-scores: true
 
 # since the dragon egg advancement is almost granted when you kill the dragon and is a unique item
 # you can enable a different way of earning points with it : earning points for holding it
@@ -109,8 +113,9 @@ show-points: true
 discord-bot-token:
 # channel ID of the discord channel where commands and team management can be used (admin/team_manager channel)
 discord-bot-management-channelID:
-
-
+discord-server-id:
+discord-link-key:
+discord-general-vocal-id:
 #   [========== ADVANCEMENTS ==========]
 # bonus when a team is the first one to unlock an advancement
 #   default: 5

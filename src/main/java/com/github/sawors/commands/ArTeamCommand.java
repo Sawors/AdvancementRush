@@ -62,7 +62,7 @@ public class ArTeamCommand implements CommandExecutor {
                                     }
                                 }
                                 for(Player p2 : Bukkit.getOnlinePlayers()){
-                                    ArTeamDisplay.updatePlayerScoreboard(p2, ArTeamManager.getPlayerTeam(p2.getUniqueId()));
+                                    ArTeamDisplay.updatePlayerDisplay(p2, ArTeamManager.getPlayerTeam(p2.getUniqueId()));
                                 }
                                 
                                 TextComponent p1 = Component.text(ChatColor.YELLOW+"team \"");
@@ -95,7 +95,7 @@ public class ArTeamCommand implements CommandExecutor {
                                         }
                                     }
                                     for(Player p2 : Bukkit.getOnlinePlayers()){
-                                        ArTeamDisplay.updatePlayerScoreboard(p2, ArTeamManager.getPlayerTeam(p2.getUniqueId()));
+                                        ArTeamDisplay.updatePlayerDisplay(p2, ArTeamManager.getPlayerTeam(p2.getUniqueId()));
                                     }
                                 }catch (ArrayIndexOutOfBoundsException e){
                                     e.printStackTrace();

@@ -16,3 +16,9 @@ commands:
     usage: /<command> <player>
   artime:
     usage: /<command> <action> <parameter>
+  arlink:
+    usage: /<command> <key>
+  arme:
+    usage: /<command>
+  arvoc:
+

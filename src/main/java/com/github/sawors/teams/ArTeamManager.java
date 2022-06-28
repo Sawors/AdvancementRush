@@ -134,7 +134,7 @@ public class ArTeamManager {
         if(p != null && p.isOnline()) {
             ArTeamManager.syncPlayerAllAdvancementsWithTeam(p, teamname);
             ArTeamManager.syncPlayerColorWithTeam(p);
-            ArTeamDisplay.updatePlayerScoreboard(p, teamname);
+            ArTeamDisplay.updatePlayerDisplay(p, teamname);
         } else {
             Main.logAdmin("could not sync player "+p.getName()+" with team "+teamname+" for this player is offline");
         }
@@ -166,7 +166,7 @@ public class ArTeamManager {
         for(Player p : Bukkit.getOnlinePlayers()){
             String team = getPlayerTeam(p.getUniqueId());
             if(team != null){
-                ArTeamDisplay.updatePlayerScoreboard(p, teamname);
+                ArTeamDisplay.updatePlayerDisplay(p, teamname);
             }
         }
     }

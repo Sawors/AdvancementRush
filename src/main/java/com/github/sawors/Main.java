@@ -3,10 +3,12 @@ package com.github.sawors;
 import com.github.sawors.advancements.AdvancementListeners;
 import com.github.sawors.commands.*;
 import com.github.sawors.discordbot.ArDBotManager;
+import com.github.sawors.game.ArGameListeners;
 import com.github.sawors.game.ArGameManager;
 import com.github.sawors.teams.ArTeamDisplay;
 import com.github.sawors.teams.TeamListeners;
 import net.dv8tion.jda.api.JDA;
+import net.dv8tion.jda.api.entities.Guild;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.TextComponent;
 import org.bukkit.*;
@@ -14,6 +16,7 @@ import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.java.JavaPlugin;
+import org.bukkit.scheduler.BukkitRunnable;
 
 import javax.security.auth.login.LoginException;
 import java.io.File;
@@ -30,7 +33,7 @@ public final class Main extends JavaPlugin {
     //
     // Discord bot
     private static JDA jda;
-    private JDA getJDA(){
+    public static JDA getJDA(){
         return jda;
     }
     
@@ -50,7 +53,7 @@ public final class Main extends JavaPlugin {
                 IOException e) {
             throw new RuntimeException(e);
         }
-        getServer().getPluginManager().registerEvents(new ArGeneralListeners(), this);
+        getServer().getPluginManager().registerEvents(new ArGameListeners(), this);
         getServer().getPluginManager().registerEvents(new AdvancementListeners(), this);
         getServer().getPluginManager().registerEvents(new TeamListeners(), this);
     
@@ -59,7 +62,9 @@ public final class Main extends JavaPlugin {
         getServer().getPluginCommand("arnick").setExecutor(new ArNickCommand());
         getServer().getPluginCommand("arunnick").setExecutor(new ArUnNickCommand());
         getServer().getPluginCommand("artime").setExecutor(new ArTimeCommand());
-    
+        getServer().getPluginCommand("arlink").setExecutor(new ArLinkCommand());
+        getServer().getPluginCommand("arme").setExecutor(new ArMeCommand());
+        getServer().getPluginCommand("arvoc").setExecutor(new ArVocCommand());
         
         //initMainConfig();
         this.saveDefaultConfig();
@@ -76,11 +81,6 @@ public final class Main extends JavaPlugin {
         //init gamemode manager
         ArGameManager.initGameMode();
         
-        //load scoreboard appearance from config
-        int rksize = getMainConfig().getInt("ranking-size");
-        if(rksize >= 0 && rksize <= 7){
-            ArTeamDisplay.setTopTeamSize(rksize);
-        }
         if(getMainConfig().getBoolean("show-points")){
             ArTeamDisplay.setShowPoints(getMainConfig().getBoolean("show-points"));
         }
@@ -102,13 +102,53 @@ public final class Main extends JavaPlugin {
         } catch (LoginException e) {
             Bukkit.getLogger().log(Level.WARNING, "[Advancement Rush] Discord bot couldn't start : wrong token, disabling Discord bot...");
         }
+    
+        //init display LAST
+        ArTeamDisplay.initDisplay();
         
-        
+        String serverid = Main.getMainConfig().getString("discord-server-id");
+            final int timoutdelay = 20;
+            new BukkitRunnable(){
+                int tries = 0;
+                @Override
+                public void run() {
+                    if(serverid != null && jda.getGuildById(serverid) != null){
+                        try{
+                            Guild server = jda.getGuildById(serverid);
+                            if(server != null){
+                                ArDBotManager.setDiscordserver(server);
+                                Bukkit.getLogger().log(Level.INFO, "[Advancement Rush] Discord server "+ArDBotManager.getDiscordserver().getName()+" correctly linked !");
+                                this.cancel();
+                                return;
+                            }
+                        } catch (NumberFormatException e){
+                            Bukkit.getLogger().log(Level.INFO, "[Advancement Rush] Could not link to Discord automatically from the ID provided in the config, new try in 1 second...");
+                            e.printStackTrace();
+                        }
+                    } else {
+                        Bukkit.getLogger().log(Level.INFO, "[Advancement Rush] Could not link to Discord automatically from the ID provided in the config, new try in 1 second...");
+                    }
+                    if(tries == timoutdelay){
+                        Bukkit.getLogger().log(Level.INFO, "[Advancement Rush] Could not link to Discord automatically from the ID provided in the config, you must use /arlink <key> to link to Discord");
+                        this.cancel();
+                        return;
+                    }
+                    tries++;
+                }
+            }.runTaskTimer(Main.getPlugin(), 40, 20);
     }
     
     @Override
     public void onDisable() {
         // Plugin shutdown logic
+        new BukkitRunnable(){
+    
+            @Override
+            public void run() {
+                ArDBotManager.deleteCategory();
+                ArDBotManager.deleteRoles();
+            }
+        }.runTaskAsynchronously(getPlugin());
     }
     
     public static Plugin getPlugin() {

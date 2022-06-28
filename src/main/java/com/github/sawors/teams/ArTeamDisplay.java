@@ -1,10 +1,13 @@
 package com.github.sawors.teams;
 
 import com.github.sawors.Main;
+import com.github.sawors.game.ArGameManager;
 import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.TextComponent;
 import net.kyori.adventure.text.format.TextColor;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
+import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.entity.Player;
 import org.bukkit.scoreboard.DisplaySlot;
 import org.bukkit.scoreboard.Objective;
@@ -16,44 +19,92 @@ import java.util.List;
 public class ArTeamDisplay {
     
     
-    private static int topteamsize = 3;
+    private static int topteamsize = 0;
     private static boolean showpoints = true;
+    //this to set default value for line length, thus final
+    private static final int maxlinelength_final = 19;
+    private static int maxlinelength = maxlinelength_final;
+    private static String spacer = " ";
     
-    public static void updatePlayerScoreboard(Player player, String team){
+    public static void initDisplay(){
+        FileConfiguration config = Main.getMainConfig();
+        //load scoreboard length
+        int rksize = config.getInt("ranking-size");
+        if(rksize >= 0 && rksize <= 7){
+            topteamsize = rksize;
+        }
+        
+        showpoints = ArGameManager.showScores();
+        
+    }
+    
+    public static void updatePlayerDisplay(Player player, String team){
+        if(!showpoints){
+            spacer = "     ";
+            maxlinelength = maxlinelength_final-(spacer.length()/2);
+        } else {
+            maxlinelength = maxlinelength_final;
+        }
+        
         Scoreboard sb = Bukkit.getScoreboardManager().getNewScoreboard();
         resetScoreboard(sb);
         
-        Objective test = sb.getObjective("ar_teams");
+        Objective objective = sb.getObjective("ar_teams");
         Component title = Component.text(ChatColor.GREEN+""+ChatColor.BOLD+" Advancement  "+ChatColor.DARK_GRAY+"<<");
-        if(test == null){
-            test = sb.registerNewObjective("ar_teams","none",title);
+        if(objective == null){
+            objective = sb.registerNewObjective("ar_teams","none",title);
         }
-        test.displayName(title);
-        test.setDisplaySlot(DisplaySlot.SIDEBAR);
+        objective.displayName(title);
+        objective.setDisplaySlot(DisplaySlot.SIDEBAR);
+        objective.getScore(ChatColor.YELLOW+""+ChatColor.BOLD+"      Rush").setScore(20);
+        objective.getScore(ChatColor.GRAY+" "+ChatColor.STRIKETHROUGH+"                   ").setScore(19);
+    
+        switch(ArGameManager.getGamephase()){
+            case TEAM_SELECTION:
+                setDisplayTeamSelectionFormat(objective, team);
+                break;
+            case INGAME:
+                setDisplayInGameFormat(objective, team);
+                break;
+            case ENDGAME:
+                setDisplayEndGameFormat(objective, team);
+                break;
+            case WINNER_ANNOUNCEMENT:
+                setDisplayWinnerAnnouncementFormat(objective, team);
+                break;
+        }
         
-        setDisplayFormat(test);
-        if(team != null){
-            setSelfTeam(test, team);
-        }
-        if(topteamsize > 0){
-            setTopTeams(test);
-        }
         player.setScoreboard(sb);
     }
+    
+    
     
     public static void resetScoreboard(Scoreboard scb){
         for(String entry : scb.getEntries()){
             scb.resetScores(entry);
         }
     }
-    
-    public static void setDisplayFormat(Objective objective){
-        objective.getScore(ChatColor.YELLOW+""+ChatColor.BOLD+"      Rush").setScore(topteamsize+7);
-        objective.getScore(ChatColor.GRAY+" "+ChatColor.STRIKETHROUGH+"                   ").setScore(topteamsize+6);
+    private static void setDisplayTeamSelectionFormat(Objective objective, String team){
+        setSelfTeamSelection(objective, team, 1);
+    }
+    private static void setDisplayInGameFormat(Objective objective, String team){
+        if(team != null){
+            setSelfTeam(objective, team,1);
+        }
+        if(topteamsize > 0){
+            setTopTeams(objective);
+        }
+    }
+    private static void setDisplayEndGameFormat(Objective objective, String team){
+        setSelfTeam(objective,team,5);
+        setTimerDisplay(objective);
+    }
+    private static void setDisplayWinnerAnnouncementFormat(Objective objective, String team){
     }
     
-    public static void setTopTeams(Objective objective){
-        if(objective.getScoreboard() == null){
+    
+    private static void setTopTeams(Objective objective){
+        if(objective.getScoreboard() == null || !ArGameManager.showRanks()){
             return;
         }
         List<String> ranking = ArTeamManager.getTeamsRanking();
@@ -68,9 +119,9 @@ public class ArTeamDisplay {
                 String position = String.valueOf(i+1);
                 Team displayself = objective.getScoreboard().getTeam(team) == null ? objective.getScoreboard().registerNewTeam(team) : objective.getScoreboard().getTeam(team);
                 if(showpoints){
-                    displayself.suffix(Component.text(ChatColor.LIGHT_PURPLE+" "+position+". ").append(getTeamDisplayWithPoints(team, points)));
+                    displayself.suffix(Component.text(ChatColor.LIGHT_PURPLE+spacer+position+". ").append(getTeamDisplay(team, points)));
                 } else {
-                    displayself.suffix(Component.text(ChatColor.LIGHT_PURPLE+" "+position+". ").append(getTeamDisplayWithoutPoints(team)));
+                    displayself.suffix(Component.text(ChatColor.LIGHT_PURPLE+spacer+position+". ").append(getTeamDisplay(team)));
                 }
                 StringBuilder identifierunique = new StringBuilder();
                 for(int i2 = 0; i2<=i; i2++){
@@ -84,7 +135,7 @@ public class ArTeamDisplay {
                 objective.getScore(identifier).setScore(topteamsize+4-i);
                 //objective.getScore(ChatColor.LIGHT_PURPLE+" "+i+". ").setScore(9-i);
             } else {
-                objective.getScore(ChatColor.LIGHT_PURPLE+" "+(i+1)+". ").setScore(topteamsize+4-i);
+                objective.getScore(ChatColor.LIGHT_PURPLE+spacer+(i+1)+". ").setScore(topteamsize+4-i);
             }
         }
         objective.getScore(ChatColor.LIGHT_PURPLE+"           ...").setScore(4);
@@ -92,40 +143,86 @@ public class ArTeamDisplay {
         //objective.getScore(ChatColor.RESET+" "+ChatColor.GRAY+""+ChatColor.STRIKETHROUGH+"                   ").setScore(3);
     }
     
-    public static void setSelfTeam(Objective objective, String team){
+    private static void setSelfTeam(Objective objective, String team, int base){
         if(objective.getScoreboard() == null){
             return;
         }
     
-        objective.getScore(ChatColor.GOLD+"    Your Team").setScore(2);
-        objective.getScore(ChatColor.RESET+" "+ChatColor.RESET+""+ChatColor.GRAY+""+ChatColor.STRIKETHROUGH+"                   ").setScore(0);
+        objective.getScore(ChatColor.GOLD+"    Your Team").setScore(base+1);
+        objective.getScore(ChatColor.RESET+" "+ChatColor.RESET+""+ChatColor.GRAY+""+ChatColor.STRIKETHROUGH+"                   ").setScore(base-1);
         
-        int points = 0;
-        points = ArTeamManager.getTeamPoints(team);
+        int points = ArTeamManager.getTeamPoints(team);
     
-        int pos = ArTeamManager.getTeamRank(team);
-        String position = String.valueOf(pos);
         Team displayself = objective.getScoreboard().getTeam(team+"_") == null ? objective.getScoreboard().registerNewTeam(team+"_") : objective.getScoreboard().getTeam(team+"_");
-        displayself.suffix(Component.text(ChatColor.LIGHT_PURPLE+" "+position+". ").append(getTeamDisplayWithPoints(team, points)));
+        String position = ArGameManager.showRanks() ? ArTeamManager.getTeamRank(team)+". " : "";
+        
+        if(showpoints){
+            displayself.suffix(Component.text(ChatColor.LIGHT_PURPLE+spacer+position).append(getTeamDisplay(team, points, true)));
+        } else {
+            displayself.suffix(Component.text(ChatColor.LIGHT_PURPLE+spacer+position).append(getTeamDisplay(team)));
+        }
         StringBuilder identifierunique = new StringBuilder();
         for(int i2 = 0; i2<=6; i2++){
             identifierunique.append(ChatColor.RESET + "");
         }
         String identifier = identifierunique.toString();
         displayself.addEntry(identifier);
-        objective.getScore(identifier).setScore(1);
+        objective.getScore(identifier).setScore(base);
         
     }
     
-    public static Component getTeamDisplayWithPoints(String team, int pts){
+    private static void setSelfTeamSelection(Objective objective, String team, int base){
+        if(objective.getScoreboard() == null){
+            return;
+        }
+    
+        objective.getScore(ChatColor.GOLD+"    Your Team").setScore(base+1);
+        objective.getScore(ChatColor.RESET+" "+ChatColor.RESET+""+ChatColor.GRAY+""+ChatColor.STRIKETHROUGH+"                   ").setScore(base-1);
+    
+        int points = 0;
+        points = ArTeamManager.getTeamPoints(team);
+    
+        int pos = ArTeamManager.getTeamRank(team);
+        String position = String.valueOf(pos);
+        Team displayself = objective.getScoreboard().getTeam(team+"_") == null ? objective.getScoreboard().registerNewTeam(team+"_") : objective.getScoreboard().getTeam(team+"_");
+        TextComponent teamnamecolored = Component.text("> ").append(getTeamDisplay(team)).append(Component.text(" <"));
+        displayself.suffix(teamnamecolored);
+        StringBuilder identifierunique = new StringBuilder();
+        int teamnamelength = getTeamDisplay(team).content().length();
+    
+        //TODO : center better the team name
+        for(int i2 = 0; i2<(((maxlinelength_final-teamnamelength)-3)/2); i2++){
+            identifierunique.append(ChatColor.RESET + " ");
+            Main.logAdmin(i2+"");
+        }
+        String identifier = identifierunique.toString();
+        displayself.addEntry(identifier);
+        objective.getScore(identifier).setScore(base);
+    }
+    
+    private static void setTimerDisplay(Objective objective){
+        if(objective.getScoreboard() == null){
+            return;
+        }
+        objective.getScore(ChatColor.GOLD+" ").setScore(3);
+        objective.getScore(ChatColor.GOLD+"        Timer").setScore(2);
+        objective.getScore(ChatColor.RED+"      "+ArGameManager.getTimerDisplay()).setScore(1);
+        objective.getScore(ChatColor.RESET+" "+ChatColor.RESET+""+ChatColor.GRAY+""+ChatColor.STRIKETHROUGH+"                   ").setScore(0);
+        
+    }
+    
+    private static TextComponent getTeamDisplay(String team, int pts, boolean showpoints){
         String teamname = team;
         String points = String.valueOf(pts);
         // = total characters per line - fixed amount of chars (format) - points chars
-        int maxlength = 20-8-points.length();
+        int maxlength = showpoints ? maxlinelength-8-points.length() : maxlinelength-8;
+        if(!ArGameManager.showRanks()){
+            maxlength += 2;
+        }
         if(team.length() > maxlength){
             StringBuilder newname = new StringBuilder();
             char[] teamchar = team.toCharArray();
-            for(int i = 0; i<maxlength-3; i++){
+            for(int i = 0; i<maxlength-2; i++){
                 newname.append(teamchar[i]);
             }
             newname.append('.');
@@ -133,25 +230,16 @@ public class ArTeamDisplay {
             newname.append('.');
             teamname = newname.toString();
         }
-        return Component.text(teamname).color(TextColor.fromHexString(ArTeamManager.getTeamColor(team))).append(Component.text(" : "+ChatColor.WHITE+points));
+        
+        TextComponent pointsdisplay = showpoints ? Component.text(" : "+ChatColor.WHITE+points) : Component.text("");
+        
+        return Component.text(teamname).color(TextColor.fromHexString(ArTeamManager.getTeamColor(team))).append(pointsdisplay);
     }
-    
-    public static Component getTeamDisplayWithoutPoints(String team){
-        String teamname = team;
-        // = total characters per line - fixed amount of chars (format) - points chars
-        int maxlength = 20-8;
-        if(team.length() > maxlength){
-            StringBuilder newname = new StringBuilder();
-            char[] teamchar = team.toCharArray();
-            for(int i = 0; i<maxlength-3; i++){
-                newname.append(teamchar[i]);
-            }
-            newname.append('.');
-            newname.append('.');
-            newname.append('.');
-            teamname = newname.toString();
-        }
-        return Component.text(teamname).color(TextColor.fromHexString(ArTeamManager.getTeamColor(team)));
+    private static TextComponent getTeamDisplay(String team, int pts){
+        return getTeamDisplay(team,pts,true);
+    }
+    private static TextComponent getTeamDisplay(String team){
+        return getTeamDisplay(team,0,false);
     }
     
     public static void setTopTeamSize(int size){

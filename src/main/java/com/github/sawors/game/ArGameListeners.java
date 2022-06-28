@@ -1,5 +1,6 @@
-package com.github.sawors;
+package com.github.sawors.game;
 
+import com.github.sawors.Main;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.TextColor;
 import org.bukkit.ChatColor;
@@ -12,7 +13,8 @@ import org.bukkit.event.player.PlayerQuitEvent;
 
 import java.util.Objects;
 
-public class ArGeneralListeners implements Listener {
+
+public class ArGameListeners implements Listener {
     
     
     /*// FANCY TRAIL FOR THE BEST PLAYER (ME OFC)
@@ -49,17 +51,19 @@ public class ArGeneralListeners implements Listener {
     }*/
     
     @EventHandler(priority = EventPriority.LOW)
-    public static void discreetConnectionMessages(PlayerJoinEvent e){
+    public static void playerJoinServer(PlayerJoinEvent e){
         if(Objects.equals(Main.getMainConfig().getBoolean("discreet-connections"), true)){
-            e.joinMessage(Component.text(ChatColor.GRAY+"→ "+e.getPlayer().getName()));
+            e.joinMessage(Component.text(ChatColor.GRAY+"-> "+e.getPlayer().getName()));
         }
-       
+        if(ArGameManager.getGameMode() == ArGameMode.HYBRID || ArGameManager.getGameMode() == ArGameMode.TIMER){
+            ArGameManager.refreshTimerDisplay();
+        }
     }
     
     @EventHandler(priority = EventPriority.LOW)
-    public static void discreetLeavingMessages(PlayerQuitEvent e){
+    public static void playerLeaveServer(PlayerQuitEvent e){
         if(Objects.equals(Main.getMainConfig().getBoolean("discreet-connections"), true)){
-            e.quitMessage(Component.text(ChatColor.GRAY+"← "+e.getPlayer().getName()));
+            e.quitMessage(Component.text(ChatColor.GRAY+"<- "+e.getPlayer().getName()));
         }
         
     }

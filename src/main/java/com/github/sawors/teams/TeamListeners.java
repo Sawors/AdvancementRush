@@ -68,6 +68,6 @@ public class TeamListeners implements Listener {
         if(ArTeamManager.doesPlayerHaveTeam(p)){
             ArTeamManager.syncPlayerColorWithTeam(p);
         }
-        ArTeamDisplay.updatePlayerScoreboard(p, team);
+        ArTeamDisplay.updatePlayerDisplay(p, team);
     }
 }
