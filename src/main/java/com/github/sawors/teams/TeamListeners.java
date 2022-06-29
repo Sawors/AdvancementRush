@@ -1,6 +1,8 @@
 package com.github.sawors.teams;
 
 import com.github.sawors.database.ArDataBase;
+import com.github.sawors.game.ArGameManager;
+import com.github.sawors.game.ArGamePhase;
 import io.papermc.paper.chat.ChatRenderer;
 import io.papermc.paper.event.player.AsyncChatEvent;
 import net.kyori.adventure.audience.Audience;
@@ -45,10 +47,17 @@ public class TeamListeners implements Listener {
                 }
             }
     
-            TextComponent channel = firstchar == '!' ? Component.text(ChatColor.DARK_GRAY+""+ChatColor.BOLD+""+"[G] ") : Component.text(ChatColor.BOLD+"[TEAM] ");
-            
-            Audience aud = firstchar == '!' ? Audience.audience(Bukkit.getOnlinePlayers()) : Audience.audience(targets);
-            ChatRenderer cht = (source, sourceDisplayName, message, viewer) -> channel.append(sourceDisplayName.append(Component.text(": "))).color(tcolor).append(Component.text(msg.content().replaceFirst("!", "")).color(TextColor.color(0xFFFFFF)));
+            TextComponent channel;
+            Audience aud;
+            if(ArGameManager.getGamephase().equals(ArGamePhase.TEAM_SELECTION)){
+                aud = Audience.audience(Bukkit.getOnlinePlayers());
+                channel = Component.text(ChatColor.DARK_GRAY+""+ChatColor.BOLD+""+"[G] ");
+            } else {
+                channel = firstchar == '!' ? Component.text(ChatColor.DARK_GRAY+""+ChatColor.BOLD+""+"[G] ") : Component.text(ChatColor.BOLD+"[TEAM] ");
+                aud = firstchar == '!' ? Audience.audience(Bukkit.getOnlinePlayers()) : Audience.audience(targets);
+            }
+            final TextComponent channel_f = channel;
+            ChatRenderer cht = (source, sourceDisplayName, message, viewer) -> channel_f.append(sourceDisplayName.append(Component.text(": "))).color(tcolor).append(Component.text(msg.content().replaceFirst("!", "")).color(TextColor.color(0xFFFFFF)));
     
             try{
                 Set<Audience> vwrs = event.viewers();

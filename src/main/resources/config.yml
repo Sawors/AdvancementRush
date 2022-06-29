@@ -55,6 +55,10 @@ enable-waiting-room-minigame: true
 # the "radius" of the square where the teams will be spread when the game starts
 #   default : 256
 spread-teams-radius: 256
+# if the team should be randomly spread inside this radius or if they should be evenly
+# spaced on a circle around the spawn (circle radius = "spread-teams-radius")
+#   default : false
+random-spread: false
 
 # set this to change how the game ends (win condition)
 #   allowed values are : TIMER, VALUE, HYBRID

@@ -71,7 +71,6 @@ public class AdvancementListeners implements Listener {
             return;
         }
         
-        
         Player p = event.getPlayer();
         if(!ArTeamManager.doesPlayerHaveTeam(p)){
             if(advmessage != null){

@@ -1,6 +1,7 @@
 name: AdvancementRush
 version: '${project.version}'
 main: com.github.sawors.Main
+load: POSTWORLD
 api-version: 1.18
 authors: [ Sawors ]
 commands:

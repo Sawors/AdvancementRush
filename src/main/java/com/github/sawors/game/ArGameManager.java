@@ -17,6 +17,7 @@ import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
 import org.bukkit.scheduler.BukkitRunnable;
 import org.bukkit.scheduler.BukkitTask;
+import org.bukkit.util.Vector;
 
 import java.sql.Connection;
 import java.sql.SQLException;
@@ -51,6 +52,7 @@ public class ArGameManager {
     private static int platformradius = 24;
     private static int spreadradius = 256;
     private static boolean enableminigame = true;
+    private static boolean randomspread = false;
     
     
     public static void initGameMode(){
@@ -95,10 +97,11 @@ public class ArGameManager {
         cancelTimerTask();
         
         String worldname = config.getString("game-world-name");
-        if(worldname != null && Bukkit.getWorld(worldname) != null){
-            gameworld = Bukkit.getWorld(worldname);
+        if(worldname != null){
+            gameworld = Bukkit.createWorld(WorldCreator.name(worldname));
         } else {
             gameworld = Bukkit.getWorlds().get(0);
+            Bukkit.getLogger().log(Level.INFO, "no world set for Advancement Rush, using the first world found : "+gameworld.getName());
         }
         
         enableminigame = Main.getMainConfig().getBoolean("enable-waiting-room-minigame");
@@ -111,7 +114,7 @@ public class ArGameManager {
         if(spreadradius < 0){
             spreadradius = 0;
         }
-        
+        randomspread = config.getBoolean("random-spread");
         
     }
     
@@ -531,19 +534,28 @@ public class ArGameManager {
     
     public static void spreadSpawnTeams(){
         ArrayList<String> teams = ArTeamManager.getTeamList();
-            World w = getGameworld();
-            int spawnradius = getSpreadradius();
-            Location baseloc = new Location(w, 0,w.getSeaLevel()+getSpawnheight()-3,0);
-            for(String team : teams){
-                Location newloc = w.getHighestBlockAt(baseloc.add(-spawnradius,0,-spawnradius).add(Math.random()*2*spawnradius,0,Math.random()*2*spawnradius)).getLocation().add(0,spawnheight/2f,0);
-                for(UUID id : ArDataBase.teamMembersDeserialize(ArTeamManager.getTeamPlayers(team))){
-                    Player p = Bukkit.getPlayer(id);
-                    if(p != null){
-                        p.addPotionEffect(new PotionEffect(PotionEffectType.INVISIBILITY,40,1,false,false,false));
-                        p.teleport(newloc);
-                    }
+        randomspread = false;
+        World w = getGameworld();
+        int spawnradius = 16;
+        Location baseloc = new Location(w, 0.5,0,0.5);
+        Vector spawnlocvec = new Vector(spawnradius,0,0);
+        for(int i = 0; i<teams.size(); i++){
+            if(randomspread){
+                spawnlocvec.setX(Math.random()*2*spawnradius);
+                spawnlocvec.setZ(Math.random()*2*spawnradius);
+            } else {
+                spawnlocvec.rotateAroundY(Math.toRadians((360f/teams.size())));
+            }
+            spawnlocvec.setY(getSpawnheight());
+            Location spawnloc = w.getHighestBlockAt(baseloc.clone().add(spawnlocvec)).getLocation().add(0.5,getSpawnheight(),0.5);
+            for(UUID id : ArDataBase.teamMembersDeserialize(ArTeamManager.getTeamPlayers(teams.get(i)))){
+                Player p = Bukkit.getPlayer(id);
+                if(p != null){
+                    p.addPotionEffect(new PotionEffect(PotionEffectType.INVISIBILITY,10,1,false,false,false));
+                    p.teleport(spawnloc);
                 }
             }
+        }
     }
     
     public static boolean isMinigameEnabled(){
