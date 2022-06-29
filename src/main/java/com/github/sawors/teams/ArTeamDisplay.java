@@ -118,7 +118,6 @@ public class ArTeamDisplay {
             return;
         }
         List<String> ranking = ArTeamManager.getTeamsRanking();
-        Main.logAdmin(ranking.toString());
         objective.getScore(ChatColor.GOLD+"    Top Teams").setScore(topteamsize+5);
         for(int i = 0; i<topteamsize; i++){
             if(ranking.size() > i){
@@ -203,7 +202,6 @@ public class ArTeamDisplay {
         //TODO : center better the team name
         for(int i2 = 0; i2<(((maxlinelength_final-teamnamelength)-3)/2); i2++){
             identifierunique.append(ChatColor.RESET + " ");
-            Main.logAdmin(i2+"");
         }
         String identifier = identifierunique.toString();
         displayself.addEntry(identifier);
@@ -226,7 +224,6 @@ public class ArTeamDisplay {
             return;
         }
         List<String> ranking = ArTeamManager.getTeamsRanking();
-        Main.logAdmin(ranking.toString());
         int rankingsize = ranking.size();
         objective.getScore(ChatColor.GOLD+"    Top Teams").setScore(rankingsize+2);
         for(int i = 0; i<showlength; i++){

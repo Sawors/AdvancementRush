@@ -26,12 +26,13 @@ import java.lang.reflect.MalformedParametersException;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.UUID;
+import java.util.logging.Level;
 
 public class AdvancementListeners implements Listener {
     
     @EventHandler(priority = EventPriority.LOW)
     public static void playerCriteriaProgress(PlayerAdvancementCriterionGrantEvent event){
-        if((ArGameManager.getGamephase().equals(ArGamePhase.WINNER_ANNOUNCEMENT) || ArGameManager.getGamephase().equals(ArGamePhase.TEAM_SELECTION))&&!event.getAdvancement().getKey().getKey().contains("/root")){
+        if((ArGameManager.getGamephase().equals(ArGamePhase.WINNER_ANNOUNCEMENT))){
             event.setCancelled(true);
             return;
         }
@@ -45,7 +46,6 @@ public class AdvancementListeners implements Listener {
             if(!p.getAdvancementProgress(event.getAdvancement()).isDone() && !ArDataBase.isAdvancementMuted(adv.getKey(),team) && team != null && ArDataBase.shouldSync(adv)){
                 ArTeamManager.addCriterionToTeam(team,adv.getKey(),event.getCriterion());
                 ArTeamManager.syncTeamAdvancement(team, adv);
-                Main.logAdmin(ChatColor.RED+event.getCriterion());
             }
         } catch(SQLException | NullPointerException e){
             e.printStackTrace();
@@ -170,7 +170,7 @@ public class AdvancementListeners implements Listener {
         if (team != null) {
             ArTeamManager.syncPlayerAllAdvancementsWithTeam(p,team);
         } else {
-            Main.logAdmin("player "+p.getName()+" has no team, couldn't sync advancements");
+            Bukkit.getLogger().log(Level.INFO,"player "+p.getName()+" has no team, couldn't sync advancements");
         }
         
         AdvancementManager.grantRootAdvancements(p);

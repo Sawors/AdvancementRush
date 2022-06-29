@@ -99,12 +99,10 @@ public class ArDataBase {
             ConfigurationSection section = Main.getMainConfig().getConfigurationSection("advancements-values");
             if(section != null){
                 Map<String,Object> map = section.getValues(false);
-                Main.logAdmin(map.toString());
                 HashMap<NamespacedKey, Integer> editadv = new HashMap<>();
                 for(int i = 0; i<map.size();i++){
                     editadv.put(NamespacedKey.fromString(String.valueOf(map.keySet().toArray()[i])), Integer.valueOf(String.valueOf(map.values().toArray()[i])));
                 }
-                Main.logAdmin(editadv.toString());
                 for(NamespacedKey key : editadv.keySet()){
                     Integer value = editadv.get(key);
                     String query = "REPLACE INTO advancements (name, value) VALUES ('"+key+"',"+value+");";
@@ -123,7 +121,6 @@ public class ArDataBase {
         try{
             String target = "jdbc:sqlite:"+Main.getDbFile().getCanonicalFile();
             co = DriverManager.getConnection(target);
-            //Main.logAdmin("[AdvancementRush] Connection to database established : "+target);
             return co;
         } catch (
                 IOException |
@@ -177,7 +174,6 @@ public class ArDataBase {
     public static void deleteTeam(String teamname) throws NullPointerException {
         try(Connection co = connect()){
             String query = "DELETE FROM teams WHERE "+ArTeamData.NAME+"='"+teamname+"'";
-            Main.logAdmin(query);
             if(doesTeamExist(teamname)){
                 co.createStatement().execute(query);
             } else{
@@ -294,7 +290,6 @@ public class ArDataBase {
         if(adv.size()>=1){
             for(int i = 0; i<adv.size(); i++){
                 msg.append(adv.get(i));
-                Main.logAdmin(adv.get(i));
                 //append the separator ","
                 if(i!=adv.size()-1){
                     msg.append(",");
@@ -391,7 +386,6 @@ public class ArDataBase {
     public static String getDiscordUser(String mcuuid){
         try(Connection co = connect()){
             String query = "SELECT DISCORDID FROM discordlink WHERE MCUUID='"+mcuuid+"'";
-            Main.logAdmin(query);
             ResultSet rset = co.prepareStatement(query).executeQuery();
             if(!rset.isClosed()){
                 return rset.getString("DISCORDID");

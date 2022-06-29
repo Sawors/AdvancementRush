@@ -47,10 +47,11 @@ public class ArGameManager {
     private static int ranktitleduration = 4;
     private static Location originloc;
     private static World gameworld;
-    private static int spawnheight = 48;
+    private static int spawnheight = 64;
     private static int platformradius = 24;
-    private static int spreadradius = 64;
+    private static int spreadradius = 256;
     private static boolean enableminigame = true;
+    
     
     public static void initGameMode(){
         FileConfiguration config = Main.getMainConfig();
@@ -91,7 +92,6 @@ public class ArGameManager {
         } else {
             dragoneggbonus = false;
         }
-        Main.logAdmin(duration*60+"");
         cancelTimerTask();
         
         String worldname = config.getString("game-world-name");
@@ -114,6 +114,11 @@ public class ArGameManager {
         
         
     }
+    
+    
+    
+    
+    
     
     public static Location tryToGetEggLocation(){
         Player lastknownholder = Bukkit.getPlayer(Objects.requireNonNull(getLastKnownHolder()));
@@ -227,9 +232,6 @@ public class ArGameManager {
     }
     public static void stopTimerCount(){
         cancelTimerTask();
-    }
-    public static void printTimer(){
-        Main.logAdmin("duration : "+duration+" timer : "+timer);
     }
     private static void cancelTimerTask(){
         try{
@@ -351,7 +353,7 @@ public class ArGameManager {
         //TODO : /!\ MOVE ALL ACTIONS TRIGGERED ON GAME PHASE CHANGE HERE
         switch(gamephase){
             case TEAM_SELECTION:
-                Main.logAdmin("w : "+getGameworld().getEntities().size());
+               
                 new BukkitRunnable(){
                     @Override
                     public void run() {
@@ -363,14 +365,13 @@ public class ArGameManager {
                         }
                     }
                 }.      // I do this delay otherwise gamerules are not loaded
-                        runTaskLater(Main.getPlugin(), 200);
-    
-                Main.logAdmin("gr : "+getGameworld().getGameRuleValue(GameRule.DO_DAYLIGHT_CYCLE));
+                        runTaskLater(Main.getPlugin(), 60);
+                
                 
             case INGAME:
                 for(World w : Bukkit.getWorlds()){
-                    getGameworld().setGameRule(GameRule.DO_DAYLIGHT_CYCLE, true);
-                    getGameworld().setGameRule(GameRule.DO_WEATHER_CYCLE, true);
+                    w.setGameRule(GameRule.DO_DAYLIGHT_CYCLE, true);
+                    w.setGameRule(GameRule.DO_WEATHER_CYCLE, true);
                     if(Main.getMainConfig().getBoolean("difficulty-hard")){w.setDifficulty(Difficulty.HARD);} else {w.setDifficulty(Difficulty.NORMAL);}
                 }
                 
@@ -404,15 +405,6 @@ public class ArGameManager {
         showscores = true;
         showranks = true;
         refreshTimerDisplay();
-        /*for(Player p : Bukkit.getOnlinePlayers()){
-            p.playSound(p.getLocation(), Sound.ENTITY_ENDER_DRAGON_GROWL,1,1);
-            try{
-                String team = ArTeamManager.getTeamsRanking().get(0);
-                //p.showTitle(Title.title(Component.text(ChatColor.GOLD+"WINNER"),Component.text(team+" : "+ArTeamManager.getTeamPoints(team)).color(TextColor.fromHexString(ArTeamManager.getTeamColor(team)))));
-            } catch(IndexOutOfBoundsException e){
-                Main.logAdmin("no team in first place");
-            }
-        }*/
         int imax = ArTeamManager.getTeamsRanking().size();
         new BukkitRunnable(){
             int i = 1;
@@ -492,7 +484,7 @@ public class ArGameManager {
                         ArTeamDisplay.updatePlayerDisplay(p,team);
                         //p.showTitle(Title.title(Component.text(ChatColor.GOLD+"WINNER"),Component.text(team+" : "+ArTeamManager.getTeamPoints(team)).color(TextColor.fromHexString(ArTeamManager.getTeamColor(team)))));
                     } catch(IndexOutOfBoundsException e){
-                        Main.logAdmin("no team in ranking");
+                        Bukkit.getLogger().log(Level.WARNING,"no team in ranking");
                     }
                 }
                 i++;

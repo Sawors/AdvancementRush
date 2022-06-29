@@ -1,6 +1,5 @@
 package com.github.sawors.teams;
 
-import com.github.sawors.Main;
 import com.github.sawors.UsefulTools;
 import com.github.sawors.advancements.AdvancementManager;
 import com.github.sawors.database.ArDataBase;
@@ -23,6 +22,7 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.*;
+import java.util.logging.Level;
 
 public class ArTeamManager {
     
@@ -145,7 +145,7 @@ public class ArTeamManager {
             ArTeamManager.syncPlayerColorWithTeam(p);
             ArTeamDisplay.updatePlayerDisplay(p, teamname);
         } else {
-            Main.logAdmin("could not sync player "+p.getName()+" with team "+teamname+" for this player is offline");
+            Bukkit.getLogger().log(Level.INFO,"could not sync player "+p.getName()+" with team "+teamname+" because this player is offline");
         }
     }
     public static void changePlayerTeam(String newteam, UUID playerid) throws SQLException, MalformedParametersException, KeyAlreadyExistsException{
@@ -153,7 +153,7 @@ public class ArTeamManager {
         if(team != null){
             ArTeamManager.removePlayerFromTeam(team, playerid);
         } else {
-            Main.logAdmin("Player "+Bukkit.getOfflinePlayer(playerid).getName()+" has no team");
+            Bukkit.getLogger().log(Level.INFO, "Player "+Bukkit.getOfflinePlayer(playerid).getName()+" has no team");
         }
         ArrayList<UUID> output = ArDataBase.teamMembersDeserialize(getTeamPlayers(newteam));
         // add player to team if not in it
@@ -342,7 +342,7 @@ public class ArTeamManager {
                     if (!crits.contains(criterion)) {
                         crits.add(criterion);
                     } else {
-                        throw new KeyAlreadyExistsException("criterion "+criterion+" is already unlocked for this team");
+                        Bukkit.getLogger().log(Level.INFO,"couldn't add criterion "+criterion+" for it is already unlocked for team "+teamname);
                     }
             
                     String newadv = ArDataBase.advancementCriteriaSerialize(advancement, crits);
@@ -373,7 +373,10 @@ public class ArTeamManager {
     public static void syncTeamAdvancement(String teamname, Advancement adv){
         ArrayList<UUID> players = ArDataBase.teamMembersDeserialize(getTeamPlayers(teamname));
         for(UUID id : players){
-            syncPlayerAdvancementWithTeam(Bukkit.getPlayer(id),teamname,adv);
+            Player p = Bukkit.getPlayer(id);
+            if(p != null){
+                syncPlayerAdvancementWithTeam(Bukkit.getPlayer(id),teamname,adv);
+            }
         }
     }
     
@@ -403,11 +406,12 @@ public class ArTeamManager {
                 ArDataBase.unmuteAdvancement(adv.getKey(),teamsource);
             }
         
-        } catch (SQLException | NullPointerException e){
+        } catch (
+                SQLException |
+                NullPointerException |
+                KeyAlreadyExistsException e){
             e.printStackTrace();
-        } catch (KeyAlreadyExistsException exception){
-            Main.logAdmin(exception.getMessage());
-        }finally {
+        } finally {
             ArDataBase.unmuteAdvancement(adv.getKey(), teamsource);
         }
     }
@@ -438,7 +442,6 @@ public class ArTeamManager {
             p.displayName(pname.color(TextColor.fromCSSHexString(ArTeamManager.getTeamColor(team))));
             p.playerListName(p.playerListName().color(TextColor.fromCSSHexString(ArTeamManager.getTeamColor(team))));
         } else {
-            Main.logAdmin("Player "+p.getName()+" has no team");
             p.displayName(pname.color(TextColor.color(0xFFFFFF)));
             p.playerListName(pname.color(TextColor.color(0xFFFFFF)));
         }
@@ -496,7 +499,6 @@ public class ArTeamManager {
             String query = "SELECT "+ArTeamData.NAME+" FROM teams WHERE "+ArTeamData.NAME+"='"+team+"'";
             PreparedStatement statement = co.prepareStatement(query);
             ResultSet rs = statement.executeQuery();
-            Main.logAdmin(!rs.isClosed()+" "+rs.getString(ArTeamData.NAME.toString()));
             if(!rs.isClosed() && !Objects.equals(rs.getString(ArTeamData.NAME.toString()), "")){
                 return true;
             }

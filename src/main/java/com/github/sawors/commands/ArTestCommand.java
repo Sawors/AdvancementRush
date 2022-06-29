@@ -2,7 +2,6 @@ package com.github.sawors.commands;
 
 import com.github.sawors.Main;
 import com.github.sawors.UsefulTools;
-import com.github.sawors.advancements.AdvancementManager;
 import com.github.sawors.database.ArDataBase;
 import com.github.sawors.game.ArGameListeners;
 import com.github.sawors.game.ArGameManager;
@@ -15,8 +14,6 @@ import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
-import org.bukkit.advancement.Advancement;
-import org.bukkit.advancement.AdvancementProgress;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
@@ -25,8 +22,6 @@ import org.bukkit.scheduler.BukkitRunnable;
 import org.jetbrains.annotations.NotNull;
 
 import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.Objects;
 
 public class ArTestCommand implements CommandExecutor {
@@ -95,7 +90,6 @@ public class ArTestCommand implements CommandExecutor {
                         break;
                     case"uncage":
                         ArGameManager.generateSpawnLobby(Material.AIR);
-                        Main.logAdmin("p1");
                         break;
                     case"spread":
                         ArGameManager.spreadSpawnTeams();
@@ -107,35 +101,6 @@ public class ArTestCommand implements CommandExecutor {
                             ArGameListeners.setWolf((Player) sender);
                         }
                 }
-            } else {
-                sender.sendMessage("Phase 1");
-                ArrayList<String> advlist = new ArrayList<>();
-                int i = 0;
-                for (@NotNull Iterator<Advancement> it = Bukkit.advancementIterator(); it.hasNext(); ) {
-                    if(i >= 5){
-                        break;
-                    }
-                    Advancement adv = it.next();
-                    if(!AdvancementManager.isRecipe(adv)){
-                        advlist.add(adv.getKey().toString());
-                        i++;
-                    }
-                }
-                ArTeamManager.setTeamAdvancements("test", ArDataBase.teamAdvancementsSerialize(advlist));
-                sender.sendMessage("Phase 2");
-                try{
-                    ArrayList<String> out = ArDataBase.teamAdvancementsDeserialize(ArTeamManager.getTeamAdvancements("test"));
-                    for(String adv : out){
-                        AdvancementProgress pgr = ((Player) sender).getAdvancementProgress(Bukkit.getAdvancement(NamespacedKey.fromString(adv)));
-                        for(String ctr : pgr.getRemainingCriteria()){
-                            pgr.awardCriteria(ctr);
-                        }
-                    }
-                } catch (
-                        SQLException | NullPointerException e) {
-                    e.printStackTrace();
-                }
-    
             }
             return true;
         }
