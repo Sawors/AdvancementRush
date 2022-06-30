@@ -53,6 +53,7 @@ spawn-platform-height: 64
 enable-waiting-room-minigame: true
 
 # the "radius" of the square where the teams will be spread when the game starts
+# set to -1 to calculate the radius for which teams are separated by exactly one "server render distance" amount of blocks (only works if random-spread is false)
 #   default : 256
 spread-teams-radius: 256
 # if the team should be randomly spread inside this radius or if they should be evenly

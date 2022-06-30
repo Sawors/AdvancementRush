@@ -279,7 +279,7 @@ public class ArTeamDisplay {
         }
     }*/
     
-    private static TextComponent getTeamDisplay(String team, int pts, boolean showpoints){
+    public static TextComponent getTeamDisplay(String team, int pts, boolean showpoints){
         String teamname = team;
         if(team == null){
             return Component.text(ChatColor.WHITE+"No Team");
@@ -306,10 +306,10 @@ public class ArTeamDisplay {
     
         return Component.text(teamname).color(TextColor.fromHexString(ArTeamManager.getTeamColor(team))).append(pointsdisplay);
     }
-    private static TextComponent getTeamDisplay(String team, int pts){
+    public static TextComponent getTeamDisplay(String team, int pts){
         return getTeamDisplay(team,pts,true);
     }
-    private static TextComponent getTeamDisplay(String team){
+    public static TextComponent getTeamDisplay(String team){
         return getTeamDisplay(team,0,false);
     }
     

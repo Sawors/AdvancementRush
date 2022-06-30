@@ -149,13 +149,27 @@ public class ArGameListeners implements Listener {
     }
     
     
+    
+    
+    
     //  WAITING GAME
     private static Entity wolf;
+    private static boolean iswolfoncooldown = false;
+    private static final int wolfcooldown = 1;
     public static Entity getWolf() {
         return wolf;
     }
     public static void setWolf(Entity newwolf) {
-        wolf = newwolf;
+        if(!iswolfoncooldown){
+            wolf = newwolf;
+            iswolfoncooldown = true;
+            new BukkitRunnable(){
+                @Override
+                public void run(){
+                    iswolfoncooldown = false;
+                }
+            }.runTaskLater(Main.getPlugin(),20L*wolfcooldown);
+        }
     }
     
     public static void startWolf(){

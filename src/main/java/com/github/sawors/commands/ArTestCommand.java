@@ -100,6 +100,8 @@ public class ArTestCommand implements CommandExecutor {
                         } else {
                             ArGameListeners.setWolf((Player) sender);
                         }
+                    case"start":
+                        ArGameManager.startGame();
                 }
             }
             return true;

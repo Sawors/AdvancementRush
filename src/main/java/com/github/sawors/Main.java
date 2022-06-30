@@ -179,6 +179,9 @@ public final class Main extends JavaPlugin {
     public static void logAdmin(String msg){
         logAdmin(Component.text(ChatColor.YELLOW+msg));
     }
+    public static void logAdmin(Object msg){
+        logAdmin(Component.text(ChatColor.YELLOW+msg.toString()));
+    }
     
     public static FileConfiguration getMainConfig(){
         return getPlugin().getConfig();

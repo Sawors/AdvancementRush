@@ -21,6 +21,7 @@ import org.bukkit.util.Vector;
 
 import java.sql.Connection;
 import java.sql.SQLException;
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Locale;
 import java.util.Objects;
@@ -110,11 +111,15 @@ public class ArGameManager {
         if(getspawnheight > 0){
             spawnheight = getspawnheight;
         }
+        
+        
+        
+        randomspread = config.getBoolean("random-spread");
+        
         spreadradius = config.getInt("spread-teams-radius");
-        if(spreadradius < 0){
+        if(spreadradius < -1){
             spreadradius = 0;
         }
-        randomspread = config.getBoolean("random-spread");
         
     }
     
@@ -536,15 +541,23 @@ public class ArGameManager {
         ArrayList<String> teams = ArTeamManager.getTeamList();
         randomspread = false;
         World w = getGameworld();
-        int spawnradius = 16;
+        int spawnradius = getSpreadradius();
         Location baseloc = new Location(w, 0.5,0,0.5);
+        double angle = Math.toRadians(360f/teams.size());
         Vector spawnlocvec = new Vector(spawnradius,0,0);
+        Main.logAdmin(spawnradius);
+        if(spawnradius == -1){
+            Bukkit.getLogger().log(Level.INFO,"[Advancement Rush] Spawn radius set to -1 (auto) in config, calculating it for "+teams.size()+" teams...");
+            double radius = (Math.sin(90-(angle/2))*Bukkit.getServer().getViewDistance()*16)/(Math.sin(angle));
+            spawnlocvec.setX(radius);
+            Bukkit.getLogger().log(Level.INFO,"[Advancement Rush] Spawn radius = "+String.format("%.2f", radius));
+        }
         for(int i = 0; i<teams.size(); i++){
             if(randomspread){
                 spawnlocvec.setX(Math.random()*2*spawnradius);
                 spawnlocvec.setZ(Math.random()*2*spawnradius);
             } else {
-                spawnlocvec.rotateAroundY(Math.toRadians((360f/teams.size())));
+                spawnlocvec.rotateAroundY(angle);
             }
             spawnlocvec.setY(getSpawnheight());
             Location spawnloc = w.getHighestBlockAt(baseloc.clone().add(spawnlocvec)).getLocation().add(0.5,getSpawnheight(),0.5);
@@ -595,5 +608,122 @@ public class ArGameManager {
     
     public static void setEnableminigame(boolean enableminigame) {
         ArGameManager.enableminigame = enableminigame;
+    }
+    
+    public static void startGame(){
+        //
+        //  NEVER SWITCH GAME PHASES LIKE THAT, ONLY DOING THIS HERE FOR THE DAMAGE CANCELLATION !!
+        //  TODO : Add a gamephase for player freeze (drop sequence + endgame ?) or find a better way to effectively deny their movements and actions
+        gamephase = ArGamePhase.TEAM_SELECTION;
+        Main.logAdmin(
+                "Game Started :"+
+                        "\n Teams : "+ArTeamManager.getTeamList()+
+                        "\n Players : "+Bukkit.getOnlinePlayers()+
+                        "\n Duration : "+getTimerDisplay()+
+                        "\n World name : "+getGameworld().getName()+
+                        "\n Game mode : "+getGameMode()+
+                        "\n Dragon Egg : "+isEggEnabled()+
+                        "\n Dragon Egg mode : "+eggbonusmode
+        );
+        ArrayList<Player> tocheck = new ArrayList<>();
+        for(String team : ArTeamManager.getTeamList()){
+            for(UUID id : ArDataBase.teamMembersDeserialize(ArTeamManager.getTeamPlayers(team))){
+                Player p = Bukkit.getPlayer(id);
+                if(p != null && p.isOnline()){
+                    tocheck.add(p);
+                }
+            }
+        }
+        Main.logAdmin(tocheck.toString());
+        new BukkitRunnable(){
+            // seconds before timeout (*4 to translate it to iterations)
+            int timeout = 10*4;
+            int testnb = 0;
+            boolean allplayersvalidated = false;
+            ArrayList<Player> checked = new ArrayList<>();
+            @Override
+            public void run() {
+                if(allplayersvalidated){
+                    new BukkitRunnable(){
+                        // timer shown right before the game start (in seconds)
+                        final int pregametimer = 5;
+                        int i = -1;
+                        String countdown;
+                        float pitch = 1;
+                        @Override
+                        public void run() {
+                            if(i == -1){
+                                countdown = "Game starts in...";
+                                pitch = .5f;
+                            } else{
+                                countdown = String.valueOf(pregametimer-i);
+                                pitch = 1.15f;
+                            }
+    
+    
+                            if(i<pregametimer){
+                                for(Player p : Bukkit.getOnlinePlayers()){
+                                    p.playSound(p.getLocation(), Sound.ENTITY_EXPERIENCE_ORB_PICKUP,1,pitch);
+                                    p.showTitle(Title.title(Component.text(ChatColor.RED+countdown), Component.text(""), Title.Times.times(Duration.ofMillis(400),Duration.ofMillis(500),Duration.ofMillis(100))));
+                                }
+                            } else {
+                                for(Player p : Bukkit.getOnlinePlayers()){
+                                    p.playSound(p.getLocation(), Sound.ENTITY_PLAYER_LEVELUP,1,1f);
+                                    p.showTitle(Title.title(Component.text(""), Component.text(ChatColor.GOLD+"GO GO GO GO !"), Title.Times.times(Duration.ofMillis(100),Duration.ofMillis(500),Duration.ofMillis(400))));
+                                    preparePlayerForGame(p);
+                                }
+                            }
+                            
+                            i++;
+                            if(i > pregametimer){
+                                //ACTUALLY STARTING GAME !
+                                setGamephase(ArGamePhase.INGAME);
+                                startTimer(true);
+                                this.cancel();
+                            }
+                        }
+                    }.runTaskTimer(Main.getPlugin(),10,20);
+                    this.cancel();
+                    return;
+                } else {
+                    if(checked.size() >= tocheck.size()){
+                        try{
+                            if(checked.containsAll(tocheck)){
+                                Main.logAdmin("not perfect check");
+                            }
+                        } catch (NullPointerException e){
+                            e.printStackTrace();
+                        }
+                        allplayersvalidated = true;
+                    } else {
+                        for(Player p : tocheck){
+                            if(p.isOnline() && p.isOnGround()){
+                                checked.add(p);
+                                Main.logAdmin("Player "+p.getName()+" validated ("+checked.size()+"/"+tocheck.size()+")");
+                            }
+                        }
+                    }
+                    
+                }
+                
+                
+                
+                if(testnb >= timeout){
+                    this.cancel();
+                    Bukkit.getLogger().log(Level.SEVERE, "[Advancement Rush] COULD NOT START THE GAME, PLAYERS NOT ON GROUND");
+                }
+            }
+        }.runTaskTimer(Main.getPlugin(),10,5);
+        spreadSpawnTeams();
+    }
+    
+    private static void preparePlayerForGame(Player p){
+        p.setHealth(20);
+        p.setFoodLevel(20);
+        p.setLevel(0);
+        p.setExp(0);
+        p.setBedSpawnLocation(p.getLocation(),true);
+        p.setCustomNameVisible(true);
+        p.setInvulnerable(false);
     }
 }
