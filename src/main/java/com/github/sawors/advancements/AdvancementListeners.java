@@ -24,11 +24,11 @@ import org.bukkit.scheduler.BukkitRunnable;
 
 import java.lang.reflect.MalformedParametersException;
 import java.sql.SQLException;
-import java.util.ArrayList;
+import java.util.Set;
 import java.util.UUID;
 import java.util.logging.Level;
 
-public class AdvancementListeners implements Listener {
+public class AdvancementListeners extends ArTeamManager implements Listener {
     
     @EventHandler(priority = EventPriority.LOW)
     public static void playerCriteriaProgress(PlayerAdvancementCriterionGrantEvent event){
@@ -178,7 +178,7 @@ public class AdvancementListeners implements Listener {
     
     private static void playBonusSoundForTeam(String team){
         try{
-            ArrayList<UUID> players = ArDataBase.teamMembersDeserialize(ArTeamManager.getTeamPlayers(team));
+            Set<UUID> players = ArDataBase.teamMembersDeserialize(ArTeamManager.getTeamPlayers(team));
             for(UUID id : players){
                 Player soundtarget = Bukkit.getPlayer(id);
                 if( soundtarget != null && soundtarget.isOnline()){
@@ -215,7 +215,7 @@ public class AdvancementListeners implements Listener {
     
     private static void playUnlockSoundForTeam(String team){
         try{
-            ArrayList<UUID> players = ArDataBase.teamMembersDeserialize(ArTeamManager.getTeamPlayers(team));
+            Set<UUID> players = ArDataBase.teamMembersDeserialize(ArTeamManager.getTeamPlayers(team));
             for(UUID id : players){
                 Player soundtarget = Bukkit.getPlayer(id);
                 if( soundtarget != null && soundtarget.isOnline()){

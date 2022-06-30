@@ -1,5 +1,6 @@
 package com.github.sawors.teams;
 
+import com.github.sawors.Main;
 import com.github.sawors.UsefulTools;
 import com.github.sawors.advancements.AdvancementManager;
 import com.github.sawors.database.ArDataBase;
@@ -13,6 +14,7 @@ import org.bukkit.Sound;
 import org.bukkit.advancement.Advancement;
 import org.bukkit.advancement.AdvancementProgress;
 import org.bukkit.entity.Player;
+import org.bukkit.scheduler.BukkitRunnable;
 import org.jetbrains.annotations.NotNull;
 
 import javax.management.openmbean.KeyAlreadyExistsException;
@@ -24,7 +26,7 @@ import java.sql.SQLException;
 import java.util.*;
 import java.util.logging.Level;
 
-public class ArTeamManager {
+public class ArTeamManager extends ArDataBase{
     
     
     // |====================================[GIT GUD]=====================================|
@@ -35,8 +37,10 @@ public class ArTeamManager {
     // | -> Del  : DELETE FROM [table] WHERE [condition]=[something]                      |
     // |==================================================================================|
     
+    //  TODO : more safety in methods accessors -> create a hashmap linking players and their teams (and update it async) to make it easier to get a player's team / all players in teams ?
+    
     public static void createTeam(String name, Color color) throws KeyAlreadyExistsException {
-        ArDataBase.registerTeam(name, UsefulTools.getColorHex(color), 0, new ArrayList<>());
+        ArDataBase.registerTeam(name, UsefulTools.getColorHex(color), 0, new HashSet<>());
     }
     
     public static void removeTeam(String name) throws NullPointerException{
@@ -73,7 +77,7 @@ public class ArTeamManager {
         }
     }
     
-    public static void setTeamPlayers(String teamname, ArrayList<UUID> players){
+    public static void setTeamPlayers(String teamname, Set<UUID> players){
         try{
             if(ArDataBase.doesTeamExist(teamname)){
                 setTeamData(ArTeamData.PLAYERS, teamname, ArDataBase.teamMembersSerialize(players));
@@ -129,8 +133,20 @@ public class ArTeamManager {
         }
     }
     
+    public static Set<Player> getTeamPlayersOnline(String teamname){
+        Set<UUID> ids = ArDataBase.teamMembersDeserialize(getTeamPlayers(teamname));
+        Set<Player> returnset = new HashSet<>();
+        for(UUID pid : ids){
+            Player p = Bukkit.getPlayer(pid);
+            if(p != null){
+                returnset.add(p);
+            }
+        }
+        return returnset;
+    }
+    
     public static void addPlayerToTeam(String teamname, UUID playerid) throws SQLException, MalformedParametersException, KeyAlreadyExistsException{
-        ArrayList<UUID> output = ArDataBase.teamMembersDeserialize(getTeamPlayers(teamname));
+        Set<UUID> output = ArDataBase.teamMembersDeserialize(getTeamPlayers(teamname));
         // add player to team if not in it
         if (!output.contains(playerid)) {
             output.add(playerid);
@@ -155,7 +171,7 @@ public class ArTeamManager {
         } else {
             Bukkit.getLogger().log(Level.INFO, "Player "+Bukkit.getOfflinePlayer(playerid).getName()+" has no team");
         }
-        ArrayList<UUID> output = ArDataBase.teamMembersDeserialize(getTeamPlayers(newteam));
+        Set<UUID> output = ArDataBase.teamMembersDeserialize(getTeamPlayers(newteam));
         // add player to team if not in it
         try{
             addPlayerToTeam(newteam,playerid);
@@ -165,7 +181,7 @@ public class ArTeamManager {
     }
     
     public static void removePlayerFromTeam(String teamname, UUID playerid) throws SQLException, MalformedParametersException {
-        ArrayList<UUID> output = ArDataBase.teamMembersDeserialize(getTeamPlayers(teamname));
+        Set<UUID> output = ArDataBase.teamMembersDeserialize(getTeamPlayers(teamname));
         output.remove(playerid);
         setTeamPlayers(teamname, ArDataBase.teamMembersSerialize(output));
         //ArDataBase.setPlayerTeamLink(playerid, "");
@@ -189,14 +205,24 @@ public class ArTeamManager {
             } else {
                 query = "UPDATE teams SET "+datatype+"='"+data+"' WHERE "+ArTeamData.NAME+"='"+teamname+"'";
             }
-            co.createStatement().execute(query);
+            new BukkitRunnable(){
+                @Override
+                public void run() {
+                    try {
+                        co.createStatement().execute(query);
+                    } catch (
+                            SQLException e) {
+                        e.printStackTrace();
+                    }
+                }
+            }.runTaskAsynchronously(Main.getPlugin());
         }catch (SQLException e){
             e.printStackTrace();
         }
     }
     
-    public static ArrayList<String> getTeamList(){
-        ArrayList<String> teamlist = new ArrayList<>();
+    public static List<String> getTeamList(){
+        List<String> teamlist = new ArrayList<>();
         try(Connection co = ArDataBase.connect()){
             PreparedStatement statement = co.prepareStatement("SELECT NAME FROM teams");
             ResultSet rset = statement.executeQuery();
@@ -248,9 +274,9 @@ public class ArTeamManager {
         }
     }
     
-    public static ArrayList<String> getTeamsWithAdvancement(NamespacedKey adv) throws SQLException, NullPointerException{
+    public static Set<String> getTeamsWithAdvancement(NamespacedKey adv) throws SQLException, NullPointerException{
         try(Connection co = ArDataBase.connect()){
-            ArrayList<String> list = new ArrayList<>();
+            Set<String> list = new HashSet<>();
             String stmt = "SELECT NAME FROM teams WHERE "+ArTeamData.ADVANCEMENTS+" LIKE '%"+adv.toString()+"(%'";
             PreparedStatement statement = co.prepareStatement(stmt);
             ResultSet rset = statement.executeQuery();
@@ -266,7 +292,7 @@ public class ArTeamManager {
     }
     
     public static void addAdvancementToTeam(String teamname, NamespacedKey advancement) throws SQLException, MalformedParametersException, KeyAlreadyExistsException{
-        ArrayList<String> output = new ArrayList<>();
+        Set<String> output = new HashSet<>();
         if(!getTeamAdvancements(teamname).contains("[]")){
             output = ArDataBase.teamAdvancementsDeserialize(getTeamAdvancements(teamname));
         }
@@ -280,7 +306,7 @@ public class ArTeamManager {
         setTeamAdvancements(teamname, ArDataBase.teamAdvancementsSerialize(output));
     }
     public static void removeAdvancementFromTeam(String teamname, NamespacedKey advancement) throws SQLException, MalformedParametersException {
-        ArrayList<String> output = ArDataBase.teamAdvancementsDeserialize(getTeamAdvancements(teamname));
+        Set<String> output = ArDataBase.teamAdvancementsDeserialize(getTeamAdvancements(teamname));
         output.removeIf(adv -> adv.contains(advancement.toString()));
         setTeamAdvancements(teamname, ArDataBase.teamAdvancementsSerialize(output));
     }
@@ -298,7 +324,7 @@ public class ArTeamManager {
             if(getTeamsWithAdvancement(advancement).contains(team)){
                 for(String adv : ArDataBase.teamAdvancementsDeserialize(getTeamAdvancements(team))) {
                     if(adv.contains(advancement.toString())){
-                        ArrayList<String> criteria = ArDataBase.advancementCriteriaDeserialize(adv);
+                        Set<String> criteria = ArDataBase.advancementCriteriaDeserialize(adv);
                         try{
                             for(String refcrit : Objects.requireNonNull(Bukkit.getAdvancement(advancement)).getCriteria()){
                                 if(!criteria.contains(refcrit)){
@@ -320,13 +346,13 @@ public class ArTeamManager {
     }
     
     public static void addCriterionToTeam(String teamname, NamespacedKey advancement, String criterion) throws SQLException, MalformedParametersException, KeyAlreadyExistsException{
-        ArrayList<String> advs = new ArrayList<>();
+        Set<String> advs = new HashSet<>();
         if(!getTeamAdvancements(teamname).contains("[]")){
             advs = ArDataBase.teamAdvancementsDeserialize(getTeamAdvancements(teamname));
         }
         
         if(!hasTeamAdvancement(teamname, advancement)){
-            ArrayList<String> crits = new ArrayList<>();
+            Set<String> crits = new HashSet<>();
             crits.add(criterion);
             String newadv = ArDataBase.advancementCriteriaSerialize(advancement, crits);
             advs.add(newadv);
@@ -334,7 +360,7 @@ public class ArTeamManager {
         } else {
             for(String checkadv : advs){
                 if(checkadv.contains(advancement.toString())){
-                    ArrayList<String> crits = ArDataBase.advancementCriteriaDeserialize(checkadv);
+                    Set<String> crits = ArDataBase.advancementCriteriaDeserialize(checkadv);
             
             
                     // add criterion to team if not in it
@@ -358,7 +384,7 @@ public class ArTeamManager {
     
     public static boolean isTeamFirstOnAdvancement(String team, Advancement advancement){
         try{
-            ArrayList<String> teamlist = getTeamsWithAdvancement(advancement.getKey());
+            Set<String> teamlist = getTeamsWithAdvancement(advancement.getKey());
             return teamlist.contains(team) && teamlist.size() <= 1;
         } catch (SQLException e){
             e.printStackTrace();
@@ -370,8 +396,8 @@ public class ArTeamManager {
     
     
     //Sync an advancement for the whole team
-    public static void syncTeamAdvancement(String teamname, Advancement adv){
-        ArrayList<UUID> players = ArDataBase.teamMembersDeserialize(getTeamPlayers(teamname));
+    protected static void syncTeamAdvancement(String teamname, Advancement adv){
+        Set<UUID> players = ArDataBase.teamMembersDeserialize(getTeamPlayers(teamname));
         for(UUID id : players){
             Player p = Bukkit.getPlayer(id);
             if(p != null){
@@ -381,7 +407,7 @@ public class ArTeamManager {
     }
     
     //Sync a player's advancement with his team
-    public static void syncPlayerAdvancementWithTeam(Player target, String teamsource, Advancement adv){
+    protected static void syncPlayerAdvancementWithTeam(Player target, String teamsource, Advancement adv){
         ArDataBase.muteAdvancement(adv.getKey(), teamsource);
         try {
             AdvancementProgress targetprogress = target.getAdvancementProgress(adv);
@@ -420,7 +446,7 @@ public class ArTeamManager {
     // TODO :
     //  Maybe as all sync methods are pretty heavy we might try to make them asynchronous, however I don't know how
     //sync every player's advancement with his team
-    public static void syncPlayerAllAdvancementsWithTeam(Player target, String teamsource){
+    protected static void syncPlayerAllAdvancementsWithTeam(Player target, String teamsource){
         try {
             for (@NotNull Iterator<Advancement> it = Bukkit.advancementIterator(); it.hasNext(); ) {
                 Advancement adv = it.next();
@@ -435,7 +461,7 @@ public class ArTeamManager {
         }
     }
     
-    public static void syncPlayerColorWithTeam(Player p){
+    protected static void syncPlayerColorWithTeam(Player p){
         Component pname = p.displayName();
         String team = ArTeamManager.getPlayerTeam(p.getUniqueId());
         if(team != null){
@@ -451,9 +477,9 @@ public class ArTeamManager {
         return Component.text(team).color(TextColor.color(UsefulTools.stringToColorElseRandom(ArTeamManager.getTeamColor(team)).asRGB()));
     }
     
-    public static void playSoundForTeam(String team, Sound sound, float pitch){
+    protected static void playSoundForTeam(String team, Sound sound, float pitch){
         try{
-            ArrayList<UUID> players = ArDataBase.teamMembersDeserialize(ArTeamManager.getTeamPlayers(team));
+            Set<UUID> players = ArDataBase.teamMembersDeserialize(ArTeamManager.getTeamPlayers(team));
             for(UUID id : players){
                 Player soundtarget = Bukkit.getPlayer(id);
                 if( soundtarget != null && soundtarget.isOnline()){
@@ -466,6 +492,7 @@ public class ArTeamManager {
         }
     }
     
+    // List here for ranking purposes
     public static List<String> getTeamsRanking(){
         ArrayList<String> ranking = new ArrayList<>();
         try(Connection co = ArDataBase.connect()){

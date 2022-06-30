@@ -3,7 +3,6 @@ package com.github.sawors.game;
 import com.github.sawors.Main;
 import com.github.sawors.UsefulTools;
 import com.github.sawors.database.ArDataBase;
-import com.github.sawors.database.ArGameData;
 import com.github.sawors.teams.ArTeamDisplay;
 import com.github.sawors.teams.ArTeamManager;
 import net.kyori.adventure.text.Component;
@@ -19,16 +18,11 @@ import org.bukkit.scheduler.BukkitRunnable;
 import org.bukkit.scheduler.BukkitTask;
 import org.bukkit.util.Vector;
 
-import java.sql.Connection;
-import java.sql.SQLException;
 import java.time.Duration;
-import java.util.ArrayList;
-import java.util.Locale;
-import java.util.Objects;
-import java.util.UUID;
+import java.util.*;
 import java.util.logging.Level;
 
-public class ArGameManager {
+public class ArGameManager extends ArDataBase{
     
     private static ArGameMode gamemode = ArGameMode.TIMER;
     private static int duration = 240;
@@ -54,7 +48,7 @@ public class ArGameManager {
     private static int spreadradius = 256;
     private static boolean enableminigame = true;
     private static boolean randomspread = false;
-    
+    private static Player eggholder;
     
     public static void initGameMode(){
         FileConfiguration config = Main.getMainConfig();
@@ -128,8 +122,8 @@ public class ArGameManager {
     
     
     
-    public static Location tryToGetEggLocation(){
-        Player lastknownholder = Bukkit.getPlayer(Objects.requireNonNull(getLastKnownHolder()));
+    protected static Location tryToGetEggLocation(){
+        Player lastknownholder = eggholder;
         if(getLastKnownHolder() != null && lastknownholder != null){
             for(ItemStack item : lastknownholder.getInventory().getStorageContents()){
                 if(item != null && item.getType() == Material.DRAGON_EGG){
@@ -141,7 +135,7 @@ public class ArGameManager {
         for(Player p : Bukkit.getOnlinePlayers()){
             for(ItemStack item : p.getInventory().getStorageContents()){
                 if(item != null && item.getType() == Material.DRAGON_EGG){
-                    updateLastKnownHolder(p);
+                    eggholder = p;
                     return p.getLocation();
                 }
             }
@@ -150,47 +144,20 @@ public class ArGameManager {
         return new Location(getGameworld(),0,0,0);
     }
     
-    public static UUID getLastKnownHolder(){
-        try(Connection co = ArDataBase.connect()){
-            String query = "SELECT VALUE FROM game WHERE DATA = '"+ ArGameData.EGG_HOLDER+"'";
-            String output = co.prepareStatement(query).executeQuery().getString("VALUE");
-            if(Objects.equals(output, "[]")){
-                return null;
-            } else {
-                return UUID.fromString(output);
-            }
-            
-        } catch(SQLException | IllegalArgumentException e){
-            e.printStackTrace();
-            return null;
-        }
-    }
-    public static void updateLastKnownHolder(Player player){
-        try(Connection co = ArDataBase.connect()){
-            String id = "";
-            if(player == null){
-                id = "[]";
-            } else {
-                id = player.getUniqueId().toString();
-            }
-            
-            String query = "UPDATE game SET VALUE = '"+id+"' WHERE DATA = '"+ArGameData.EGG_HOLDER+"'";
-            co.prepareStatement(query).executeQuery();
-        } catch(SQLException e){
-            e.printStackTrace();
-        }
+    public static Player getLastKnownHolder(){
+        return eggholder;
     }
     
-    public static void startTimer(boolean reset){
+    protected static void startTimer(boolean reset){
         cancelTimerTask();
         if(reset){timer = 0;}
         setGamephase(ArGamePhase.INGAME);
         getNewTimer();
     }
-    public static void startTimer(){
+    protected static void startTimer(){
         startTimer(true);
     }
-    public static void resetTimer(){
+    protected static void resetTimer(){
         setGamephase(ArGamePhase.TEAM_SELECTION);
         cancelTimerTask();
         timer = 0;
@@ -218,7 +185,7 @@ public class ArGameManager {
             startWinnerAnnouncementSequence();}
         
     }
-    public static void updateTimerInDatabase(int time){
+    /*public static void updateTimerInDatabase(int time){
         try(Connection co = ArDataBase.connect()){
             String query = "UPDATE game SET VALUE = "+time+" WHERE DATA = '"+ArGameData.TIMER+"'";
             co.prepareStatement(query).executeQuery();
@@ -234,7 +201,7 @@ public class ArGameManager {
             e.printStackTrace();
             return 0;
         }
-    }
+    }*/
     public static int getTimerTime(){
         return timer;
     }
@@ -357,7 +324,7 @@ public class ArGameManager {
     //
     //  GAME PHASES
     //
-    public static void setGamephase(ArGamePhase gamephase) {
+    protected static void setGamephase(ArGamePhase gamephase) {
         //TODO : /!\ MOVE ALL ACTIONS TRIGGERED ON GAME PHASE CHANGE HERE
         switch(gamephase){
             case TEAM_SELECTION:
@@ -407,7 +374,7 @@ public class ArGameManager {
         return finalrankshowlength;
     }
     
-    public static void startWinnerAnnouncementSequence(){
+    protected static void startWinnerAnnouncementSequence(){
         timer=duration*60;
         setGamephase(ArGamePhase.WINNER_ANNOUNCEMENT);
         showscores = true;
@@ -504,7 +471,7 @@ public class ArGameManager {
         return ranktitleduration;
     }
     
-    public static void generateSpawnLobby(Material material){
+    protected static void generateSpawnLobby(Material material){
         if(material.isBlock() || material.isAir() && getPlatformRadius() > 0){
             World w = getGameworld();
             Material locmat;
@@ -537,8 +504,8 @@ public class ArGameManager {
         }
     }
     
-    public static void spreadSpawnTeams(){
-        ArrayList<String> teams = ArTeamManager.getTeamList();
+    protected static void spreadSpawnTeams(){
+        List<String> teams = ArTeamManager.getTeamList();
         randomspread = false;
         World w = getGameworld();
         int spawnradius = getSpreadradius();
@@ -641,6 +608,7 @@ public class ArGameManager {
             int testnb = 0;
             boolean allplayersvalidated = false;
             ArrayList<Player> checked = new ArrayList<>();
+            @SuppressWarnings( "deprecation" )
             @Override
             public void run() {
                 if(allplayersvalidated){

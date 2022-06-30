@@ -17,7 +17,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.UUID;
 
-public class ArDBotManager {
+public class ArDBotManager extends ArDataBase{
     
     private static Guild discordserver;
     

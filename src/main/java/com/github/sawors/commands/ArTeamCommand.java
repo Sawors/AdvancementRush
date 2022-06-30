@@ -22,11 +22,11 @@ import org.jetbrains.annotations.NotNull;
 import javax.management.openmbean.KeyAlreadyExistsException;
 import java.lang.reflect.MalformedParametersException;
 import java.sql.SQLException;
-import java.util.ArrayList;
 import java.util.Objects;
+import java.util.Set;
 import java.util.UUID;
 
-public class ArTeamCommand implements CommandExecutor {
+public class ArTeamCommand extends ArTeamManager implements CommandExecutor {
     @Override
     public boolean onCommand(@NotNull CommandSender sender, @NotNull Command command, @NotNull String label, @NotNull String[] args) {
         if(args.length >= 1 && sender.isOp()){
@@ -86,7 +86,7 @@ public class ArTeamCommand implements CommandExecutor {
                         if(args.length >=2){
                             String name = args[1];
                             try{
-                                ArrayList<UUID> teamoldplayers = ArDataBase.teamMembersDeserialize(ArTeamManager.getTeamPlayers(name));
+                                Set<UUID> teamoldplayers = ArDataBase.teamMembersDeserialize(ArTeamManager.getTeamPlayers(name));
                                 ArTeamManager.removeTeam(name);
                                 try{
                                     for(UUID id1 : teamoldplayers){
@@ -216,7 +216,7 @@ public class ArTeamCommand implements CommandExecutor {
                             return true;
                         } else {
                             Main.logAdmin("arg : "+args[1]);
-                            ArrayList<UUID> players = ArDataBase.teamMembersDeserialize(ArTeamManager.getTeamPlayers(args[1]));
+                            Set<UUID> players = ArDataBase.teamMembersDeserialize(ArTeamManager.getTeamPlayers(args[1]));
                             sender.sendMessage(Component.text(ChatColor.YELLOW+"==[Team ").append(ArTeamManager.getTeamColoredName(args[1])).append(Component.text(ChatColor.YELLOW+" Players]==")));
                             for(UUID pid : players){
                                 try{

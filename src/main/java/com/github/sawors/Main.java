@@ -6,7 +6,6 @@ import com.github.sawors.database.ArDataBase;
 import com.github.sawors.discordbot.ArDBotManager;
 import com.github.sawors.game.ArGameListeners;
 import com.github.sawors.game.ArGameManager;
-import com.github.sawors.game.ArGamePhase;
 import com.github.sawors.teams.ArTeamDisplay;
 import com.github.sawors.teams.TeamListeners;
 import net.dv8tion.jda.api.JDA;
@@ -142,8 +141,7 @@ public final class Main extends JavaPlugin {
     
         // THIS OTHERWISE I REFUSE TO WORK ANYMORE
         ArGameListeners.startWolf();
-    
-        ArGameManager.setGamephase(ArGamePhase.TEAM_SELECTION);
+        
     }
     
     @Override

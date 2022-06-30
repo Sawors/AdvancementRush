@@ -116,7 +116,7 @@ public class ArDataBase {
         }
     }
     
-    public static Connection connect(){
+    protected static Connection connect(){
         Connection co;
         try{
             String target = "jdbc:sqlite:"+Main.getDbFile().getCanonicalFile();
@@ -157,7 +157,7 @@ public class ArDataBase {
                 +");";
     }
     
-    public static void registerTeam(String name, String colorhex, int points, ArrayList<UUID> members) throws KeyAlreadyExistsException{
+    public static void registerTeam(String name, String colorhex, int points, Set<UUID> members) throws KeyAlreadyExistsException{
         try(Connection co = connect()){
             String query = "INSERT INTO teams("+ArTeamData.NAME+","+ArTeamData.COLOR+","+ArTeamData.POINTS+","+ArTeamData.PLAYERS+") VALUES('"+name+"','"+colorhex+"',"+points+",'"+teamMembersSerialize(members)+"')";
             if(!doesTeamExist(name)){
@@ -171,7 +171,7 @@ public class ArDataBase {
         }
     }
     
-    public static void deleteTeam(String teamname) throws NullPointerException {
+    protected static void deleteTeam(String teamname) throws NullPointerException {
         try(Connection co = connect()){
             String query = "DELETE FROM teams WHERE "+ArTeamData.NAME+"='"+teamname+"'";
             if(doesTeamExist(teamname)){
@@ -185,14 +185,15 @@ public class ArDataBase {
         }
     }
     
-    public static String teamMembersSerialize(ArrayList<UUID> members){
+    public static String teamMembersSerialize(Set<UUID> members){
         StringBuilder msg = new StringBuilder();
         msg.append("[");
+        List<UUID> mblist = new ArrayList<>(members);
         
-        if(members.size()>=1){
-            for(int i = 0; i<members.size(); i++){
-                msg.append(members.get(i));
-                if(i!=members.size()-1){
+        if(mblist.size()>=1){
+            for(int i = 0; i<mblist.size(); i++){
+                msg.append(mblist.get(i));
+                if(i!=mblist.size()-1){
                    msg.append(",");
                 }
             }
@@ -201,11 +202,11 @@ public class ArDataBase {
         return msg.toString();
     }
     
-    public static ArrayList<UUID> teamMembersDeserialize(String str) throws MalformedParametersException {
+    public static Set<UUID> teamMembersDeserialize(String str) throws MalformedParametersException {
         char[] content = str.toCharArray();
-        ArrayList<UUID> list = new ArrayList<>();
+        Set<UUID> list = new HashSet<>();
         if(content[0] == '[' && content[content.length-1] == ']'){
-            ArrayList<String> ids = new ArrayList<>();
+            Set<String> ids = new HashSet<>();
             StringBuilder uuid = new StringBuilder();
             for(int i = 1; i<content.length; i++){
                 char evalchar = content[i];
@@ -250,11 +251,11 @@ public class ArDataBase {
         output.append(')');
         return output.toString();
     }
-    public static ArrayList<String> advancementCriteriaDeserialize(String advancementwithcrits){
+    public static Set<String> advancementCriteriaDeserialize(String advancementwithcrits){
         char[] content = advancementwithcrits.toCharArray();
-        ArrayList<String> list = new ArrayList<>();
+        Set<String> list = new HashSet<>();
         if(Character.isLetterOrDigit(content[0]) && content[content.length-1] == ')'){
-            ArrayList<String> crits = new ArrayList<>();
+            Set<String> crits = new HashSet<>();
             StringBuilder critunique = new StringBuilder();
             int criteriastart = 0;
             for(int i = 0; i<content.length; i++){
@@ -283,15 +284,16 @@ public class ArDataBase {
         return list;
     }
     
-    public static String teamAdvancementsSerialize(ArrayList<String> adv){
+    public static String teamAdvancementsSerialize(Set<String> adv){
         StringBuilder msg = new StringBuilder();
         msg.append("[");
+        List<String> advlist = new ArrayList<>(adv);
         
-        if(adv.size()>=1){
-            for(int i = 0; i<adv.size(); i++){
-                msg.append(adv.get(i));
+        if(advlist.size()>=1){
+            for(int i = 0; i<advlist.size(); i++){
+                msg.append(advlist.get(i));
                 //append the separator ","
-                if(i!=adv.size()-1){
+                if(i!=advlist.size()-1){
                     msg.append(",");
                 }
             }
@@ -300,11 +302,11 @@ public class ArDataBase {
         return msg.toString();
     }
     
-    public static ArrayList<String> teamAdvancementsDeserialize(String str) throws MalformedParametersException {
+    public static Set<String> teamAdvancementsDeserialize(String str) throws MalformedParametersException {
         char[] content = str.toCharArray();
-        ArrayList<String> list = new ArrayList<>();
+        Set<String> list = new HashSet<>();
         if(content[0] == '[' && content[content.length-1] == ']'){
-            ArrayList<String> advs = new ArrayList<>();
+            Set<String> advs = new HashSet<>();
             StringBuilder advunique = new StringBuilder();
             for(int i = 1; i<content.length; i++){
                 char evalchar = content[i];
@@ -370,7 +372,7 @@ public class ArDataBase {
             e.printStackTrace();
         }
     }
-    public static String getMinecraftPlayer(String discordid){
+    protected static String getMinecraftPlayer(String discordid){
         try(Connection co = connect()){
             String query = "SELECT MCUUID FROM discordlink WHERE DISCORDID='"+discordid+"'";
             ResultSet rset = co.prepareStatement(query).executeQuery();
@@ -383,7 +385,7 @@ public class ArDataBase {
             return null;
         }
     }
-    public static String getDiscordUser(String mcuuid){
+    protected static String getDiscordUser(String mcuuid){
         try(Connection co = connect()){
             String query = "SELECT DISCORDID FROM discordlink WHERE MCUUID='"+mcuuid+"'";
             ResultSet rset = co.prepareStatement(query).executeQuery();
