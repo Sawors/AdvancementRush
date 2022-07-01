@@ -49,6 +49,7 @@ public class ArGameManager extends ArDataBase{
     private static boolean enableminigame = true;
     private static boolean randomspread = false;
     private static Player eggholder;
+    private static Set<UUID> frozenplayers = new HashSet<>();
     
     public static void initGameMode(){
         FileConfiguration config = Main.getMainConfig();
@@ -90,14 +91,8 @@ public class ArGameManager extends ArDataBase{
             dragoneggbonus = false;
         }
         cancelTimerTask();
-        
-        String worldname = config.getString("game-world-name");
-        if(worldname != null){
-            gameworld = Bukkit.createWorld(WorldCreator.name(worldname));
-        } else {
-            gameworld = Bukkit.getWorlds().get(0);
-            Bukkit.getLogger().log(Level.INFO, "no world set for Advancement Rush, using the first world found : "+gameworld.getName());
-        }
+    
+        gameworld = Bukkit.getServer().getWorlds().get(0);
         
         enableminigame = Main.getMainConfig().getBoolean("enable-waiting-room-minigame");
         platformradius = config.getInt("spawn-platform-radius");
@@ -115,10 +110,25 @@ public class ArGameManager extends ArDataBase{
             spreadradius = 0;
         }
         
+        setGamephase(ArGamePhase.TEAM_SELECTION);
+        
     }
     
-    
-    
+    public static Set<UUID> getFrozenPlayers(){
+        return frozenplayers;
+    }
+    public static boolean isFrozen(UUID pid){
+        return frozenplayers.contains(pid);
+    }
+    public static void freezePlayer(UUID pid){
+        Player p = Bukkit.getPlayer(pid);
+        if(p != null){
+            frozenplayers.add(p.getUniqueId());
+        }
+    }
+    public static void unFreezePlayer(UUID pid){
+        frozenplayers.remove(pid);
+    }
     
     
     
@@ -375,7 +385,8 @@ public class ArGameManager extends ArDataBase{
     }
     
     protected static void startWinnerAnnouncementSequence(){
-        timer=duration*60;
+        stopTimerCount();
+        resetTimer();
         setGamephase(ArGamePhase.WINNER_ANNOUNCEMENT);
         showscores = true;
         showranks = true;
@@ -392,7 +403,7 @@ public class ArGameManager extends ArDataBase{
                 for(Player p : Bukkit.getOnlinePlayers()){
                     try{
                         new BukkitRunnable(){
-                            int times = ranktitleduration;
+                            final int times = ranktitleduration;
                             int timesi = 0;
     
                             @Override
@@ -519,20 +530,44 @@ public class ArGameManager extends ArDataBase{
             spawnlocvec.setX(radius);
             Bukkit.getLogger().log(Level.INFO,"[Advancement Rush] Spawn radius = "+String.format("%.2f", radius));
         }
-        for(int i = 0; i<teams.size(); i++){
-            if(randomspread){
-                spawnlocvec.setX(Math.random()*2*spawnradius);
-                spawnlocvec.setZ(Math.random()*2*spawnradius);
+        final float inteamspawnradius = 1;
+        final int spawnheight = getSpawnheight();
+        for (String team : teams) {
+        
+            if (randomspread) {
+                spawnlocvec.setX(Math.random() * 2 * spawnradius);
+                spawnlocvec.setZ(Math.random() * 2 * spawnradius);
             } else {
                 spawnlocvec.rotateAroundY(angle);
             }
             spawnlocvec.setY(getSpawnheight());
-            Location spawnloc = w.getHighestBlockAt(baseloc.clone().add(spawnlocvec)).getLocation().add(0.5,getSpawnheight(),0.5);
-            for(UUID id : ArDataBase.teamMembersDeserialize(ArTeamManager.getTeamPlayers(teams.get(i)))){
+            Set<UUID> players = ArDataBase.teamMembersDeserialize(ArTeamManager.getTeamPlayers(team));
+            Vector inteamspread = new Vector(inteamspawnradius, 0, 0);
+            double inteamangle = Math.toRadians(360f / players.size());
+            final Location spawnloc = w.getHighestBlockAt(baseloc.clone().add(spawnlocvec)).getLocation().add(0.5, spawnheight, 0.5);
+            new BukkitRunnable() {
+                Location teamspawncenter = spawnloc.clone().add(0, -spawnheight+1.2, 0);
+                Vector rotation = new Vector(inteamspawnradius+1.5, 0, 0);
+            
+                @Override
+                public void run() {
+                    if(!getGamephase().equals(ArGamePhase.TEAM_SELECTION)){
+                        this.cancel();
+                        return;
+                    }
+                    rotation.rotateAroundY(Math.toRadians(18));
+                    w.spawnParticle(Particle.REDSTONE,teamspawncenter.clone().add(rotation),1,0,0,0, new Particle.DustOptions(UsefulTools.stringToColorElseRandom(ArTeamManager.getTeamColor(team)),1));
+                }
+            }.runTaskTimer(Main.getPlugin(), 0, 1);
+            if(players.size() <= 1){
+                inteamspread = new Vector(0,0,0);
+            }
+            for (UUID id : players) {
+                spawnlocvec.rotateAroundY(inteamangle);
                 Player p = Bukkit.getPlayer(id);
-                if(p != null){
-                    p.addPotionEffect(new PotionEffect(PotionEffectType.INVISIBILITY,10,1,false,false,false));
-                    p.teleport(spawnloc);
+                if (p != null) {
+                    p.addPotionEffect(new PotionEffect(PotionEffectType.INVISIBILITY, 10, 1, false, false, false));
+                    p.teleport(spawnloc.add(inteamspread));
                 }
             }
         }
@@ -592,22 +627,25 @@ public class ArGameManager extends ArDataBase{
                         "\n Dragon Egg : "+isEggEnabled()+
                         "\n Dragon Egg mode : "+eggbonusmode
         );
-        ArrayList<Player> tocheck = new ArrayList<>();
+        Set<Player> tocheck = new HashSet<>();
         for(String team : ArTeamManager.getTeamList()){
             for(UUID id : ArDataBase.teamMembersDeserialize(ArTeamManager.getTeamPlayers(team))){
                 Player p = Bukkit.getPlayer(id);
                 if(p != null && p.isOnline()){
                     tocheck.add(p);
+                    freezePlayer(p.getUniqueId());
                 }
             }
         }
+        Set<Player> freezelist = new HashSet<>(tocheck);
         Main.logAdmin(tocheck.toString());
+        generateSpawnLobby(Material.AIR);
         new BukkitRunnable(){
             // seconds before timeout (*4 to translate it to iterations)
             int timeout = 10*4;
             int testnb = 0;
             boolean allplayersvalidated = false;
-            ArrayList<Player> checked = new ArrayList<>();
+            Set<Player> checked = new HashSet<>();
             @SuppressWarnings( "deprecation" )
             @Override
             public void run() {
@@ -637,7 +675,7 @@ public class ArGameManager extends ArDataBase{
                             } else {
                                 for(Player p : Bukkit.getOnlinePlayers()){
                                     p.playSound(p.getLocation(), Sound.ENTITY_PLAYER_LEVELUP,1,1f);
-                                    p.showTitle(Title.title(Component.text(""), Component.text(ChatColor.GOLD+"GO GO GO GO !"), Title.Times.times(Duration.ofMillis(100),Duration.ofMillis(500),Duration.ofMillis(400))));
+                                    p.showTitle(Title.title(Component.text(""), Component.text(ChatColor.GOLD+"GO GO GO GO !"), Title.Times.times(Duration.ofMillis(200),Duration.ofMillis(1000),Duration.ofMillis(800))));
                                     preparePlayerForGame(p);
                                 }
                             }
@@ -646,6 +684,9 @@ public class ArGameManager extends ArDataBase{
                             if(i > pregametimer){
                                 //ACTUALLY STARTING GAME !
                                 setGamephase(ArGamePhase.INGAME);
+                                for(Player p : freezelist){
+                                    unFreezePlayer(p.getUniqueId());
+                                }
                                 startTimer(true);
                                 this.cancel();
                             }

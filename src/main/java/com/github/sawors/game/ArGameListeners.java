@@ -16,10 +16,7 @@ import org.bukkit.event.block.BlockPlaceEvent;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
 import org.bukkit.event.entity.EntityDamageEvent;
 import org.bukkit.event.entity.PlayerDeathEvent;
-import org.bukkit.event.player.PlayerAttemptPickupItemEvent;
-import org.bukkit.event.player.PlayerInteractAtEntityEvent;
-import org.bukkit.event.player.PlayerJoinEvent;
-import org.bukkit.event.player.PlayerQuitEvent;
+import org.bukkit.event.player.*;
 import org.bukkit.scheduler.BukkitRunnable;
 
 import java.util.Locale;
@@ -144,6 +141,15 @@ public class ArGameListeners implements Listener {
             p.setFoodLevel(20);
             if(Bukkit.getOnlinePlayers().size() == 1){
                 setWolf(p);
+            }
+        }
+    }
+    
+    @EventHandler
+    public static void preventFrozenPlayerMovement(PlayerMoveEvent event){
+        if(event.hasChangedPosition()){
+            if(ArGameManager.isFrozen(event.getPlayer().getUniqueId()) && !(event.getFrom().getY() != event.getTo().getY())){
+                event.setCancelled(true);
             }
         }
     }

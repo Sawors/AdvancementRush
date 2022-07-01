@@ -18,7 +18,8 @@ discreet-connections: true
 discreet-death-messages: true
 
 # the name of the world (main, usually the overworld dimension) where the game is played
-game-world-name:
+#   DISABLED : CREATES NETHER LINKING BUG and I don't want to mess with connection nether to world for the moment
+#game-world-name:
 
 # if you want multi-world support for a team selection lobby (pregame lobby) and a winner announcement lobby
 multi-world:
@@ -46,8 +47,8 @@ no-natural-health-regen: false
 spawn-platform-radius: 24
 # the height over the sea level (63) at which the spawn platform will generate
 # if "spawn-platform-radius" = 0 players will still spawn at the specified height
-#   default : 64
-spawn-platform-height: 64
+#   default : 96
+spawn-platform-height: 96
 # enable waiting room minigame (a simple tag game to wait for the game to fill)
 #   default : true
 enable-waiting-room-minigame: true

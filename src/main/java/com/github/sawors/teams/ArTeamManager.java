@@ -1,6 +1,5 @@
 package com.github.sawors.teams;
 
-import com.github.sawors.Main;
 import com.github.sawors.UsefulTools;
 import com.github.sawors.advancements.AdvancementManager;
 import com.github.sawors.database.ArDataBase;
@@ -14,7 +13,6 @@ import org.bukkit.Sound;
 import org.bukkit.advancement.Advancement;
 import org.bukkit.advancement.AdvancementProgress;
 import org.bukkit.entity.Player;
-import org.bukkit.scheduler.BukkitRunnable;
 import org.jetbrains.annotations.NotNull;
 
 import javax.management.openmbean.KeyAlreadyExistsException;
@@ -197,28 +195,23 @@ public class ArTeamManager extends ArDataBase{
     }
     
     private static void setTeamData(ArTeamData datatype, String teamname, String data){
+        //yes this "if" is ridiculous but used to avoid database errors
+        for(Player p : Bukkit.getOnlinePlayers()){
+            ArTeamDisplay.updatePlayerDisplay(p, getPlayerTeam(p.getUniqueId()));
+        }
+        String query;
+        if(datatype == ArTeamData.POINTS){
+            query = "UPDATE teams SET "+datatype+"="+data+" WHERE "+ArTeamData.NAME+"='"+teamname+"'";
+        } else {
+            query = "UPDATE teams SET "+datatype+"='"+data+"' WHERE "+ArTeamData.NAME+"='"+teamname+"'";
+        }
         try(Connection co = ArDataBase.connect()){
-            //yes this "if" is ridiculous but used to avoid database errors
-            String query;
-            if(datatype == ArTeamData.POINTS){
-                query = "UPDATE teams SET "+datatype+"="+data+" WHERE "+ArTeamData.NAME+"='"+teamname+"'";
-            } else {
-                query = "UPDATE teams SET "+datatype+"='"+data+"' WHERE "+ArTeamData.NAME+"='"+teamname+"'";
-            }
-            new BukkitRunnable(){
-                @Override
-                public void run() {
-                    try {
-                        co.createStatement().execute(query);
-                    } catch (
-                            SQLException e) {
-                        e.printStackTrace();
-                    }
-                }
-            }.runTaskAsynchronously(Main.getPlugin());
-        }catch (SQLException e){
+            co.createStatement().execute(query);
+        } catch (
+                SQLException e) {
             e.printStackTrace();
         }
+        
     }
     
     public static List<String> getTeamList(){
@@ -284,10 +277,9 @@ public class ArTeamManager extends ArDataBase{
                 while(rset.next()){
                     list.add(rset.getString("NAME"));
                 }
-                return list;
-            } else {
-                throw new NullPointerException("no team with advancement "+adv);
+                
             }
+            return list;
         }
     }
     
@@ -385,7 +377,7 @@ public class ArTeamManager extends ArDataBase{
     public static boolean isTeamFirstOnAdvancement(String team, Advancement advancement){
         try{
             Set<String> teamlist = getTeamsWithAdvancement(advancement.getKey());
-            return teamlist.contains(team) && teamlist.size() <= 1;
+            return  teamlist.size() <= 1 && teamlist.contains(team);
         } catch (SQLException e){
             e.printStackTrace();
         }
