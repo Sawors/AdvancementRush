@@ -3,6 +3,7 @@ package com.github.sawors.game;
 import com.github.sawors.Main;
 import com.github.sawors.UsefulTools;
 import com.github.sawors.database.ArDataBase;
+import com.github.sawors.discordbot.ArDBotManager;
 import com.github.sawors.teams.ArTeamDisplay;
 import com.github.sawors.teams.ArTeamManager;
 import net.kyori.adventure.text.Component;
@@ -11,7 +12,6 @@ import org.bukkit.*;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.entity.Player;
-import org.bukkit.inventory.ItemStack;
 import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
 import org.bukkit.scheduler.BukkitRunnable;
@@ -29,12 +29,7 @@ public class ArGameManager extends ArDataBase{
     private static boolean showscores = true;
     private static int hiderankstimer = 30;
     private static int targetvalue = 1000;
-    private static boolean dragoneggbonus = true;
-    private static ArDragonEggMode eggbonusmode = ArDragonEggMode.HOLD;
-    private static int eggbonusperminute = 10;
-    private static int eggfinalbonuspoints = 300;
-    private static boolean eggshowholdercoordinates = true;
-    private static int eggglowingholdertimer = 30;
+    
     private static BukkitTask timerinstance = null;
     private static int timer = 0;
     private static ArGamePhase gamephase = ArGamePhase.TEAM_SELECTION;
@@ -48,18 +43,28 @@ public class ArGameManager extends ArDataBase{
     private static int spreadradius = 256;
     private static boolean enableminigame = true;
     private static boolean randomspread = false;
-    private static Player eggholder;
     private static Set<UUID> frozenplayers = new HashSet<>();
+    private static boolean ranksrevelation = true;
+    private static boolean groupback = true;
+    private static int groupdelay = 15;
+    private static String groupdestination = "LOBBY";
+    private static boolean startdiscordsplit = true;
+    private static boolean enddiscordgroup = true;
     
     public static void initGameMode(){
-        FileConfiguration config = Main.getMainConfig();
+        gameworld = Bukkit.getServer().getWorlds().get(0);
+        loadConfigValues(Main.getMainConfig());
+        cancelTimerTask();
+        setGamephase(ArGamePhase.TEAM_SELECTION);
         
+    }
+    
+    public static void loadConfigValues(FileConfiguration config){
         try{
             gamemode = ArGameMode.valueOf(Objects.requireNonNull(config.getString("gamemode")).toUpperCase(Locale.ROOT));
         } catch (IllegalArgumentException e){
             Bukkit.getLogger().log(Level.WARNING, "[Advancement Rush] could not load gamemode parameter, wrong syntax");
         }
-    
         ConfigurationSection timersection = config.getConfigurationSection("timer-options");
         ConfigurationSection valuesection = config.getConfigurationSection("value-options");
         ConfigurationSection hybridsection = config.getConfigurationSection("hybrid-options");
@@ -75,43 +80,36 @@ public class ArGameManager extends ArDataBase{
             hiderankstimer = hybridsection.getInt("hide-ranks-timer");
             showscores = hybridsection.getBoolean("show-scores");
         }
-        
-        ConfigurationSection eggsection = config.getConfigurationSection("dragon-egg-bonus");
-        if(eggsection != null && eggsection.getBoolean("enabled")){
-            try{
-                eggbonusmode = ArDragonEggMode.valueOf(Objects.requireNonNull(eggsection.getString("bonus-mode")).toUpperCase(Locale.ROOT));
-            } catch (NullPointerException | IllegalArgumentException e){
-                Bukkit.getLogger().log(Level.WARNING, "[Advancement Rush] could not load egg bonus mode parameter, wrong syntax");
-            }
-            eggbonusperminute = eggsection.getInt("hold-points-per-minute");
-            eggfinalbonuspoints = eggsection.getInt("end-bonus-points");
-            eggshowholdercoordinates = eggsection.getBoolean("show-coordinates");
-            eggglowingholdertimer = eggsection.getInt("glowing-timer");
-        } else {
-            dragoneggbonus = false;
-        }
-        cancelTimerTask();
-    
-        gameworld = Bukkit.getServer().getWorlds().get(0);
-        
         enableminigame = Main.getMainConfig().getBoolean("enable-waiting-room-minigame");
         platformradius = config.getInt("spawn-platform-radius");
         int getspawnheight = config.getInt("spawn-platform-height");
         if(getspawnheight > 0){
             spawnheight = getspawnheight;
         }
-        
-        
-        
         randomspread = config.getBoolean("random-spread");
-        
         spreadradius = config.getInt("spread-teams-radius");
         if(spreadradius < -1){
             spreadradius = 0;
         }
+        groupdelay = config.getInt("end-auto-move-delay");
+        if(groupdelay < 0){
+            groupdelay = 0;
+        }
+        ranksrevelation = config.getBoolean("ranks-revelation");
+        ConfigurationSection groupbacksection = config.getConfigurationSection("group-back");
+        if(groupbacksection != null){
+            groupback = groupbacksection.getBoolean("enabled");
+            groupdelay = groupbacksection.getInt("delay");
+            groupdestination = groupbacksection.getString("tp-destination");
+            if(groupdestination == null || (!groupdestination.equalsIgnoreCase("LOBBY") && !groupdestination.equalsIgnoreCase("WORLD"))){
+                Bukkit.getLogger().log(Level.WARNING, "[Advancement Rush] could not set group-back destination, using default value LOBBY...");
+            }
+        }
+        startdiscordsplit = config.getBoolean("start-auto-move");
+        enddiscordgroup = config.getBoolean("end-auto-move");
         
-        setGamephase(ArGamePhase.TEAM_SELECTION);
-        
+        // Maybe messy to keep it here
+        ArDragonEggManager.loadEggConfig(config);
     }
     
     public static Set<UUID> getFrozenPlayers(){
@@ -130,34 +128,6 @@ public class ArGameManager extends ArDataBase{
         frozenplayers.remove(pid);
     }
     
-    
-    
-    protected static Location tryToGetEggLocation(){
-        Player lastknownholder = eggholder;
-        if(getLastKnownHolder() != null && lastknownholder != null){
-            for(ItemStack item : lastknownholder.getInventory().getStorageContents()){
-                if(item != null && item.getType() == Material.DRAGON_EGG){
-                    return lastknownholder.getLocation();
-                }
-            }
-        }
-    
-        for(Player p : Bukkit.getOnlinePlayers()){
-            for(ItemStack item : p.getInventory().getStorageContents()){
-                if(item != null && item.getType() == Material.DRAGON_EGG){
-                    eggholder = p;
-                    return p.getLocation();
-                }
-            }
-        }
-        
-        return new Location(getGameworld(),0,0,0);
-    }
-    
-    public static Player getLastKnownHolder(){
-        return eggholder;
-    }
-    
     protected static void startTimer(boolean reset){
         cancelTimerTask();
         if(reset){timer = 0;}
@@ -171,11 +141,11 @@ public class ArGameManager extends ArDataBase{
         setGamephase(ArGamePhase.TEAM_SELECTION);
         cancelTimerTask();
         timer = 0;
-        refreshTimerDisplay();
+        refreshTimerTablistDisplay();
     }
-    public static void refreshTimerDisplay(){
+    public static void refreshTimerTablistDisplay(){
         for(Player p : Bukkit.getOnlinePlayers()){
-            p.sendPlayerListFooter(Component.text(ChatColor.GOLD+ getTimerDisplay()));
+            ArTeamDisplay.updateTablist(p,getTimerDisplay(),ArDragonEggManager.getEggHolderPositionDisplay());
         }
     }
     public static String getTimerDisplay(){
@@ -231,7 +201,7 @@ public class ArGameManager extends ArDataBase{
             @Override
             public void run() {
                 timer++;
-                refreshTimerDisplay();
+                refreshTimerTablistDisplay();
                 int remainingseconds = (duration*60)-timer;
                 if(timer >= duration*60){
                     new BukkitRunnable(){
@@ -317,12 +287,6 @@ public class ArGameManager extends ArDataBase{
     public static ArGameMode getGameMode(){
         return gamemode;
     }
-    public static boolean isEggEnabled(){
-        return dragoneggbonus;
-    }
-    public static boolean showEggHolderCoordinates(){
-        return eggshowholdercoordinates;
-    }
     
     
     public static ArGamePhase getGamephase() {
@@ -382,100 +346,6 @@ public class ArGameManager extends ArDataBase{
     
     public static int getFinalRankingShowLength(){
         return finalrankshowlength;
-    }
-    
-    protected static void startWinnerAnnouncementSequence(){
-        stopTimerCount();
-        resetTimer();
-        setGamephase(ArGamePhase.WINNER_ANNOUNCEMENT);
-        showscores = true;
-        showranks = true;
-        refreshTimerDisplay();
-        int imax = ArTeamManager.getTeamsRanking().size();
-        new BukkitRunnable(){
-            int i = 1;
-            @Override
-            public void run() {
-                if(i>imax){
-                    this.cancel();
-                    return;
-                }
-                for(Player p : Bukkit.getOnlinePlayers()){
-                    try{
-                        new BukkitRunnable(){
-                            final int times = ranktitleduration;
-                            int timesi = 0;
-    
-                            @Override
-                            public void run() {
-                                new BukkitRunnable(){
-                                    final int soundnb = i;
-                                    int locali = 0;
-                                    @Override
-                                    public void run() {
-                                        if(locali >= soundnb){
-                                            this.cancel();
-                                            return;
-                                        }
-                                        p.playSound(p.getLocation(), Sound.ENTITY_FIREWORK_ROCKET_LAUNCH, 1f,1+(.01f*i));
-                                        locali++;
-                                    }
-                                }.runTaskTimer(Main.getPlugin(), 0, 1);
-                                new BukkitRunnable(){
-                                    final int soundnb = i;
-                                    int locali = 0;
-                                    @Override
-                                    public void run() {
-                                        if(locali >= soundnb){
-                                            this.cancel();
-                                            return;
-                                        }
-                                        p.playSound(p.getLocation(), Sound.ENTITY_FIREWORK_ROCKET_BLAST, 1f,1+(.01f*i));
-                                        locali++;
-                                    }
-                                }.runTaskTimer(Main.getPlugin(), 0, 2);
-                                timesi++;
-                                if(timesi >= times){
-                                    this.cancel();
-                                }
-                                
-                            }
-                           
-                        }.runTaskTimer(Main.getPlugin(),0,10);
-                        String team = "not_used";
-                        finalrankshowlength = i;
-                        // 1st announcement effects
-                        if(i==ArTeamManager.getTeamsRanking().size()){
-                            p.spawnParticle(Particle.REDSTONE,p.getLocation().add(0,1,0),128,2,2,2,.5, new Particle.DustOptions(UsefulTools.stringToColorElseRandom(ArTeamManager.getTeamColor(team)),1));
-                            p.spawnParticle(Particle.SOUL_FIRE_FLAME,p.getLocation().add(0,1,0),128,2,2,2,.25);
-                            p.playSound(p.getLocation(), Sound.ENTITY_WITHER_DEATH, 2f,1);
-                        }
-                        // 2nd announcement effects
-                        else if(i==ArTeamManager.getTeamsRanking().size()-1){
-                            p.spawnParticle(Particle.REDSTONE,p.getLocation().add(0,1,0),128,2,2,2,.5, new Particle.DustOptions(UsefulTools.stringToColorElseRandom(ArTeamManager.getTeamColor(team)),1));
-                            p.playSound(p.getLocation(), Sound.ENTITY_ENDER_DRAGON_GROWL, 2f,1);
-                            p.spawnParticle(Particle.END_ROD,p.getLocation().add(0,1,0),128,2,2,2,.1);
-                        }
-                        // 3rd announcement effects
-                        else if(i==ArTeamManager.getTeamsRanking().size()-2){
-                            p.spawnParticle(Particle.REDSTONE,p.getLocation().add(0,1,0),128,2,2,2,.5, new Particle.DustOptions(UsefulTools.stringToColorElseRandom(ArTeamManager.getTeamColor(team)),1));
-                            p.playSound(p.getLocation(), Sound.ENTITY_BLAZE_DEATH, 2f,1);
-                            p.spawnParticle(Particle.SPELL,p.getLocation().add(0,1,0),128,2,2,2,.25);
-                        }
-                        //other announcements effect
-                        else {
-                            p.spawnParticle(Particle.REDSTONE,p.getLocation().add(0,1,0),128,2,2,2,.5, new Particle.DustOptions(UsefulTools.stringToColorElseRandom(ArTeamManager.getTeamColor(team)),1));
-                            p.playSound(p.getLocation(), Sound.ENTITY_VILLAGER_CELEBRATE, 2f,1);
-                        }
-                        ArTeamDisplay.updatePlayerDisplay(p,team);
-                        //p.showTitle(Title.title(Component.text(ChatColor.GOLD+"WINNER"),Component.text(team+" : "+ArTeamManager.getTeamPoints(team)).color(TextColor.fromHexString(ArTeamManager.getTeamColor(team)))));
-                    } catch(IndexOutOfBoundsException e){
-                        Bukkit.getLogger().log(Level.WARNING,"no team in ranking");
-                    }
-                }
-                i++;
-            }
-        }.runTaskTimer(Main.getPlugin(),ranktitleduration/4,ranktitleduration*20);
     }
     
     public static int getRankTitleDuration(){
@@ -546,17 +416,19 @@ public class ArGameManager extends ArDataBase{
             double inteamangle = Math.toRadians(360f / players.size());
             final Location spawnloc = w.getHighestBlockAt(baseloc.clone().add(spawnlocvec)).getLocation().add(0.5, spawnheight, 0.5);
             new BukkitRunnable() {
-                Location teamspawncenter = spawnloc.clone().add(0, -spawnheight+1.2, 0);
+                Location teamspawncenter = spawnloc.clone().add(0, -spawnheight+0.75, 0);
                 Vector rotation = new Vector(inteamspawnradius+1.5, 0, 0);
-            
+                Vector nrotation = new Vector(-(inteamspawnradius+1.5), 0, 0);
                 @Override
                 public void run() {
                     if(!getGamephase().equals(ArGamePhase.TEAM_SELECTION)){
                         this.cancel();
                         return;
                     }
-                    rotation.rotateAroundY(Math.toRadians(18));
+                    rotation.rotateAroundY(Math.toRadians(9));
+                    nrotation.rotateAroundY(Math.toRadians(9));
                     w.spawnParticle(Particle.REDSTONE,teamspawncenter.clone().add(rotation),1,0,0,0, new Particle.DustOptions(UsefulTools.stringToColorElseRandom(ArTeamManager.getTeamColor(team)),1));
+                    w.spawnParticle(Particle.REDSTONE,teamspawncenter.clone().add(nrotation),1,0,0,0, new Particle.DustOptions(UsefulTools.stringToColorElseRandom(ArTeamManager.getTeamColor(team)),1));
                 }
             }.runTaskTimer(Main.getPlugin(), 0, 1);
             if(players.size() <= 1){
@@ -567,6 +439,7 @@ public class ArGameManager extends ArDataBase{
                 Player p = Bukkit.getPlayer(id);
                 if (p != null) {
                     p.addPotionEffect(new PotionEffect(PotionEffectType.INVISIBILITY, 10, 1, false, false, false));
+                    preparePlayerForGame(p);
                     p.teleport(spawnloc.add(inteamspread));
                 }
             }
@@ -611,6 +484,12 @@ public class ArGameManager extends ArDataBase{
     public static void setEnableminigame(boolean enableminigame) {
         ArGameManager.enableminigame = enableminigame;
     }
+    public static boolean discordEndGameGroup(){
+        return enddiscordgroup;
+    }
+    
+    
+    
     
     public static void startGame(){
         //
@@ -624,20 +503,61 @@ public class ArGameManager extends ArDataBase{
                         "\n Duration : "+getTimerDisplay()+
                         "\n World name : "+getGameworld().getName()+
                         "\n Game mode : "+getGameMode()+
-                        "\n Dragon Egg : "+isEggEnabled()+
-                        "\n Dragon Egg mode : "+eggbonusmode
+                        "\n Dragon Egg : "+ArDragonEggManager.isEggEnabled()+
+                        "\n Dragon Egg mode : "+ArDragonEggManager.getEggBonusMode()
         );
+        ArDragonEggManager.setEggHolder(null);
+        new BukkitRunnable(){
+            final int imax = 8;
+            int i = 1;
+            @Override
+            public void run() {
+                
+                
+                
+                
+                switch(i){
+                    case 1:
+                        ArDBotManager.createGameCategory();
+                        break;
+                    case 2:
+                        ArDBotManager.createTeamRoles();
+                        break;
+                    case 3:
+                        ArDBotManager.createTeamChannel();
+                        break;
+                    case 4:
+                        ArDBotManager.giveTeamRoles();
+                        break;
+                    case 5:
+                        if(startdiscordsplit){
+                            new BukkitRunnable(){
+                                @Override
+                                public void run() {
+                                    ArDBotManager.sendUsersToTeamChannels();
+                                }
+                            }.runTaskAsynchronously(Main.getPlugin());
+                        }
+                        this.cancel();
+                        return;
+                }
+                if(i>= imax){
+                    this.cancel();
+                    return;
+                }
+                i++;
+            }
+        }.runTaskTimer(Main.getPlugin(),0,40);
         Set<Player> tocheck = new HashSet<>();
         for(String team : ArTeamManager.getTeamList()){
             for(UUID id : ArDataBase.teamMembersDeserialize(ArTeamManager.getTeamPlayers(team))){
                 Player p = Bukkit.getPlayer(id);
                 if(p != null && p.isOnline()){
                     tocheck.add(p);
-                    freezePlayer(p.getUniqueId());
                 }
             }
         }
-        Set<Player> freezelist = new HashSet<>(tocheck);
+        Set<Player> freezelist = new HashSet<>();
         Main.logAdmin(tocheck.toString());
         generateSpawnLobby(Material.AIR);
         new BukkitRunnable(){
@@ -676,16 +596,16 @@ public class ArGameManager extends ArDataBase{
                                 for(Player p : Bukkit.getOnlinePlayers()){
                                     p.playSound(p.getLocation(), Sound.ENTITY_PLAYER_LEVELUP,1,1f);
                                     p.showTitle(Title.title(Component.text(""), Component.text(ChatColor.GOLD+"GO GO GO GO !"), Title.Times.times(Duration.ofMillis(200),Duration.ofMillis(1000),Duration.ofMillis(800))));
-                                    preparePlayerForGame(p);
                                 }
                             }
                             
                             i++;
                             if(i > pregametimer){
-                                //ACTUALLY STARTING GAME !
+                                //ACTUALLY STARTING THE GAME !
                                 setGamephase(ArGamePhase.INGAME);
                                 for(Player p : freezelist){
                                     unFreezePlayer(p.getUniqueId());
+                                    p.setBedSpawnLocation(p.getLocation(), true);
                                 }
                                 startTimer(true);
                                 this.cancel();
@@ -696,18 +616,13 @@ public class ArGameManager extends ArDataBase{
                     return;
                 } else {
                     if(checked.size() >= tocheck.size()){
-                        try{
-                            if(checked.containsAll(tocheck)){
-                                Main.logAdmin("not perfect check");
-                            }
-                        } catch (NullPointerException e){
-                            e.printStackTrace();
-                        }
                         allplayersvalidated = true;
                     } else {
                         for(Player p : tocheck){
                             if(p.isOnline() && p.isOnGround()){
                                 checked.add(p);
+                                freezelist.add(p);
+                                freezePlayer(p.getUniqueId());
                                 Main.logAdmin("Player "+p.getName()+" validated ("+checked.size()+"/"+tocheck.size()+")");
                             }
                         }
@@ -725,14 +640,199 @@ public class ArGameManager extends ArDataBase{
         }.runTaskTimer(Main.getPlugin(),10,5);
         spreadSpawnTeams();
     }
+    protected static void startWinnerAnnouncementSequence(){
+        stopTimerCount();
+        ArDragonEggManager.cancelEggTimer();
+        if(ArDragonEggManager.getEggBonusMode().equals(ArDragonEggMode.END) && ArDragonEggManager.getLastKnownHolder() instanceof Player){
+            Player p = (Player) ArDragonEggManager.getLastKnownHolder();
+            String team = ArTeamManager.getPlayerTeam(p.getUniqueId());
+            if(team != null){
+                ArTeamManager.addPointsToTeam(team, ArDragonEggManager.getFinalBonusPoints());
+                for(Player pl : Bukkit.getOnlinePlayers()){
+                    pl.playSound(pl.getLocation(),Sound.ENTITY_PLAYER_LEVELUP,0.5f,0.8f);
+                }
+                Bukkit.broadcast(Component.text(ChatColor.GOLD+"Team ").append(ArTeamManager.getTeamColoredName(team)).append(Component.text(ChatColor.GOLD+" has earned the points of the Dragon Egg holder "+ChatColor.DARK_GREEN+"+"+ArDragonEggManager.getFinalBonusPoints()+"pts")));
+            }
+        }
+        //resetTimer();
+        new BukkitRunnable(){
+            Title title;
+            Sound sound;
+            float pitch = 1;
+            int count = 1;
+            // maxcount = 5 -> 10 seconds before ranks reveal (maxcount*2)
+            int maxcount = 5;
+            @Override
+            public void run() {
+                switch(count){
+                    case 1:
+                        sound = Sound.ENTITY_ENDER_DRAGON_GROWL;
+                        pitch = 0.85f;
+                        title = Title.title(Component.text(ChatColor.GOLD+"Game Finished !"), Component.text(ChatColor.YELLOW+"gg !"), Title.Times.times(Duration.ofMillis(250), Duration.ofMillis(1500), Duration.ofMillis(250)));
+                        break;
+                    case 2:
+                        pitch = 1;
+                        sound = Sound.ENTITY_PLAYER_LEVELUP;
+                        title = Title.title(Component.text(ChatColor.GOLD+"Announcing Winners"), Component.text(""), Title.Times.times(Duration.ofMillis(250), Duration.ofMillis(1500), Duration.ofMillis(250)));
+                        break;
+                    case 3:
+                        pitch = 1;
+                        sound = Sound.ENTITY_EXPERIENCE_ORB_PICKUP;
+                        title = Title.title(Component.text(ChatColor.GREEN+"..."), Component.text(""), Title.Times.times(Duration.ofMillis(250), Duration.ofMillis(1500), Duration.ofMillis(250)));
+                        break;
+                    case 4:
+                        pitch = 1f;
+                        sound = Sound.ENTITY_EXPERIENCE_ORB_PICKUP;
+                        title = Title.title(Component.text(ChatColor.GREEN+"..."), Component.text(""), Title.Times.times(Duration.ofMillis(250), Duration.ofMillis(1500), Duration.ofMillis(250)));
+                        break;
+                    case 5:
+                        pitch = 1.2f;
+                        sound = Sound.ENTITY_EXPERIENCE_ORB_PICKUP;
+                        title = Title.title(Component.text(ChatColor.GOLD+"..."), Component.text(""), Title.Times.times(Duration.ofMillis(250), Duration.ofMillis(1500), Duration.ofMillis(250)));
+                        break;
+                }
+                if(count <= 5){
+                    for(Player p : Bukkit.getOnlinePlayers()){
+                        if(pitch > 0){
+                            p.playSound(p.getLocation(), sound,1,pitch);
+                        }
+                        p.showTitle(title);
+                    }
+                }
+                if(count > maxcount){
+                    announceWinners();
+                    this.cancel();
+                    return;
+                }
+                count++;
+            }
+        }.runTaskTimer(Main.getPlugin(), 0,40);
+    }
+    
+    private static void announceWinners(){
+        showscores = true;
+        showranks = true;
+        setGamephase(ArGamePhase.WINNER_ANNOUNCEMENT);
+        refreshTimerTablistDisplay();
+        int imax = ArTeamManager.getTeamsRanking().size();
+        new BukkitRunnable(){
+            int i = 1;
+            @Override
+            public void run() {
+                if(i>imax){
+                    new BukkitRunnable(){
+                        @Override
+                        public void run() {
+                            // group discord
+                            ArDBotManager.deleteCategory();
+                            ArDBotManager.deleteRoles();
+                            if(Objects.equals(groupdestination, "LOBBY")){
+                                generateSpawnLobby(Material.BARRIER);
+                                for(Player p : Bukkit.getOnlinePlayers()){
+                                    preparePlayerForGame(p);
+                                    p.teleport(new Location(gameworld, 0,gameworld.getSeaLevel()+spawnheight+2,0));
+                                }
+                            }
+                        }
+                    }.runTaskLater(Main.getPlugin(), groupdelay*20L);
+                    this.cancel();
+                    return;
+                }
+                for(Player p : Bukkit.getOnlinePlayers()){
+                    try{
+                        new BukkitRunnable(){
+                            final int times = ranktitleduration;
+                            int timesi = 0;
+                        
+                            @Override
+                            public void run() {
+                                new BukkitRunnable(){
+                                    final int soundnb = i;
+                                    int locali = 0;
+                                    @Override
+                                    public void run() {
+                                        if(locali >= soundnb){
+                                            this.cancel();
+                                            return;
+                                        }
+                                        p.playSound(p.getLocation(), Sound.ENTITY_FIREWORK_ROCKET_LAUNCH, 1f,1+(.01f*i));
+                                        locali++;
+                                    }
+                                }.runTaskTimer(Main.getPlugin(), 0, 1);
+                                new BukkitRunnable(){
+                                    final int soundnb = i;
+                                    int locali = 0;
+                                    @Override
+                                    public void run() {
+                                        if(locali >= soundnb){
+                                            this.cancel();
+                                            return;
+                                        }
+                                        p.playSound(p.getLocation(), Sound.ENTITY_FIREWORK_ROCKET_BLAST, 1f,1+(.01f*i));
+                                        locali++;
+                                    }
+                                }.runTaskTimer(Main.getPlugin(), 0, 2);
+                                timesi++;
+                                if(timesi >= times){
+                                    this.cancel();
+                                }
+                            
+                            }
+                        
+                        }.runTaskTimer(Main.getPlugin(),0,10);
+                        String team = "not_used";
+                        finalrankshowlength = i;
+                        // 1st announcement effects
+                        if(i==ArTeamManager.getTeamsRanking().size()){
+                            p.spawnParticle(Particle.REDSTONE,p.getLocation().add(0,1,0),128,2,2,2,.5, new Particle.DustOptions(UsefulTools.stringToColorElseRandom(ArTeamManager.getTeamColor(team)),1));
+                            p.spawnParticle(Particle.SOUL_FIRE_FLAME,p.getLocation().add(0,1,0),128,2,2,2,.25);
+                            p.playSound(p.getLocation(), Sound.ENTITY_WITHER_DEATH, 2f,1);
+                        }
+                        // 2nd announcement effects
+                        else if(i==ArTeamManager.getTeamsRanking().size()-1){
+                            p.spawnParticle(Particle.REDSTONE,p.getLocation().add(0,1,0),128,2,2,2,.5, new Particle.DustOptions(UsefulTools.stringToColorElseRandom(ArTeamManager.getTeamColor(team)),1));
+                            p.playSound(p.getLocation(), Sound.ENTITY_ENDER_DRAGON_GROWL, 2f,1);
+                            p.spawnParticle(Particle.END_ROD,p.getLocation().add(0,1,0),128,2,2,2,.1);
+                        }
+                        // 3rd announcement effects
+                        else if(i==ArTeamManager.getTeamsRanking().size()-2){
+                            p.spawnParticle(Particle.REDSTONE,p.getLocation().add(0,1,0),128,2,2,2,.5, new Particle.DustOptions(UsefulTools.stringToColorElseRandom(ArTeamManager.getTeamColor(team)),1));
+                            p.playSound(p.getLocation(), Sound.ENTITY_BLAZE_DEATH, 2f,1);
+                            p.spawnParticle(Particle.SPELL,p.getLocation().add(0,1,0),128,2,2,2,.25);
+                        }
+                        //other announcements effect
+                        else {
+                            p.spawnParticle(Particle.REDSTONE,p.getLocation().add(0,1,0),128,2,2,2,.5, new Particle.DustOptions(UsefulTools.stringToColorElseRandom(ArTeamManager.getTeamColor(team)),1));
+                            p.playSound(p.getLocation(), Sound.ENTITY_VILLAGER_CELEBRATE, 2f,1);
+                        }
+                        ArTeamDisplay.updatePlayerDisplay(p,team);
+                        //p.showTitle(Title.title(Component.text(ChatColor.GOLD+"WINNER"),Component.text(team+" : "+ArTeamManager.getTeamPoints(team)).color(TextColor.fromHexString(ArTeamManager.getTeamColor(team)))));
+                    } catch(IndexOutOfBoundsException e){
+                        Bukkit.getLogger().log(Level.WARNING,"no team in ranking");
+                    }
+                }
+                i++;
+            }
+        }.runTaskTimer(Main.getPlugin(),ranktitleduration/4,ranktitleduration* 20L);
+    }
+    
+    
+    
+    
+    
+    
+    
     
     private static void preparePlayerForGame(Player p){
         p.setHealth(20);
         p.setFoodLevel(20);
         p.setLevel(0);
         p.setExp(0);
+        p.setTotalExperience(0);
         p.setBedSpawnLocation(p.getLocation(),true);
         p.setCustomNameVisible(true);
         p.setInvulnerable(false);
+        p.getOpenInventory().close();
+        p.getInventory().clear();
     }
 }

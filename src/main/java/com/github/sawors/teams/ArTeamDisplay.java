@@ -1,6 +1,8 @@
 package com.github.sawors.teams;
 
 import com.github.sawors.Main;
+import com.github.sawors.database.ArDataBase;
+import com.github.sawors.game.ArDragonEggManager;
 import com.github.sawors.game.ArGameManager;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.TextComponent;
@@ -8,15 +10,19 @@ import net.kyori.adventure.text.format.TextColor;
 import net.kyori.adventure.title.Title;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
+import org.bukkit.OfflinePlayer;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.entity.Player;
 import org.bukkit.scoreboard.DisplaySlot;
 import org.bukkit.scoreboard.Objective;
 import org.bukkit.scoreboard.Scoreboard;
 import org.bukkit.scoreboard.Team;
+import org.jetbrains.annotations.NotNull;
 
 import java.time.Duration;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
 public class ArTeamDisplay {
     
@@ -137,6 +143,7 @@ public class ArTeamDisplay {
                 for(int i2 = 0; i2<=i; i2++){
                     identifierunique.append(ChatColor.RESET + "");
                 }
+                
                 String identifier = identifierunique.toString();
                 for(String entry : displayself.getEntries()){
                     displayself.removeEntry(entry);
@@ -153,8 +160,8 @@ public class ArTeamDisplay {
         //objective.getScore(ChatColor.RESET+" "+ChatColor.GRAY+""+ChatColor.STRIKETHROUGH+"                   ").setScore(3);
     }
     
-    private static void setSelfTeam(Objective objective, String team, int base){
-        if(objective.getScoreboard() == null){
+    private static void setSelfTeam(@NotNull Objective objective, String team, int base){
+        if(objective.getScoreboard() == null ||team == null){
             return;
         }
     
@@ -175,6 +182,9 @@ public class ArTeamDisplay {
         for(int i2 = 0; i2<=6; i2++){
             identifierunique.append(ChatColor.RESET + "");
         }
+        
+        identifierunique.append(getCenteringSpacer(team.length()+String.valueOf(points).length()+position.length()+4, maxlinelength_final));
+        
         String identifier = identifierunique.toString();
         displayself.addEntry(identifier);
         objective.getScore(identifier).setScore(base);
@@ -200,10 +210,8 @@ public class ArTeamDisplay {
         StringBuilder identifierunique = new StringBuilder();
         int teamnamelength = getTeamDisplay(team).content().length();
     
-        //TODO : center better the team name
-        for(int i2 = 0; i2<(((maxlinelength_final-teamnamelength)-3)/2); i2++){
-            identifierunique.append(ChatColor.RESET + " ");
-        }
+        identifierunique.append(getCenteringSpacer(teamnamelength+4, maxlinelength_final));
+        
         String identifier = identifierunique.toString();
         displayself.addEntry(identifier);
         objective.getScore(identifier).setScore(base);
@@ -250,36 +258,6 @@ public class ArTeamDisplay {
         objective.getScore(ChatColor.RESET+" "+ChatColor.RESET+""+ChatColor.GRAY+""+ChatColor.STRIKETHROUGH+"                   ").setScore(0);
     }
     
-    /*private static void showTeamPointsAnimation(String team, int points, int showduration, int showlength, Objective objective, Team displayself){
-        int pos = ArTeamManager.getTeamsRanking().indexOf(team)+1;
-        String position = String.valueOf(pos);
-        if(objective.getScoreboard() != null){
-            new BukkitRunnable(){
-                @Override
-                public void run() {
-                    displayself.suffix(Component.text(ChatColor.LIGHT_PURPLE+spacer+position+". ").append(getTeamDisplay(team, baseloop)));
-                    StringBuilder identifierunique = new StringBuilder();
-                    for(int i2 = 0; i2<showlength-1; i2++){
-                        identifierunique.append(ChatColor.RESET + "");
-                    }
-                    String identifier = identifierunique.toString();
-                *//*for(String entry : displayself.getEntries()){
-                    displayself.removeEntry(entry);
-                }*//*
-                    displayself.addEntry(identifier);
-                    objective.getScore(identifier).setScore(ArTeamManager.getTeamsRanking().size()-pos+1);
-                    for(Player p : Bukkit.getOnlinePlayers()){
-                        p.setScoreboard(objective.getScoreboard());
-                    }
-                    baseloop += points/((showduration-1)*20);
-                    if(baseloop >= points){
-                        this.cancel();
-                    }
-                }
-            }.runTaskTimer(Main.getPlugin(),0,1);
-        }
-    }*/
-    
     protected static TextComponent getTeamDisplay(String team, int pts, boolean showpoints){
         String teamname = team;
         if(team == null){
@@ -323,8 +301,17 @@ public class ArTeamDisplay {
     private static void showPlayerTeamScoreTitle(Player p, String team){
         int points = ArTeamManager.getTeamPoints(team);
         int duration = ArGameManager.getRankTitleDuration();
-        String color = ArTeamManager.getTeamColor(team);
+        TextColor color = TextColor.fromHexString(ArTeamManager.getTeamColor(team));
         TextColor rankcolor = TextColor.color(0xFFFF55);
+        List<UUID> ids = new ArrayList<>(ArDataBase.teamMembersDeserialize(ArTeamManager.getTeamPlayers(team)));
+        StringBuilder playernames = new StringBuilder();
+        for(int i = 0; i<ids.size(); i++){
+            OfflinePlayer plr = Bukkit.getOfflinePlayer(ids.get(i));
+            playernames.append(plr.getName());
+            if(i< ids.size()-1){
+                playernames.append(" - ");
+            }
+        }
         int rank = ArTeamManager.getTeamRank(team);
         switch(rank){
             case 3:
@@ -337,6 +324,33 @@ public class ArTeamDisplay {
                 rankcolor = TextColor.color(0xFFAA00);
                 break;
         }
-        p.showTitle(Title.title(Component.text(team).color(TextColor.fromHexString(color)), Component.text(points+" points").color(rankcolor), Title.Times.times(Duration.ofMillis(duration*150L),Duration.ofMillis(duration* 500L),Duration.ofMillis(duration*350L))));
+        p.showTitle(Title.title(Component.text(team).color(color), Component.text(points+" points").color(rankcolor), Title.Times.times(Duration.ofMillis(duration*150L),Duration.ofMillis(duration* 500L),Duration.ofMillis(duration*350L))));
+        p.sendActionBar(Component.text(ChatColor.BOLD+playernames.toString()).color(color));
+    }
+    
+    protected static String getCenteringSpacer(int textlength, int linelength){
+        StringBuilder centeredtext = new StringBuilder();
+        for(int i = 0; i<(linelength - textlength)/2; i++){
+            centeredtext.append(ChatColor.RESET + " ");
+        }
+        return centeredtext.toString();
+    }
+    
+    protected static String getCenteredText(String text, int linelength){
+        return getCenteringSpacer(text.length(), linelength)+text;
+    }
+    
+    public static void updateTablist(Player p, String timerdisplay, String posdisplay){
+        Component footer = Component.text("");
+        if(posdisplay != null){
+            footer = footer.append(Component.text(ChatColor.DARK_PURPLE+""+ChatColor.BOLD+"Egg Holder Location : "+ChatColor.LIGHT_PURPLE+ArDragonEggManager.getEggHolderPositionDisplay()));
+            if(timerdisplay != null){
+                footer = footer.append(Component.text('\n'));
+            }
+        }
+        if(timerdisplay != null){
+            footer = footer.append(Component.text(ChatColor.GOLD+ ArGameManager.getTimerDisplay()));
+        }
+        p.sendPlayerListFooter(footer);
     }
 }

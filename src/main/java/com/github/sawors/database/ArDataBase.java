@@ -27,6 +27,11 @@ public class ArDataBase {
     // | -> Del  : DELETE FROM [table] WHERE [condition]=[something]                      |
     // |==================================================================================|
     
+    // TODO :
+    //      REWORK THE WHOLE DATABASE TO ALLOW QUERIES ONLY INSIDE OF THIS CLASS (make ArDatabase.connect() private/protected)
+    //      In this rework we should move all set/get methods to a Java Collection approach -> async write to the DB + data "loading" from the DB, the DB is no more the
+    //      only reference for data storage but is more of a backup / readonly source
+    
     
     //                 <team, advancementsname>
     private static HashMap<String, ArrayList<NamespacedKey>> advancementmutemap = new HashMap<>();
@@ -447,8 +452,8 @@ public class ArDataBase {
                 "('minecraft:story/enchant_item',15)," +
                 "('minecraft:adventure/kill_a_mob',5)," +
                 "('minecraft:adventure/shoot_arrow',5)," +
-                "('minecraft:adventure/sniper_duel',50)," +
-                "('minecraft:adventure/bullseye',100)," +
+                "('minecraft:adventure/sniper_duel',100)," +
+                "('minecraft:adventure/bullseye',50)," +
                 "('minecraft:adventure/kill_all_mobs',650)," +
                 "('minecraft:adventure/totem_of_undying',50)," +
                 "('minecraft:adventure/throw_trident',75)," +

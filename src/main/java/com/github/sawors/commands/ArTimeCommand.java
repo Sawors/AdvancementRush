@@ -31,15 +31,15 @@ public class ArTimeCommand extends ArGameManager implements CommandExecutor {
                     switch(args[0]){
                         case"add":
                             ArGameManager.forceSetTimer(ArGameManager.getTimerTime()+value);
-                            ArGameManager.refreshTimerDisplay();
+                            ArGameManager.refreshTimerTablistDisplay();
                             break;
                         case"set":
                             ArGameManager.forceSetTimer(value);
-                            ArGameManager.refreshTimerDisplay();
+                            ArGameManager.refreshTimerTablistDisplay();
                             break;
                         case"duration":
                             ArGameManager.setGameDuration(value);
-                            ArGameManager.refreshTimerDisplay();
+                            ArGameManager.refreshTimerTablistDisplay();
                             break;
                             
                     }

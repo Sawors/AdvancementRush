@@ -4,6 +4,7 @@ import com.github.sawors.advancements.AdvancementListeners;
 import com.github.sawors.commands.*;
 import com.github.sawors.database.ArDataBase;
 import com.github.sawors.discordbot.ArDBotManager;
+import com.github.sawors.game.ArDragonEggListeners;
 import com.github.sawors.game.ArGameListeners;
 import com.github.sawors.game.ArGameManager;
 import com.github.sawors.teams.ArTeamDisplay;
@@ -57,6 +58,7 @@ public final class Main extends JavaPlugin {
         getServer().getPluginManager().registerEvents(new ArGameListeners(), this);
         getServer().getPluginManager().registerEvents(new AdvancementListeners(), this);
         getServer().getPluginManager().registerEvents(new TeamListeners(), this);
+        getServer().getPluginManager().registerEvents(new ArDragonEggListeners(), this);
     
         getServer().getPluginCommand("arteam").setExecutor(new ArTeamCommand());
         getServer().getPluginCommand("artest").setExecutor(new ArTestCommand());
@@ -66,6 +68,7 @@ public final class Main extends JavaPlugin {
         getServer().getPluginCommand("arlink").setExecutor(new ArLinkCommand());
         getServer().getPluginCommand("arme").setExecutor(new ArMeCommand());
         getServer().getPluginCommand("arvoc").setExecutor(new ArVocCommand());
+        getServer().getPluginCommand("argame").setExecutor(new ArGameCommand());
         
         //initMainConfig();
         this.saveDefaultConfig();

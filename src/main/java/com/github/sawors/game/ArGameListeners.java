@@ -65,7 +65,7 @@ public class ArGameListeners implements Listener {
             e.joinMessage(Component.text(ChatColor.GRAY+"-> "+e.getPlayer().getName()));
         }
         if(ArGameManager.getGameMode() == ArGameMode.HYBRID || ArGameManager.getGameMode() == ArGameMode.TIMER){
-            ArGameManager.refreshTimerDisplay();
+            ArGameManager.refreshTimerTablistDisplay();
         }
     }
     
@@ -79,6 +79,8 @@ public class ArGameListeners implements Listener {
     
     @EventHandler
     public static void discreetDeathMessage(PlayerDeathEvent event){
+        Location l = event.getPlayer().getLocation();
+        Main.logAdmin("Player "+event.getPlayer().getName()+" is dead at "+l.getWorld().getName()+": "+l.getX()+", "+l.getY()+", "+l.getZ());
         if(Objects.equals(Main.getMainConfig().getBoolean("discreet-death-messages"), true)){
             Component dm = event.deathMessage() != null ? event.deathMessage() : Component.text("");
             event.deathMessage(dm.color(TextColor.color(0x555555)));
@@ -148,7 +150,7 @@ public class ArGameListeners implements Listener {
     @EventHandler
     public static void preventFrozenPlayerMovement(PlayerMoveEvent event){
         if(event.hasChangedPosition()){
-            if(ArGameManager.isFrozen(event.getPlayer().getUniqueId()) && !(event.getFrom().getY() != event.getTo().getY())){
+            if(ArGameManager.isFrozen(event.getPlayer().getUniqueId()) && ((event.getFrom().getX() != event.getTo().getX()) || (event.getFrom().getZ() != event.getTo().getZ()))){
                 event.setCancelled(true);
             }
         }

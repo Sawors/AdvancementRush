@@ -6,7 +6,7 @@ api-version: 1.18
 authors: [ Sawors ]
 commands:
   arteam:
-    usage: /<command> <action> <parameters>
+    usage: /<command> <action> <argument>
     aliases: [advancementrushteam]
   artest:
     usage: /<command>
@@ -16,10 +16,13 @@ commands:
   arunnick:
     usage: /<command> <player>
   artime:
-    usage: /<command> <action> <parameter>
+    usage: /<command> <action> <argument>
   arlink:
     usage: /<command> <key>
   arme:
     usage: /<command>
   arvoc:
+    usage: /<command> <argument>
+  argame:
+    usage: /<command> <argument>
 

@@ -27,7 +27,7 @@ public class ArVocCommand implements CommandExecutor {
                     new BukkitRunnable(){
                         @Override
                         public void run() {
-                            ArDBotManager.createTeamChannels();
+                            ArDBotManager.createTeamChannel();
                             sender.sendMessage(ChatColor.LIGHT_PURPLE+"channels created");
                         }
                     }.runTaskLater(Main.getPlugin(), 40);

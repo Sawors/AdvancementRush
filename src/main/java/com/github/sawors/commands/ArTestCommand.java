@@ -110,6 +110,8 @@ public class ArTestCommand extends ArGameManager implements CommandExecutor {
                         if(args.length >= 2 && Bukkit.getPlayer(args[1])!= null){
                             ArGameManager.unFreezePlayer(Objects.requireNonNull(Bukkit.getPlayer(args[1])).getUniqueId());
                         }
+                    case"reload":
+                        ArGameManager.loadConfigValues(Main.getMainConfig());
                 }
             }
             return true;

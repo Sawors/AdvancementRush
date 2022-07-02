@@ -21,20 +21,6 @@ discreet-death-messages: true
 #   DISABLED : CREATES NETHER LINKING BUG and I don't want to mess with connection nether to world for the moment
 #game-world-name:
 
-# if you want multi-world support for a team selection lobby (pregame lobby) and a winner announcement lobby
-multi-world:
-  enabled: false
-  # lobby/spawn world name and spawnpoint coordinates, name "arush-spawn" by default
-  spawn-world-name: arush-spawn
-  spawn-X: 0
-  spawn-Y: 64
-  spawn-Z: 0
-  # name of the world for the lobby where players are teleported after the game's end and spawnpoint coordinates, name "arush-win" by default
-  win-world-name: arush-win
-  win-X: 0
-  win-Y: 64
-  win-Z: 0
-
 # auto gamerule and difficulty attribution
 disable-fire-spread: true
 difficulty-hard: true
@@ -49,7 +35,7 @@ spawn-platform-radius: 24
 # if "spawn-platform-radius" = 0 players will still spawn at the specified height
 #   default : 96
 spawn-platform-height: 96
-# enable waiting room minigame (a simple tag game to wait for the game to fill)
+# enable waiting room minigame (a simple tag game to wait for the game to fill up)
 #   default : true
 enable-waiting-room-minigame: true
 
@@ -61,6 +47,40 @@ spread-teams-radius: 256
 # spaced on a circle around the spawn (circle radius = "spread-teams-radius")
 #   default : false
 random-spread: false
+
+# if you want multi-world support for a team selection lobby (pregame lobby) and a winner announcement lobby
+multi-world:
+  enabled: false
+  # lobby/spawn world name and spawnpoint coordinates, name "arush-spawn" by default
+  spawn-world-name: arush-spawn
+  spawn-X: 0
+  spawn-Y: 64
+  spawn-Z: 0
+  # name of the world for the lobby where players are teleported after the game's end and spawnpoint coordinates, name "arush-win" by default
+  win-world-name: arush-win
+  win-X: 0
+  win-Y: 64
+  win-Z: 0
+
+#   GAME END SEQUENCE
+# should there be the ranks' revelation animation (I don't know why one would disable that (?_?) )
+#   default : true
+ranks-revelation: true
+# when the game ends players are all usually tp back to some sort of lobby
+group-back:
+  # should the plugin handle players when the game is ended or is it handled by another plugin / admin ?
+  # "true" to use AdvancementRush end game management (next 3 options)
+  #   default : true
+  enabled: true
+  # delay after which players are tp back (in seconds)
+  #   default : 5
+  delay: 5
+  # where should the plugin teleport players ?
+  # LOBBY : teleport them back to the same lobby where they started the game (the floating invisible box generated on team selection)
+  # WORLD : if you enabled multi-world support this will try to teleport them to the world specified in "win-world-name", if it fails it will send them to LOBBY
+  # allowed values are : WORLD, LOBBY
+  #   default : LOBBY
+  tp-destination: LOBBY
 
 # set this to change how the game ends (win condition)
 #   allowed values are : TIMER, VALUE, HYBRID
@@ -150,11 +170,20 @@ show-points: true
 # follow this tutorial if you want to know how to get it and create a Discord bot : https://discordpy.readthedocs.io/en/stable/discord.html
 # for the sake of simplicity please give the Administrator perm to the bot, otherwise many features will not work
 discord-bot-token:
-# channel ID of the discord channel where commands and team management can be used (admin/team_manager channel)
-discord-bot-management-channelID:
+# ID of the server where your instance of the bot is primarily used if you want it to try to auto connect on server start, if blank you will have to connect the bot to your Discord server using /arlink
 discord-server-id:
+# the default key to link Discord bot and Minecraft plugin used in /arlink (can be left blank if "discord-server-id" is specified or if you want to add it yourself with /arlink <key>)
 discord-link-key:
-discord-general-vocal-id:
+# the main voice channel where players are waiting for the game to start
+discord-general-voice-id:
+
+# should the discord bot move automatically users on game start from voice channel specified by "discord-general-voice-id" to their team channel ?
+#   default : true
+start-auto-move: true
+# same thing as above but this time moving members back to the general channel on game end
+#   default : true
+end-auto-move: true
+
 #   [========== ADVANCEMENTS ==========]
 # bonus when a team is the first one to unlock an advancement
 #   default: 5

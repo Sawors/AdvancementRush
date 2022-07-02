@@ -184,8 +184,9 @@ public class ArTeamManager extends ArDataBase{
         setTeamPlayers(teamname, ArDataBase.teamMembersSerialize(output));
         //ArDataBase.setPlayerTeamLink(playerid, "");
     }
-    public static void addPointsToTeam(String teamname, int points) throws SQLException, MalformedParametersException {
+    public static void addPointsToTeam(String teamname, int points){
         setTeamPoints(teamname, getTeamPoints(teamname)+points);
+        
         for(Player p : Bukkit.getOnlinePlayers()){
             String team = getPlayerTeam(p.getUniqueId());
             if(team != null){
