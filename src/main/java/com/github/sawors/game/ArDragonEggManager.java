@@ -164,7 +164,8 @@ public class ArDragonEggManager {
                                 Player player = Bukkit.getPlayer(pid);
                                 if(player != null){
                                     player.playSound(player.getLocation(), Sound.ENTITY_EXPERIENCE_ORB_PICKUP,.5f,1.2f);
-                                    player.sendMessage(Component.text(ChatColor.GOLD+""+ChatColor.BOLD+"> Dragon Egg bonus : "+ChatColor.DARK_GREEN+"+"+eggbonusperminute+"pts"));
+                                    //Dragon Egg bonus
+                                    player.sendMessage(Component.text(ChatColor.GOLD+""+ChatColor.BOLD+"> Bonus de l'Oeuf de Dragon : "+ChatColor.DARK_GREEN+"+"+eggbonusperminute+"pts"));
                                 }
                             }
                         }

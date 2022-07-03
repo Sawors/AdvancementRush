@@ -125,7 +125,8 @@ public class ArTeamDisplay {
             return;
         }
         List<String> ranking = ArTeamManager.getTeamsRanking();
-        objective.getScore(ChatColor.GOLD+"    Top Teams").setScore(topteamsize+5);
+        //    Top Teams
+        objective.getScore(getCenteringSpacer("Top Équipes",maxlinelength_final)+ChatColor.GOLD+"Top Équipes").setScore(topteamsize+5);
         for(int i = 0; i<topteamsize; i++){
             if(ranking.size() > i){
                 String team = ranking.get(i);
@@ -164,8 +165,8 @@ public class ArTeamDisplay {
         if(objective.getScoreboard() == null ||team == null){
             return;
         }
-    
-        objective.getScore(ChatColor.GOLD+"    Your Team").setScore(base+1);
+        //    Your Team
+        objective.getScore(getCenteringSpacer("Votre Équipe",maxlinelength_final)+ChatColor.GOLD+"Votre Équipe").setScore(base+1);
         objective.getScore(ChatColor.RESET+" "+ChatColor.RESET+""+ChatColor.GRAY+""+ChatColor.STRIKETHROUGH+"                   ").setScore(base-1);
         
         int points = ArTeamManager.getTeamPoints(team);
@@ -195,8 +196,8 @@ public class ArTeamDisplay {
         if(objective.getScoreboard() == null){
             return;
         }
-    
-        objective.getScore(ChatColor.GOLD+"    Your Team").setScore(base+1);
+        //    Your Team
+        objective.getScore(getCenteringSpacer("Votre Équipe",maxlinelength_final)+ChatColor.GOLD+"Votre Équipe").setScore(base+1);
         objective.getScore(ChatColor.RESET+" "+ChatColor.RESET+""+ChatColor.GRAY+""+ChatColor.STRIKETHROUGH+"                   ").setScore(base-1);
     
         int points = 0;
@@ -222,7 +223,8 @@ public class ArTeamDisplay {
             return;
         }
         objective.getScore(ChatColor.GOLD+" ").setScore(3);
-        objective.getScore(ChatColor.GOLD+"        Timer").setScore(2);
+        //        Timer
+        objective.getScore(getCenteringSpacer("Temps",maxlinelength_final)+ChatColor.GOLD+"Temps").setScore(2);
         objective.getScore(ChatColor.RED+"      "+ArGameManager.getTimerDisplay()).setScore(1);
         objective.getScore(ChatColor.RESET+" "+ChatColor.RESET+""+ChatColor.GRAY+""+ChatColor.STRIKETHROUGH+"                   ").setScore(0);
         
@@ -234,7 +236,7 @@ public class ArTeamDisplay {
         }
         List<String> ranking = ArTeamManager.getTeamsRanking();
         int rankingsize = ranking.size();
-        objective.getScore(ChatColor.GOLD+"    Top Teams").setScore(rankingsize+2);
+        objective.getScore( getCenteringSpacer("Top Équipes",maxlinelength_final)+ChatColor.GOLD+"Top Équipes").setScore(rankingsize+2);
         for(int i = 0; i<showlength; i++){
             String team = ranking.get(rankingsize-i-1);
             int points = ArTeamManager.getTeamPoints(team);
@@ -261,7 +263,7 @@ public class ArTeamDisplay {
     protected static TextComponent getTeamDisplay(String team, int pts, boolean showpoints){
         String teamname = team;
         if(team == null){
-            return Component.text(ChatColor.WHITE+"No Team");
+            return Component.text(ChatColor.WHITE+"Pas d'Équipe");
         }
         String points = String.valueOf(pts);
         // = total characters per line - fixed amount of chars (format) - points chars
@@ -336,6 +338,14 @@ public class ArTeamDisplay {
         return centeredtext.toString();
     }
     
+    protected static String getCenteringSpacer(String texttocenter, int linelength){
+        StringBuilder centeredtext = new StringBuilder();
+        for(int i = 0; i<(linelength - texttocenter.length())/2; i++){
+            centeredtext.append(ChatColor.RESET + " ");
+        }
+        return centeredtext.toString();
+    }
+    
     protected static String getCenteredText(String text, int linelength){
         return getCenteringSpacer(text.length(), linelength)+text;
     }
@@ -343,7 +353,8 @@ public class ArTeamDisplay {
     public static void updateTablist(Player p, String timerdisplay, String posdisplay){
         Component footer = Component.text("");
         if(posdisplay != null){
-            footer = footer.append(Component.text(ChatColor.DARK_PURPLE+""+ChatColor.BOLD+"Egg Holder Location : "+ChatColor.LIGHT_PURPLE+ArDragonEggManager.getEggHolderPositionDisplay()));
+            //Egg Holder Location :
+            footer = footer.append(Component.text(ChatColor.DARK_PURPLE+""+ChatColor.BOLD+"Porteur D'Oeuf : "+ChatColor.LIGHT_PURPLE+ArDragonEggManager.getEggHolderPositionDisplay()));
             if(timerdisplay != null){
                 footer = footer.append(Component.text('\n'));
             }

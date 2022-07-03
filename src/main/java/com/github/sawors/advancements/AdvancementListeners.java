@@ -128,12 +128,14 @@ public class AdvancementListeners extends ArTeamManager implements Listener {
                                 @Override
                                 public void run() {
                                     Bukkit.broadcast(
-                                            Component.text(ChatColor.DARK_PURPLE+""+ChatColor.BOLD+"Team ")
+                                            //Team
+                                            Component.text(ChatColor.DARK_PURPLE+""+ChatColor.BOLD+"L'équipe ")
                                                     .append(
                                                             ArTeamManager.getTeamColoredName(team)
                                                     )
                                                     .append(
-                                                            Component.text(ChatColor.DARK_PURPLE+""+ChatColor.BOLD+" is the first team to unlock "+ChatColor.GOLD+"[")
+                                                            // is the first team to unlock
+                                                            Component.text(ChatColor.DARK_PURPLE+""+ChatColor.BOLD+" est la première à débloquer"+ChatColor.GOLD+"[")
                                                     )
                                                     .append(
                                                             display.title().color(TextColor.color(0xFFAA00))

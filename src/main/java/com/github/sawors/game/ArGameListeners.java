@@ -113,13 +113,16 @@ public class ArGameListeners implements Listener {
                 event.getDrops().removeAll(keepstuff);
             }
         }
+        //Your stuff is at
         if(ArGameManager.doDeathCoordinatesMessage()){
-            TextComponent msg = Component.text(ChatColor.GREEN+"Your stuff is at ").append(Component.text("X:"+(int)l.getX()+" Y:"+(int)l.getY()+" Z:"+(int)l.getZ()).color(TextColor.color(0x0096FF)));
+            TextComponent msg = Component.text(ChatColor.GREEN+"Votre stuff est en ").append(Component.text("X:"+(int)l.getX()+" Y:"+(int)l.getY()+" Z:"+(int)l.getZ()).color(TextColor.color(0x0096FF)));
             if(l.getWorld().getName().toLowerCase(Locale.ENGLISH).contains("nether")){
-                msg = msg.append( Component.text(ChatColor.GREEN+" in the Nether"));
+                // in the Nether
+                msg = msg.append( Component.text(ChatColor.GREEN+" dans le Nether"));
             }
             if(l.getWorld().getName().toLowerCase(Locale.ENGLISH).contains("end")){
-                msg = msg.append( Component.text(ChatColor.GREEN+" in the End"));
+                // in the End
+                msg = msg.append( Component.text(ChatColor.GREEN+" dans l'End"));
             }
             p.sendMessage(msg);
         }

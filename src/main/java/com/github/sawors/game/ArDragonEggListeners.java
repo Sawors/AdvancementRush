@@ -28,7 +28,8 @@ public class ArDragonEggListeners implements Listener {
         Entity e = event.getRightClicked();
         if(e instanceof ArmorStand && ((ArmorStand)e).getEquipment().getHelmet() != null && ((ArmorStand)e).getEquipment().getHelmet().getType().equals(Material.DRAGON_EGG)){
             if(p.getInventory().firstEmpty() == -1){
-                p.showTitle(Title.title(Component.text(""),Component.text(ChatColor.RED+"Your inventory is full, can't pickup the egg")));
+                //Your inventory is full, can't pickup the egg
+                p.showTitle(Title.title(Component.text(""),Component.text(ChatColor.RED+"Votre inventaire est plein, vous ne pouvez pas ramasser l'Oeuf")));
                 event.setCancelled(true);
             } else {
                 e.remove();
@@ -42,11 +43,14 @@ public class ArDragonEggListeners implements Listener {
                 }
                 p.playSound(p.getLocation(), Sound.ENTITY_ENDER_DRAGON_GROWL,1,1.25f);
                 p.playSound(p.getLocation(), Sound.ENTITY_ENDERMAN_SCREAM,.5f,.85f);
-                p.showTitle(Title.title(Component.text(""),Component.text(ChatColor.LIGHT_PURPLE+""+ChatColor.BOLD+"You are now the Egg Holder"), Title.Times.times(Duration.ofMillis(250),Duration.ofMillis(1000),Duration.ofMillis(250))));
+                //You are now the Egg Holder
+                p.showTitle(Title.title(Component.text(""),Component.text(ChatColor.LIGHT_PURPLE+""+ChatColor.BOLD+"Vous êtes le Porteur d'Oeuf"), Title.Times.times(Duration.ofMillis(250),Duration.ofMillis(1000),Duration.ofMillis(250))));
                 ArDragonEggManager.setEggHolder(p);
                 String team = ArTeamManager.getPlayerTeam(p.getUniqueId());
                 if(team != null){
-                    Bukkit.broadcast(Component.text(ChatColor.DARK_PURPLE+"Team "+ChatColor.BOLD).append(ArTeamManager.getTeamColoredName(team)).append(Component.text(ChatColor.DARK_PURPLE+" has picked up the Dragon Egg")));
+                    //Team
+                    // has picked up the Dragon Egg
+                    Bukkit.broadcast(Component.text(ChatColor.DARK_PURPLE+"L'équipe "+ChatColor.BOLD).append(ArTeamManager.getTeamColoredName(team)).append(Component.text(ChatColor.DARK_PURPLE+" a ramassé l'Oeuf de Dragon")));
                 }
             }
         }

@@ -53,7 +53,8 @@ public class TeamListeners implements Listener {
                 aud = Audience.audience(Bukkit.getOnlinePlayers());
                 channel = Component.text(ChatColor.DARK_GRAY+""+ChatColor.BOLD+""+"[G] ");
             } else {
-                channel = firstchar == '!' ? Component.text(ChatColor.DARK_GRAY+""+ChatColor.BOLD+""+"[G] ") : Component.text(ChatColor.BOLD+"[TEAM] ");
+                //TEAM
+                channel = firstchar == '!' ? Component.text(ChatColor.DARK_GRAY+""+ChatColor.BOLD+""+"[G] ") : Component.text(ChatColor.BOLD+"[ÉQUIPE] ");
                 aud = firstchar == '!' ? Audience.audience(Bukkit.getOnlinePlayers()) : Audience.audience(targets);
             }
             final TextComponent channel_f = channel;

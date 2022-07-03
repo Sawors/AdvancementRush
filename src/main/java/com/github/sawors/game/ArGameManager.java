@@ -248,7 +248,8 @@ public class ArGameManager extends ArDataBase{
                         p.playSound(p.getLocation(), Sound.ENTITY_ENDER_DRAGON_GROWL,.1f, 1.5f);
                     }
                     Bukkit.broadcast(Component.text(ChatColor.RED+"-> "+getRemainingTimeDisplay()));
-                    Bukkit.broadcast(Component.text(ChatColor.RED+""+ChatColor.MAGIC+"ED"+ChatColor.RED+" "+ChatColor.BOLD+"team ranking is now hidden ! "+ChatColor.MAGIC+"ED"));
+                    //team ranking is now hidden !
+                    Bukkit.broadcast(Component.text(ChatColor.RED+""+ChatColor.MAGIC+"ED"+ChatColor.RED+" "+ChatColor.BOLD+"Le classement des équipes est maintenant caché "+ChatColor.MAGIC+"ED"));
                 }
                 
                 // endgame announcement
@@ -278,14 +279,22 @@ public class ArGameManager extends ArDataBase{
         if(hours >= 1){
             String plural = minutes == 1 ? "" : "s";
             if(minutes < 10){
-                return hours+" hour"+plural+" remaining";
+                // hour
+                // restante
+                return hours+" heure"+plural+" restante"
+                        //only for french
+                        +plural;
             }
-            return hours+" hour"+plural+" "+minutes+" minute"+plural+" remaining ";
+            return hours+" heure"+plural+" "+minutes+" minute"+plural+" restante"
+                    //only for french
+                    +plural;
         } else if(minutes >= 1){
             String plural = minutes == 1 ? "" : "s";
-            return minutes+" minute"+plural+" remaining";
+            return minutes+" minute"+plural+" restante"
+                    //only for french
+                    +plural;
         } else {
-            return seconds+" seconds remaining";
+            return seconds+" secondes restantes";
         }
     }
     
@@ -591,7 +600,8 @@ public class ArGameManager extends ArDataBase{
                         @Override
                         public void run() {
                             if(i == -1){
-                                countdown = "Game starts in...";
+                                //Game starts in...
+                                countdown = "Début dans...";
                                 pitch = .5f;
                             } else{
                                 countdown = String.valueOf(pregametimer-i);
@@ -663,7 +673,9 @@ public class ArGameManager extends ArDataBase{
                 for(Player pl : Bukkit.getOnlinePlayers()){
                     pl.playSound(pl.getLocation(),Sound.ENTITY_PLAYER_LEVELUP,0.5f,0.8f);
                 }
-                Bukkit.broadcast(Component.text(ChatColor.GOLD+"Team ").append(ArTeamManager.getTeamColoredName(team)).append(Component.text(ChatColor.GOLD+" has earned the points of the Dragon Egg holder "+ChatColor.DARK_GREEN+"+"+ArDragonEggManager.getFinalBonusPoints()+"pts")));
+                //Team
+                // has earned the points of the Dragon Egg holder
+                Bukkit.broadcast(Component.text(ChatColor.GOLD+"L'équipe ").append(ArTeamManager.getTeamColoredName(team)).append(Component.text(ChatColor.GOLD+" a gagné les points du Porteur d'Oeuf de Dragon"+ChatColor.DARK_GREEN+"+"+ArDragonEggManager.getFinalBonusPoints()+"pts")));
             }
         }
         //resetTimer();
@@ -680,12 +692,14 @@ public class ArGameManager extends ArDataBase{
                     case 1:
                         sound = Sound.ENTITY_ENDER_DRAGON_GROWL;
                         pitch = 0.85f;
-                        title = Title.title(Component.text(ChatColor.GOLD+"Game Finished !"), Component.text(ChatColor.YELLOW+"gg !"), Title.Times.times(Duration.ofMillis(250), Duration.ofMillis(1500), Duration.ofMillis(250)));
+                        //Game Finished !
+                        title = Title.title(Component.text(ChatColor.GOLD+"Partie terminée !"), Component.text(ChatColor.YELLOW+"gg !"), Title.Times.times(Duration.ofMillis(250), Duration.ofMillis(1500), Duration.ofMillis(250)));
                         break;
                     case 2:
                         pitch = 1;
                         sound = Sound.ENTITY_PLAYER_LEVELUP;
-                        title = Title.title(Component.text(ChatColor.GOLD+"Announcing Winners"), Component.text(""), Title.Times.times(Duration.ofMillis(250), Duration.ofMillis(1500), Duration.ofMillis(250)));
+                        //Announcing Winners
+                        title = Title.title(Component.text(ChatColor.GOLD+"Classement"), Component.text(""), Title.Times.times(Duration.ofMillis(250), Duration.ofMillis(1500), Duration.ofMillis(250)));
                         break;
                     case 3:
                         pitch = 1;
