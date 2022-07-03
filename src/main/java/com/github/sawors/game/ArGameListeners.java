@@ -17,8 +17,11 @@ import org.bukkit.event.entity.EntityDamageByEntityEvent;
 import org.bukkit.event.entity.EntityDamageEvent;
 import org.bukkit.event.entity.PlayerDeathEvent;
 import org.bukkit.event.player.*;
+import org.bukkit.inventory.ItemStack;
 import org.bukkit.scheduler.BukkitRunnable;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Locale;
 import java.util.Objects;
 
@@ -80,11 +83,47 @@ public class ArGameListeners implements Listener {
     @EventHandler
     public static void discreetDeathMessage(PlayerDeathEvent event){
         Location l = event.getPlayer().getLocation();
+        Player p = event.getPlayer();
         Main.logAdmin("Player "+event.getPlayer().getName()+" is dead at "+l.getWorld().getName()+": "+l.getX()+", "+l.getY()+", "+l.getZ());
         if(Objects.equals(Main.getMainConfig().getBoolean("discreet-death-messages"), true)){
             Component dm = event.deathMessage() != null ? event.deathMessage() : Component.text("");
-            event.deathMessage(dm.color(TextColor.color(0x555555)));
+            event.deathMessage(dm.color(TextColor.color(0xAAAAAA)));
         }
+        if(ArGameManager.doKeepStuffOnDeath()){
+            List<ItemStack> keepstuff = new ArrayList<>();
+            for(ItemStack item : p.getInventory().getContents()){
+                if(item != null){
+                    String itemname = item.getType().toString();
+                    if(
+                            itemname.contains("_AXE") ||
+                            itemname.contains("_PICKAXE") ||
+                            itemname.contains("_SHOVEL") ||
+                            itemname.contains("_SWORD") ||
+                            itemname.contains("_HOE") ||
+                            itemname.contains("_HELMET") ||
+                            itemname.contains("_CHESTPLATE") ||
+                            itemname.contains("_LEGGINGS") ||
+                            itemname.contains("_BOOTS") ||
+                            item.getEnchantments().size() > 0
+                    ){keepstuff.add(item);}
+                }
+            }
+            if(!event.getKeepInventory()){
+                event.getItemsToKeep().addAll(keepstuff);
+                event.getDrops().removeAll(keepstuff);
+            }
+        }
+        if(ArGameManager.doDeathCoordinatesMessage()){
+            TextComponent msg = Component.text(ChatColor.GREEN+"Your stuff is at ").append(Component.text("X:"+(int)l.getX()+" Y:"+(int)l.getY()+" Z:"+(int)l.getZ()).color(TextColor.color(0x0096FF)));
+            if(l.getWorld().getName().toLowerCase(Locale.ENGLISH).contains("nether")){
+                msg = msg.append( Component.text(ChatColor.GREEN+" in the Nether"));
+            }
+            if(l.getWorld().getName().toLowerCase(Locale.ENGLISH).contains("end")){
+                msg = msg.append( Component.text(ChatColor.GREEN+" in the End"));
+            }
+            p.sendMessage(msg);
+        }
+        
     }
     
     @EventHandler

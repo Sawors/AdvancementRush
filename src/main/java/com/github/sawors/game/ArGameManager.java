@@ -50,6 +50,8 @@ public class ArGameManager extends ArDataBase{
     private static String groupdestination = "LOBBY";
     private static boolean startdiscordsplit = true;
     private static boolean enddiscordgroup = true;
+    private static boolean deathkeepstuff = true;
+    private static boolean deathpositionmessage = true;
     
     public static void initGameMode(){
         gameworld = Bukkit.getServer().getWorlds().get(0);
@@ -108,8 +110,18 @@ public class ArGameManager extends ArDataBase{
         startdiscordsplit = config.getBoolean("start-auto-move");
         enddiscordgroup = config.getBoolean("end-auto-move");
         
+        deathkeepstuff = config.getBoolean("death-keep-basic-equipment");
+        deathpositionmessage = config.getBoolean("death-tell-coordinates");
+        
         // Maybe messy to keep it here
         ArDragonEggManager.loadEggConfig(config);
+    }
+    
+    protected static boolean doKeepStuffOnDeath(){
+        return deathkeepstuff;
+    }
+    protected static boolean doDeathCoordinatesMessage(){
+        return deathpositionmessage;
     }
     
     public static Set<UUID> getFrozenPlayers(){

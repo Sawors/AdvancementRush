@@ -147,10 +147,14 @@ dragon-egg-bonus:
   # show the coordinate of the player holding the dragon egg in the tablist
   #   default: true
   show-coordinates: true
-  # number of minutes before the game end at which the player holding the dragon egg gain the Glowing potion effect
-  # set to 0 to disable
-  #   default : 30
-  glowing-timer: 30
+
+# should the player keep its armor, tools and sword when respawning ?
+# This is used to avoid punishing too much the player dying in a gamemode where speed and efficiency matter that much
+#   default : true
+death-keep-basic-equipment: true
+# should a message be sent to the dead player with its death coordinates ?
+#   default : true
+death-tell-coordinates: true
 
 
 #   [========== INTERFACE ==========]

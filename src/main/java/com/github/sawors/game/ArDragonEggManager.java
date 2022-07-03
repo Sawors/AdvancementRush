@@ -127,7 +127,9 @@ public class ArDragonEggManager {
     }
     
     protected static void cancelEggTimer(){
-        eggtimer.cancel();
+        if(eggtimer != null){
+            eggtimer.cancel();
+        }
     }
     
     protected static void pauseEggTimer(){
